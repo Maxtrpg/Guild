@@ -102,11 +102,7 @@
         .npc-dialogue-ui::after { content: '▼'; position: absolute; bottom: 10px; right: 20px; color: var(--highlight); animation: bounce 1s infinite; }
         .npc-label { position: absolute; top: -20px; left: 30px; background: var(--highlight); color: #000; padding: 5px 20px; font-family: var(--font-title); font-weight: bold; border-radius: 4px; border: 2px solid #fff; transform: skewX(-15deg); }
         .typewriter-text { font-family: var(--font-hand); font-size: 1.3rem; color: #eee; line-height: 1.6; min-height: 60px; }
-        
-        @keyframes slideInUp { to { transform: translateY(0); } }
-        @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
-        @keyframes fadeInUI { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
+        @keyframes slideInUp { to { transform: translateY(0); } } @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } } @keyframes fadeInUI { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } } @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
         @media (max-width: 768px) { .npc-full-body { left: 50%; transform: translateX(-50%) translateY(100%); bottom: 150px; height: 50vh; } @keyframes slideInUp { to { transform: translateX(-50%) translateY(0); } } }
 
         /* Chat Widget */
@@ -209,6 +205,7 @@
         .party-card { background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(40,40,40,0.9)); border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
         .party-card:hover { transform: translateY(-5px); border-color: var(--highlight); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
         .party-icon { font-size: 2.5rem; color: var(--highlight); margin-bottom: 10px; }
+        .party-icon-img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 10px; border: 2px solid var(--highlight); }
         .party-name { font-family: var(--font-title); font-size: 1.4rem; color: #fff; margin-bottom: 5px; }
         .party-count { color: #888; font-size: 0.9rem; }
         .char-row { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
@@ -276,13 +273,13 @@
 
     <div id="login-gate">
         <h2>🛡️ 冒險者認證</h2>
-        <input type="text" class="game-input" id="login-name" placeholder="稱呼">
+        <input type="text" class="game-input" id="login-name" placeholder="代號">
         <input type="password" class="game-input" id="login-pass" placeholder="證號">
-        <button class="btn-action" onclick="handleLogin()">進入公會</button>
+        <button class="btn-action" onclick="handleLogin()">進入系統</button>
         <p style="margin-top:15px; font-size:0.8rem; color:#888; cursor:pointer;" onclick="toggleReg(true)">新進人員登記</p>
         <div id="reg-panel" class="hidden" style="margin-top:20px; border-top:1px solid #444; padding-top:20px;">
-            <input type="text" class="game-input" id="reg-name" placeholder="設定中文稱呼(登入帳號,密碼將會自動生成)">
-            <button class="btn-action" onclick="handleRegistration()">點擊註冊</button>
+            <input type="text" class="game-input" id="reg-name" placeholder="設定代號">
+            <button class="btn-action" onclick="handleRegistration()">註冊</button>
         </div>
     </div>
 
@@ -318,7 +315,7 @@
     <div id="view-guild" class="view-container active">
         <div class="reception-area">
              <div style="text-align:center; color:var(--text-sub); font-family:var(--font-hand); font-style:italic;">
-                "歡迎來到馬茲提卡冒險者公會。"
+                "歡迎來到馬茲提卡冒險者公會。請隨意查看佈告欄，有事請呼叫右下角的櫃檯人員。"
             </div>
         </div>
 
@@ -338,7 +335,13 @@
                 <div class="card-grid" id="quest-list"></div>
             </div>
             <div id="market" class="section"><h2>自由市集</h2><div style="text-align:right; margin-bottom:10px;"><button class="btn-action" style="width:auto;" onclick="openListingModal()">+ 上架</button></div><div class="card-grid" id="market-list"></div></div>
-            <div id="roster" class="section"><h2>冒險者名冊 (隊伍)</h2><div class="roster-grid" id="roster-list"></div></div>
+            <div id="roster" class="section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>冒險者名冊 (隊伍)</h2>
+                    <button class="btn-action" style="width:auto; margin:0;" onclick="openCreatePartyModal()">+ 成立戰隊</button>
+                </div>
+                <div class="roster-grid" id="roster-list"></div>
+            </div>
         </main>
     </div>
 
@@ -392,8 +395,12 @@
                                     <div style="flex:1"><label class="editor-label">職業</label><input class="game-input" id="edit-class"></div>
                                     <div style="flex:0 0 80px"><label class="editor-label">資歷</label><input type="number" class="game-input" id="edit-rank" placeholder="0"></div>
                                 </div>
+                                <div style="margin-top:10px;">
+                                    <label class="editor-label">所屬戰隊 (Party)</label>
+                                    <input class="game-input" id="edit-party" placeholder="填寫已註冊的隊名，例如：紅龍之牙">
+                                </div>
                                 
-                                <div class="editor-tabs">
+                                <div class="editor-tabs" style="margin-top:15px;">
                                     <button class="editor-tab active" onclick="switchEditorTab(event, 'edit-tab-core')">核心</button>
                                     <button class="editor-tab" onclick="switchEditorTab(event, 'edit-tab-skills')">技能</button>
                                     <button class="editor-tab" onclick="switchEditorTab(event, 'edit-tab-magic')">魔法</button>
@@ -540,6 +547,22 @@
         </form></div>
     </div>
 
+    <div id="create-party-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:400px;">
+            <span class="close-btn" onclick="closeModal(event)">×</span>
+            <h2>成立戰隊</h2>
+            <form onsubmit="handleCreateParty(event)">
+                <label class="editor-label">戰隊徽章</label>
+                <input id="p-icon" class="game-input" placeholder="圖片網址 (URL)" required style="margin-bottom:10px;">
+                <label class="editor-label">戰隊名稱</label>
+                <input id="p-name" class="game-input" placeholder="例如: 紅龍之牙" required style="margin-bottom:10px;">
+                <label class="editor-label">宣言 / 簡介</label>
+                <textarea id="p-desc" class="game-textarea" rows="3" placeholder="我們是..."></textarea>
+                <button class="btn-action">註冊戰隊</button>
+            </form>
+        </div>
+    </div>
+
     <div id="party-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content" style="max-width:500px;">
             <span class="close-btn" onclick="closeModal(event)">×</span>
@@ -566,7 +589,7 @@
         const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
 
         const THEMES = {
-            'scholar': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/001.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8))", color: "#2c1e14", panel: "rgba(45, 30, 20, 0.95)", border: "#5d4037", hl: "#ffb74d", text: "#f3e5dc", sub: "#d7ccc8", in_bg: "#eaddcf", in_txt: "#3e2723", btn_bg: "linear-gradient(to bottom, #ffb74d, #e65100)", btn_txt: "#2e1500" },
+            'scholar': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/01.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8))", color: "#2c1e14", panel: "rgba(45, 30, 20, 0.95)", border: "#5d4037", hl: "#ffb74d", text: "#f3e5dc", sub: "#d7ccc8", in_bg: "#eaddcf", in_txt: "#3e2723", btn_bg: "linear-gradient(to bottom, #ffb74d, #e65100)", btn_txt: "#2e1500" },
             'warrior': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/003.webp'), radial-gradient(circle at 50% 30%, #263238 0%, #000 100%)", color: "#000", panel: "rgba(30, 40, 45, 0.95)", border: "#78909c", hl: "#90a4ae", text: "#eceff1", sub: "#b0bec5", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #90a4ae, #546e7a)", btn_txt: "#000" },
             'jungle': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/002.webp'), radial-gradient(circle at 50% 20%, #1b5e20 0%, #000 90%)", color: "#051005", panel: "rgba(20, 35, 20, 0.95)", border: "#4caf50", hl: "#a5d6a7", text: "#e8f5e9", sub: "#c8e6c9", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #a5d6a7, #388e3c)", btn_txt: "#000" },
             'tavern': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/004.webp'), radial-gradient(circle at 50% 50%, #e65100 0%, #3e2723 100%)", color: "#2e1500", panel: "rgba(40, 20, 10, 0.95)", border: "#ff6f00", hl: "#ffcc80", text: "#fff3e0", sub: "#ffe0b2", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #ffcc80, #ef6c00)", btn_txt: "#2e1500" }
@@ -620,23 +643,37 @@
         function getRankTitle(sessions) { const s=parseInt(sessions)||0; if(s<=5)return `🪨 黑曜石學徒 (${s})`; if(s<=10)return `🐆 美洲豹戰士 (${s})`; if(s<=15)return `🦅 雄鷹騎士 (${s})`; if(s<=20)return `☀️ 太陽祭司 (${s})`; return `🐍 羽蛇神選 (${s})`; }
         function setVal(id, v){const e=document.getElementById(id);if(e)e.value=v;}
 
-        async function loadMyCharactersList() {
+        async function loadMyCharactersList(targetId = null) {
             const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) return;
+            // Order by updated_at so recent edits are top
             let { data: chars } = await db.from('my_characters').select('*').eq('owner_name', u.name).order('created_at', {ascending: true});
             myCharacters = chars || [];
             document.getElementById('char-list-items').innerHTML = myCharacters.map((c, i) => `<div class="char-list-item" onclick="selectCharacter(${i})">${c.name}</div>`).join('');
+            
+            // Re-select logic
+            if(myCharacters.length > 0) {
+                if(targetId) {
+                    const idx = myCharacters.findIndex(c => c.id == targetId);
+                    if(idx >= 0) selectCharacter(idx);
+                    else selectCharacter(0);
+                } else {
+                    selectCharacter(0);
+                }
+            } else {
+                createNewChar();
+            }
+
             let { data: logs } = await db.from('journals').select('*').eq('author_name', u.name).order('created_at',{ascending:false});
             document.getElementById('my-journal-list').innerHTML = logs.map(l => {
                 let advHtml = (l.advancements && Array.isArray(l.advancements)) ? `<div style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.1); border:1px dashed var(--border-color); border-radius:4px; font-size:0.85rem;"><div style="color:var(--text-sub); border-bottom:1px dashed var(--border-color); margin-bottom:4px;">技能成長</div>${l.advancements.map(a => `<div style="display:flex; justify-content:space-between;"><span>${a.skill}</span><span style="color:var(--highlight)">${a.note}</span></div>`).join('')}</div>` : '';
                 return `<div class="card"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span class="tag" style="border-color:var(--highlight); color:var(--highlight)">${l.adventure_date || '未知日期'}</span><span class="tag">${myCharacters.find(c => c.id === l.character_id)?.name || '未指定'}</span></div><h3>${l.title}</h3>${l.summary ? `<div style="font-style:italic; color:var(--text-sub); margin-bottom:10px; padding-left:10px; border-left:3px solid #555;">${l.summary}</div>` : ''}<p class="desc">${l.content}</p>${advHtml}</div>`;
             }).join('');
-            if(myCharacters.length > 0) selectCharacter(0); else createNewChar();
         }
 
         function selectCharacter(index) {
             document.querySelectorAll('.char-list-item').forEach((el, i) => el.classList.toggle('active', i === index));
             const char = myCharacters[index]; if(!char) return;
-            setVal('edit-char-id', char.id); setVal('edit-name', char.name); setVal('edit-race', char.race); setVal('edit-class', char.class); setVal('edit-avatar', char.avatar_url); setVal('edit-rank', char.rank||0);
+            setVal('edit-char-id', char.id); setVal('edit-name', char.name); setVal('edit-race', char.race); setVal('edit-class', char.class); setVal('edit-avatar', char.avatar_url); setVal('edit-rank', char.rank||0); setVal('edit-party', char.party||'');
             document.getElementById('avatar-preview').src = char.avatar_url;
             const sheet = char.sheet_data || {}; const sys = sheet.system || {}; const items = sheet.items || [];
             ['str','con','agl','int','wil','cha'].forEach(k => { if(sys.attributes?.[k]) setVal(`attr-${k}`, sys.attributes[k].value||10); });
@@ -656,7 +693,7 @@
         }
 
         function createNewChar() {
-            setVal('edit-char-id', ''); setVal('edit-name', '新角色'); setVal('edit-race', ''); setVal('edit-class', ''); setVal('edit-avatar', ''); setVal('edit-rank', 0);
+            setVal('edit-char-id', ''); setVal('edit-name', '新角色'); setVal('edit-race', ''); setVal('edit-class', ''); setVal('edit-avatar', ''); setVal('edit-rank', 0); setVal('edit-party', '');
             document.getElementById('avatar-preview').src = ""; ['str','con','agl','int','wil','cha'].forEach(k => setVal(`attr-${k}`, 10)); setVal('edit-hp', 10); setVal('edit-wp', 10); setVal('edit-bio', '');
             editorData = { kinAbilities:[], heroicAbilities:[], coreSkills:[], weaponSkills:[], secondarySkills:[], cantrips:[], rankedSpells:[], weapons:[], armors:[], gear:[] };
             renderAllLists(); document.querySelectorAll('.char-list-item').forEach(el => el.classList.remove('active'));
@@ -724,25 +761,46 @@
 
         // --- FETCH DATA ---
         async function fetchData() {
-            // Roster Grouped by Party
+            // 1. Fetch Parties
+            let { data: registeredParties } = await db.from('parties').select('*');
+            const partyMap = {};
+            if(registeredParties) {
+                registeredParties.forEach(p => { partyMap[p.name] = p; });
+            }
+
+            // 2. Fetch Characters
             let { data: chars } = await db.from('my_characters').select('*').eq('is_public', true).order('created_at',{ascending:false});
             const parties = {};
+            
+            // Initialize registered parties first (so they appear even if empty)
+            if(registeredParties) {
+                registeredParties.forEach(p => {
+                    parties[p.name] = [];
+                });
+            }
+
+            // Distribute characters
             (chars || []).forEach(c => {
-                const pName = c.party || '自由之翼 (Freelancers)'; // Default Group
+                const pName = c.party || '自由之翼 (Freelancers)'; 
                 if (!parties[pName]) parties[pName] = [];
                 parties[pName].push(c);
             });
+            
+            // Also ensure default group exists
+            if(!parties['自由之翼 (Freelancers)']) parties['自由之翼 (Freelancers)'] = [];
 
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
                 const members = parties[pName];
-                const leader = members[0]; // Just use first as visual rep
-                // Escape quotes for onclick
+                const regInfo = partyMap[pName];
+                const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; 
                 const safePName = pName.replace(/'/g, "\\'");
+                const desc = regInfo ? regInfo.description : '';
+                
                 return `
                 <div class="party-card" onclick="openPartyDetail('${safePName}')">
-                    <div class="party-icon"><i class="fas fa-users"></i></div>
+                    ${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}
                     <div class="party-name">${pName}</div>
-                    <div class="party-count">${members.length} 名成員</div>
+                    <div class="party-count">${members.length > 0 ? members.length + ' 名成員' : '<span style="color:#d4af37">召募中</span>'}</div>
                     <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
                         ${members.slice(0,3).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
                         ${members.length > 3 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
@@ -750,12 +808,10 @@
                 </div>`;
             }).join('');
             
-            // Store for modal access
             window.currentParties = parties;
 
             let { data: n } = await db.from('notices').select('*'); document.getElementById('notice-list').innerHTML = n.map(x=>`<div class="card card-notice"><h3>${x.title}</h3><p class="desc">${x.content}</p></div>`).join('');
             
-            // Quests with Client Info
             let { data: q } = await db.from('quests').select('*'); 
             document.getElementById('quest-list').innerHTML = q.map(x=>`
                 <div class="card card-quest">
@@ -770,7 +826,6 @@
                     <div class="quest-footer">報酬: ${x.reward || '面議'}</div>
                 </div>`).join('');
             
-            // Market with Seller Info
             let { data: m } = await db.from('market').select('*'); 
             document.getElementById('market-list').innerHTML = m.map(x=>`
                 <div class="card card-market">
@@ -788,14 +843,14 @@
 
         function openPartyDetail(pName) {
             const members = window.currentParties[pName];
-            const html = members.map(m => `
+            const html = members.length > 0 ? members.map(m => `
                 <div class="char-row">
                     <img src="${m.avatar_url||DEFAULT_AVATAR}">
                     <div>
                         <div style="font-weight:bold; color:var(--highlight);">${m.name}</div>
                         <div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | Lv.${m.rank||0}</div>
                     </div>
-                </div>`).join('');
+                </div>`).join('') : '<div style="text-align:center; color:#888; padding:20px;">尚無成員</div>';
             
             document.getElementById('party-modal-title').innerText = pName;
             document.getElementById('party-modal-list').innerHTML = html;
@@ -806,7 +861,7 @@
         function openQuestModal() {
             const u = JSON.parse(localStorage.getItem('maztica_user'));
             setVal('q-client-name', u.name);
-            setVal('q-client-img', u.avatar_url || ''); // Default to user avatar
+            setVal('q-client-img', u.avatar_url || ''); 
             document.getElementById('quest-modal').classList.add('open');
         }
         
@@ -824,7 +879,26 @@
             else { showToast("任務已發布"); document.getElementById('quest-modal').classList.remove('open'); fetchData(); }
         }
 
-        // ... (Remaining JS: loadJson, saveCharacter, etc. kept same as V41.2) ...
+        // Party Creation
+        function openCreatePartyModal() {
+            document.getElementById('create-party-modal').classList.add('open');
+        }
+
+        async function handleCreateParty(e) {
+            e.preventDefault();
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const payload = {
+                name: document.getElementById('p-name').value,
+                icon_url: document.getElementById('p-icon').value,
+                description: document.getElementById('p-desc').value,
+                leader_name: u.name
+            };
+            const { error } = await db.from('parties').insert(payload);
+            if(error) alert(error.message);
+            else { showToast("戰隊註冊成功！"); document.getElementById('create-party-modal').classList.remove('open'); fetchData(); }
+        }
+
+        // ... (Remaining JS: loadJson, saveCharacter, etc. kept same as V44.1) ...
         function loadJsonToEditor(input) {
             const file = input.files[0]; if(!file) return;
             const r = new FileReader();
@@ -864,9 +938,28 @@
             const charId = document.getElementById('edit-char-id').value;
             const allItems = [ ...editorData.kinAbilities, ...editorData.heroicAbilities, ...editorData.coreSkills, ...editorData.weaponSkills, ...editorData.secondarySkills, ...editorData.cantrips, ...editorData.rankedSpells, ...editorData.weapons, ...editorData.armors, ...editorData.gear ];
             const newSheet = { name: document.getElementById('edit-name').value, img: document.getElementById('edit-avatar').value, system: { attributes: { str: { value: document.getElementById('attr-str').value }, con: { value: document.getElementById('attr-con').value }, agl: { value: document.getElementById('attr-agl').value }, int: { value: document.getElementById('attr-int').value }, wil: { value: document.getElementById('attr-wil').value }, cha: { value: document.getElementById('attr-cha').value }, }, hitPoints: { value: document.getElementById('edit-hp').value, max: document.getElementById('edit-hp').value }, willPoints: { value: document.getElementById('edit-wp').value, max: document.getElementById('edit-wp').value }, currency: { gc: document.getElementById('curr-gc')?.value || 0, sc: document.getElementById('curr-sc')?.value || 0, cc: document.getElementById('curr-cc')?.value || 0 }, notes: document.getElementById('edit-bio').value }, items: allItems };
-            const payload = { owner_name: u.name, name: newSheet.name, race: document.getElementById('edit-race').value, class: document.getElementById('edit-class').value, avatar_url: newSheet.img, rank: document.getElementById('edit-rank').value, sheet_data: newSheet };
-            let error; if (charId) { const res = await db.from('my_characters').update(payload).eq('id', charId); error = res.error; } else { const res = await db.from('my_characters').insert(payload); error = res.error; }
-            if(error) alert("保存失敗: " + error.message); else { showToast("💾 保存成功！"); loadMyCharactersList(); }
+            const payload = { owner_name: u.name, name: newSheet.name, race: document.getElementById('edit-race').value, class: document.getElementById('edit-class').value, avatar_url: newSheet.img, rank: document.getElementById('edit-rank').value, sheet_data: newSheet, party: document.getElementById('edit-party').value };
+            
+            // ★ Real-time Update Logic Fix ★
+            let targetId = charId; // Default to current
+            let error; 
+            
+            if (charId) { 
+                const res = await db.from('my_characters').update(payload).eq('id', charId); 
+                error = res.error; 
+            } else { 
+                // Need to select to get ID of new char
+                const res = await db.from('my_characters').insert(payload).select(); 
+                error = res.error; 
+                if(res.data && res.data.length > 0) targetId = res.data[0].id;
+            }
+
+            if(error) alert("保存失敗: " + error.message); 
+            else { 
+                showToast("💾 保存成功！"); 
+                // Reload list but keep focus on this character
+                loadMyCharactersList(targetId); 
+            }
         }
         async function deleteCharacter() { const charId = document.getElementById('edit-char-id').value; if(!charId) return; if(confirm("確定刪除?")) { await db.from('my_characters').delete().eq('id', charId); showToast("已刪除"); loadMyCharactersList(); } }
         async function uploadAvatar(input) {
@@ -901,4 +994,3 @@
     </script>
 </body>
 </html>
-
