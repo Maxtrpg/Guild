@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAZTICA | 冒險者公會</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --font-title: 'Cinzel', serif;
+            --font-body: 'Inter', sans-serif;
+            --font-hand: 'Crimson Pro', serif;
+            
+            /* Private Mode Defaults */
+            --private-bg-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/01.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8));
+            --private-bg-color: #2c1e14;
+        }
+
+        body { margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; font-family: var(--font-body); transition: background 0.5s ease; background-attachment: fixed; background-size: cover; background-position: center; background-color: #000; }
+        * { box-sizing: border-box; transition: border-color 0.2s, background-color 0.2s, color 0.2s; }
+
+        /* --- Mode A: Guild --- */
+        body.mode-guild {
+            background-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/bg-guild02.webp');
+            color: #e0e0e0;
+            --panel-bg: rgba(20, 20, 20, 0.95);
+            --border-color: #444;
+            --highlight: #d4af37;
+            --input-bg: rgba(0,0,0,0.6);
+            --input-text: #eee;
+            --btn-bg: linear-gradient(to bottom, #d4af37, #8c6b22);
+            --btn-text: #000;
+            --tab-active-bg: rgba(212, 175, 55, 0.2);
+            --list-item-bg: rgba(255,255,255,0.05);
+            --btn-add-border: #d4af37;
+            --btn-add-hover: #d4af37;
+            --btn-add-text-hover: #000;
+        }
+        
+        /* Guild Atmosphere */
+        body.mode-guild::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.5)); pointer-events: none; z-index: 0; }
+        body.mode-guild::after { content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05), transparent 40%); animation: lightShift 15s infinite alternate ease-in-out; pointer-events: none; z-index: 0; mix-blend-mode: screen; }
+        @keyframes lightShift { 0% { transform: translate(0,0); opacity: 0.5; } 100% { transform: translate(-20px, 20px); opacity: 0.8; } }
+
+        /* --- Mode B: Private --- */
+        body.mode-private {
+            color: var(--p-text-main, #f3e5dc);
+            --panel-bg: var(--p-panel-bg, rgba(40, 30, 25, 0.95));
+            --border-color: var(--p-border-color, #8d6e63);
+            --highlight: var(--p-highlight, #ffb74d);
+            --input-bg: rgba(0, 0, 0, 0.4); 
+            --input-text: #f0f0f0; 
+            --btn-bg: var(--p-btn-bg, linear-gradient(to bottom, #ffb74d, #e65100));
+            --btn-text: var(--p-btn-text, #2e1500);
+            --tab-active-bg: rgba(255, 183, 77, 0.2);
+            --list-item-bg: rgba(0,0,0,0.5); 
+            --btn-add-border: #ffb74d;
+            --btn-add-hover: #ffb74d;
+            --btn-add-text-hover: #2e1500;
+        }
+
+        /* Header */
+        header { position: sticky; top: 0; z-index: 100; background: rgba(10, 5, 0, 0.95); border-bottom: 2px solid var(--highlight); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 20px rgba(0,0,0,0.8); }
+        .brand { font-family: var(--font-title); font-size: 1.5rem; font-weight: 700; color: var(--highlight); letter-spacing: 2px; }
+        .mode-switch { display: flex; background: rgba(255,255,255,0.05); border-radius: 30px; border: 1px solid var(--border-color); padding: 2px; gap: 5px; }
+        .mode-btn { background: transparent; border: none; color: #888; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-family: var(--font-title); font-size: 0.8rem; }
+        .mode-btn.active { background: var(--highlight); color: var(--btn-text); font-weight: bold; }
+        .btn-logout { background: none; border: 1px solid var(--border-color); color: #888; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-logout:hover { color: var(--highlight); border-color: var(--highlight); }
+
+        /* Nav & Theme Bar */
+        .nav-container { display: flex; justify-content: center; gap: 10px; padding: 15px 0; margin-bottom: 0; position: relative; z-index: 2; }
+        .nav-btn { background: var(--panel-bg); border: 1px solid var(--border-color); color: #888; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; transform: skewX(-15deg); }
+        .nav-btn span { display: block; transform: skewX(15deg); font-weight: bold; }
+        .nav-btn.active { background: rgba(255,255,255,0.1); border-color: var(--highlight); color: var(--highlight); }
+
+        .theme-bar { display: flex; justify-content: center; gap: 10px; margin: 0 auto 15px auto; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--border-color); width: fit-content; position: relative; z-index: 2; }
+        .theme-btn { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #555; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 0.7rem; }
+        .theme-btn:hover { transform: scale(1.2); z-index: 2; border-color: #fff; }
+        .theme-btn.active { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 8px #fff; }
+        .t-scholar { background: #5d4037; } .t-warrior { background: #37474f; } .t-jungle { background: #1b5e20; } .t-tavern { background: #e65100; }
+
+        /* Layout */
+        main { max-width: 1200px; margin: 0 auto; padding: 0 15px 80px; position: relative; z-index: 1; }
+        .view-container { display: none; opacity: 0; transition: opacity 0.4s ease; }
+        .view-container.active { display: block; opacity: 1; }
+        .section { display: none; animation: slideUp 0.3s forwards; }
+        .section.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Reception (Visual) */
+        .reception-area { display: flex; align-items: center; justify-content: center; gap: 30px; padding: 30px; margin-bottom: 20px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        
+        /* Buttons */
+        .btn-action { width: 100%; padding: 10px; margin-top: 10px; background: var(--btn-bg); color: var(--btn-text); font-weight: bold; border: none; border-radius: 4px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; }
+        .btn-action:hover { filter: brightness(1.2); }
+        .btn-add { margin-top: 8px; padding: 6px 12px; font-size: 0.85rem; background: rgba(0,0,0,0.6); border: 1px solid var(--btn-add-border); color: var(--btn-add-border); border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; display: inline-block; transition: 0.2s; }
+        .btn-add:hover { background: var(--btn-add-hover); color: var(--btn-add-text-hover); box-shadow: 0 0 10px var(--btn-add-border); }
+
+        /* --- NPC INTRO --- */
+        #npc-intro-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9000; display: none; flex-direction: column; justify-content: flex-end; align-items: center; }
+        #npc-intro-layer.active { display: flex; animation: fadeInOverlay 0.5s forwards; }
+        .npc-full-body { height: 80vh; max-height: 800px; width: auto; position: absolute; bottom: -50px; left: 10%; filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); transform: translateY(100%); animation: slideInUp 0.8s 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: none; }
+        .npc-dialogue-ui { width: 90%; max-width: 800px; background: rgba(20, 20, 20, 0.95); border: 2px solid var(--highlight); border-radius: 10px; padding: 25px; margin-bottom: 50px; box-shadow: 0 0 50px rgba(0,0,0,0.8), 0 0 15px rgba(212,175,55,0.3); position: relative; z-index: 9001; cursor: pointer; opacity: 0; animation: fadeInUI 0.5s 0.8s forwards; }
+        .npc-dialogue-ui::after { content: '▼'; position: absolute; bottom: 10px; right: 20px; color: var(--highlight); animation: bounce 1s infinite; }
+        .npc-label { position: absolute; top: -20px; left: 30px; background: var(--highlight); color: #000; padding: 5px 20px; font-family: var(--font-title); font-weight: bold; border-radius: 4px; border: 2px solid #fff; transform: skewX(-15deg); }
+        .typewriter-text { font-family: var(--font-hand); font-size: 1.3rem; color: #eee; line-height: 1.6; min-height: 60px; }
+        @keyframes slideInUp { to { transform: translateY(0); } } @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } } @keyframes fadeInUI { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } } @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
+
+        /* --- Chat Widget --- */
+        #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 8000; display: flex; flex-direction: column; align-items: flex-end; }
+        #npc-chat-toggle { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.4); cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; background: #000; overflow: hidden; }
+        #npc-chat-toggle:hover { transform: scale(1.1); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 0 40px rgba(212,175,55,0.8); }
+        #npc-chat-img { width: 100%; height: 100%; object-fit: cover; }
+        #chat-notify { position: absolute; top: 0; right: 0; width: 15px; height: 15px; background: #ff4444; border-radius: 50%; border: 2px solid #fff; display: none; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0%{box-shadow:0 0 0 0 rgba(255,68,68,0.7)} 70%{box-shadow:0 0 0 10px rgba(255,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(255,68,68,0)} }
+        #chat-box { width: 300px; height: 400px; background: rgba(15, 10, 5, 0.95); border: 1px solid var(--highlight); border-radius: 12px; margin-bottom: 15px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); backdrop-filter: blur(10px); transform-origin: bottom right; animation: popOpen 0.3s; }
+        @keyframes popOpen { from{transform:scale(0);opacity:0;} to{transform:scale(1);opacity:1;} }
+        .chat-header { padding: 15px; background: rgba(var(--highlight), 0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--highlight); font-weight: bold; font-family: var(--font-title); display: flex; align-items: center; gap: 10px; }
+        .chat-header img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--highlight); }
+        .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
+        .msg-npc { align-self: flex-start; background: rgba(255,255,255,0.1); color: #ddd; border-left: 3px solid var(--highlight); }
+        .msg-player { align-self: flex-end; background: var(--highlight); color: #000; border-radius: 8px 8px 0 8px; }
+        .chat-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 5px; }
+        #chat-in { margin: 0; width: 100%; border-radius: 20px; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff; }
+        #chat-send { background: transparent; border: none; color: var(--highlight); cursor: pointer; font-size: 1.2rem; }
+
+        /* --- Editor --- */
+        .forge-wrapper { display: flex; gap: 20px; height: 80vh; align-items: flex-start; }
+        @media (max-width: 900px) { .forge-wrapper { flex-direction: column; height: auto; } }
+        .char-list-sidebar { width: 220px; min-width: 220px; flex-shrink: 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
+        .char-list-header { padding: 10px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color); text-align: center; color: var(--highlight); font-weight: bold; }
+        .char-list-content { flex: 1; overflow-y: auto; padding: 5px; }
+        .char-list-item { padding: 8px; cursor: pointer; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .char-list-item:hover, .char-list-item.active { background: var(--highlight); color: var(--btn-text); font-weight: bold; }
+        .editor-main { flex: 1; overflow-y: auto; padding-right: 5px; width: 100%; }
+        .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; }
+        @media (max-width: 1100px) { .editor-layout { grid-template-columns: 1fr; } }
+        .editor-left { display: flex; flex-direction: column; gap: 15px; }
+        .avatar-upload-wrapper { position: relative; width: 100%; aspect-ratio: 2/3; background: #000; border: 2px solid var(--highlight); border-radius: 6px; overflow: hidden; cursor: pointer; }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; opacity:0; color:#fff; font-size:2rem; transition:0.3s; }
+        .avatar-upload-wrapper:hover .avatar-overlay { opacity:1; }
+        
+        .editor-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
+        .editor-tab { padding: 8px 15px; background: rgba(0,0,0,0.4); color: #888; border: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; min-width: 80px; }
+        .editor-tab:hover { background: rgba(255,255,255,0.1); color: #ccc; }
+        .editor-tab.active { background: var(--tab-active-bg); color: var(--highlight); border: 1px solid var(--highlight); border-bottom: none; font-weight: bold; }
+        .editor-panel { display: none; animation: fadeIn 0.3s; }
+        .editor-panel.active { display: block; }
+        
+        .game-input { width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--input-text); padding: 8px; border-radius: 4px; font-weight: 600; font-size: 0.95rem; }
+        .game-textarea { width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--input-text); padding: 8px; border-radius: 4px; resize: vertical; font-family: inherit; }
+        .editor-label { display: block; font-size: 0.7rem; color: #aaa; text-transform: uppercase; margin: 10px 0 2px 0; border-bottom: 1px dashed #666; font-weight: bold; }
+        .attr-hex-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .attr-hex { width: 60px; text-align: center; }
+        .attr-hex input { text-align: center; font-family: var(--font-title); font-size: 1.2rem; font-weight: bold; color: var(--highlight); background: rgba(0,0,0,0.5); padding: 5px; }
+        .currency-row { display: flex; gap: 5px; margin-top: 5px; }
+        .curr-box { flex:1; text-align: center; background: rgba(0,0,0,0.3); padding: 3px; border-radius: 4px; border: 1px solid var(--border-color); }
+        .curr-label { font-size: 0.6rem; color: var(--text-sub); margin-bottom: 2px; }
+        .curr-input { width: 100%; text-align: center; background: transparent; border: none; color: var(--text-main); font-weight: bold; font-family: var(--font-title); font-size: 1rem; }
+        .editor-list-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 8px; border-radius: 4px; max-height: 250px; overflow-y: auto; margin-bottom: 5px; }
+        .item-row-edit { display: flex; gap: 8px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 6px; margin-bottom: 4px; background: var(--list-item-bg); border-radius: 4px; }
+        .item-row-edit input { background: transparent; border: none; color: #fff; width: 100%; font-weight: 500; font-size: 0.95rem; text-shadow: 0 1px 2px #000; }
+        .item-row-edit input.qty-input { width: 40px; text-align: center; border-left: 1px solid rgba(255,255,255,0.2); }
+        .item-row-edit input:focus { color: var(--highlight); }
+        .btn-icon { background: none; border: none; color: #ef5350; cursor: pointer; font-size: 1rem; }
+        .json-zone { border: 2px dashed var(--border-color); padding: 15px; text-align: center; color: #888; border-radius: 8px; cursor: pointer; margin-bottom: 15px; background: rgba(0,0,0,0.1); font-size: 0.9rem; }
+        .json-zone:hover { border-color: var(--highlight); color: var(--highlight); }
+
+        /* --- Cards & Roster --- */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .card h3 { color: var(--highlight); margin: 0 0 10px 0; font-family: var(--font-title); font-size: 1.2rem; }
+        
+        .card-quest { background: #f4e7d1; color: #3e2723; border: 1px solid #8d6e63; padding: 0; overflow:hidden; }
+        .quest-header { display: flex; align-items: center; gap: 10px; background: rgba(141, 110, 99, 0.2); padding: 10px 20px; border-bottom: 1px solid #8d6e63; }
+        .quest-client-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #3e2723; }
+        .quest-client-name { font-weight: bold; font-family: var(--font-title); font-size: 0.9rem; }
+        .quest-body { padding: 15px 20px; }
+        .quest-title { font-family: var(--font-title); font-size: 1.4rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; color: #b71c1c; }
+        .quest-desc { font-family: var(--font-hand); font-size: 1.1rem; line-height: 1.5; color: #4e342e; }
+        .quest-footer { background: rgba(183, 28, 28, 0.1); padding: 10px; text-align: center; border-top: 1px dashed #b71c1c; color: #b71c1c; font-weight: bold; font-family: var(--font-title); }
+
+        .card-market { background: #2a1b12; border: 3px solid #4e342e; border-radius: 6px; padding: 0; overflow:hidden; }
+        .market-header { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 10px 15px; border-bottom: 1px solid #4e342e; }
+        .market-seller-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
+        .market-seller-name { color: #ccc; font-size: 0.85rem; }
+        .market-body { padding: 15px; text-align: center; }
+        .market-item { color: var(--highlight); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 5px; }
+        .market-desc { color: #bcaaa4; font-size: 0.9rem; font-style: italic; }
+        .market-footer { background: #1a1a1a; padding: 8px; text-align: center; color: #fff; font-weight: bold; border-top: 1px solid #4e342e; }
+        
+        .card-notice { background: var(--panel-bg); border: 2px solid var(--highlight); padding: 25px; border-radius: 8px; position: relative; }
+        .card-notice::before { content:'♔'; position:absolute; top:10px; right:15px; font-size:3rem; color:#8a0303; opacity:0.8; }
+        .card-notice h3 { color: var(--highlight); font-family: var(--font-title); margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .card-notice .desc { color: #ccc; font-family: var(--font-hand); font-size: 1.1rem; line-height: 1.6; }
+
+        .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .party-card { background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(40,40,40,0.9)); border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
+        .party-card:hover { transform: translateY(-5px); border-color: var(--highlight); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+        .party-icon { font-size: 2.5rem; color: var(--highlight); margin-bottom: 10px; }
+        .party-name { font-family: var(--font-title); font-size: 1.4rem; color: #fff; margin-bottom: 5px; }
+        .party-count { color: #888; font-size: 0.9rem; }
+        .char-row { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
+        .char-row img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
+
+        /* --- Modals (Fixed) --- */
+        #login-gate { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; background: #111; padding: 30px; border: 2px solid var(--highlight); text-align: center; z-index: 2000; border-radius: 10px; }
+        .modal-overlay { position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(5px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        .modal-overlay.open { display: flex !important; }
+        .modal-content { background: #151515; border: 1px solid var(--highlight); width: 95%; max-width: 700px; padding: 25px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; margin: auto; }
+        .modal-content-game { width: 95%; max-width: 900px; max-height: 95vh; overflow-y: auto; background: transparent; position: relative; margin: auto; }
+        .close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; color: #888; cursor: pointer; }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--highlight); color: var(--highlight); padding: 8px 20px; display: none; z-index: 4000; border-radius: 20px; }
+        
+        .adv-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+        .adv-row select, .adv-row input { background: rgba(0,0,0,0.5); border: 1px solid #444; color: #ccc; padding: 5px; border-radius: 4px; font-size: 0.9rem; }
+        .adv-row select { flex: 2; } .adv-row input { flex: 3; }
+        .adv-add-btn { background: #333; border: 1px solid #555; color: #ccc; cursor: pointer; padding: 5px 10px; margin-top: 5px; font-size: 0.8rem; }
+        
+        /* Game Sheet View */
+        .char-sheet-game { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
+        @media(max-width:900px){.char-sheet-game{grid-template-columns:1fr}}
+        .char-portrait-frame { width: 100%; aspect-ratio: 2/3; border: 3px solid var(--highlight); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .hex-stat-display { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; }
+        .hex-box { width: 60px; height: 70px; background: #1a1a1a; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+        .hex-val { font-size: 1.4rem; font-weight: bold; color: var(--highlight); font-family: var(--font-title); }
+        .char-right { display: flex; flex-direction: column; gap: 15px; }
+        
+        .game-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
+        .game-tab { padding: 8px 15px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; }
+        .game-tab.active { background: rgba(255,255,255,0.1); color: var(--highlight); border-color: var(--highlight); font-weight: bold; }
+        .game-panel { display: none; height: 400px; overflow-y: auto; padding-right: 5px; animation: fadeIn 0.2s; }
+        .game-panel.active { display: block; }
+        
+        .game-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
+        .game-item-slot { width: 100%; aspect-ratio: 1/1; background: rgba(0,0,0,0.4); border: 2px solid var(--border-color); border-radius: 6px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .game-item-slot:hover { border-color: var(--highlight); transform: scale(1.05); }
+        .game-item-img { width: 100%; height: 100%; object-fit: cover; }
+        .game-item-fallback { font-size: 1.5rem; color: #555; }
+        .game-item-slot:hover .game-item-fallback { color: var(--highlight); }
+        
+        /* Item Modal */
+        .item-modal-layout { display: grid; grid-template-columns: 100px 1fr; gap: 20px; }
+        .item-modal-icon-box { width: 100px; height: 100px; border: 2px solid var(--highlight); border-radius: 12px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+        .item-modal-img { width: 100%; height: 100%; object-fit: cover; }
+        .item-modal-fallback { font-size: 3rem; color: var(--highlight); }
+        .item-modal-header h3 { margin: 0 0 5px 0; color: var(--highlight); font-family: var(--font-title); font-size: 1.5rem; }
+        .item-modal-type { color: var(--text-sub); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .item-modal-desc { margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: #ccc; border-top: 1px solid var(--border-color); padding-top: 15px; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body class="mode-guild">
+
+    <header>
+        <div class="brand">MAZTICA</div>
+        <div class="mode-switch">
+            <button class="mode-btn active" onclick="switchMode('guild')">🏛️ 公會</button>
+            <button class="mode-btn" onclick="switchMode('private')">🕯️ 書房</button>
+        </div>
+        <div id="user-status" style="display:none; font-size:0.9rem;">
+            <span id="current-user" style="color:var(--highlight); margin-right:10px;"></span> 
+            <button class="btn-logout" onclick="handleLogout()">登出</button>
+        </div>
+    </header>
+
+    <div id="login-gate">
+        <h2>🛡️ 冒險者認證</h2>
+        <input type="text" class="game-input" id="login-name" placeholder="代號">
+        <input type="password" class="game-input" id="login-pass" placeholder="證號">
+        <button class="btn-action" onclick="handleLogin()">進入系統</button>
+        <p style="margin-top:15px; font-size:0.8rem; color:#888; cursor:pointer;" onclick="toggleReg(true)">新進人員登記</p>
+        <div id="reg-panel" class="hidden" style="margin-top:20px; border-top:1px solid #444; padding-top:20px;">
+            <input type="text" class="game-input" id="reg-name" placeholder="設定代號">
+            <button class="btn-action" onclick="handleRegistration()">註冊</button>
+        </div>
+    </div>
+
+    <div id="npc-intro-layer" onclick="dismissIntro()">
+        <img src="https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/NPC/npc-Itotia.webp" class="npc-full-body" alt="Itotia">
+        <div class="npc-dialogue-ui">
+            <div class="npc-label">伊托蒂雅 (Itotia)</div>
+            <div class="typewriter-text" id="intro-text"></div>
+        </div>
+    </div>
+
+    <div id="chat-widget">
+        <div id="chat-box">
+            <div class="chat-header">
+                <img src="https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/NPC/Itotiatoken(1).webp">
+                <span>伊托蒂雅：有什麼我可以幫忙傳達的嗎？</span>
+                <span onclick="toggleChat()" style="margin-left:auto; cursor:pointer;">×</span>
+            </div>
+            <div class="chat-body" id="chat-msgs">
+                <div class="chat-msg msg-npc">歡迎來到公會通訊頻道，請保持禮貌。</div>
+            </div>
+            <div class="chat-footer">
+                <input id="chat-in" placeholder="輸入訊息...">
+                <button id="chat-send" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <div id="npc-chat-toggle" onclick="toggleChat()">
+            <img id="npc-chat-img" src="https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/NPC/Itotiatoken(1).webp">
+            <div id="chat-notify"></div>
+        </div>
+    </div>
+
+    <div id="view-guild" class="view-container active">
+        <div class="reception-area">
+             <div style="text-align:center; color:var(--text-sub); font-family:var(--font-hand); font-style:italic;">
+                "歡迎來到馬茲提卡冒險者公會。請隨意查看佈告欄，有事請呼叫右下角的櫃檯人員。"
+            </div>
+        </div>
+
+        <nav class="nav-container">
+            <button class="nav-btn active" onclick="showSection('notices','guild')"><span>公告</span></button>
+            <button class="nav-btn" onclick="showSection('quests','guild')"><span>任務</span></button>
+            <button class="nav-btn" onclick="showSection('market','guild')"><span>市集</span></button>
+            <button class="nav-btn" onclick="showSection('roster','guild')"><span>名冊</span></button>
+        </nav>
+        <main>
+            <div id="notices" class="section active"><h2>公會公告</h2><div class="card-grid" id="notice-list"></div></div>
+            <div id="quests" class="section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>懸賞委託</h2>
+                    <button class="btn-action" style="width:auto; margin:0;" onclick="openQuestModal()">+ 發布</button>
+                </div>
+                <div class="card-grid" id="quest-list"></div>
+            </div>
+            <div id="market" class="section"><h2>自由市集</h2><div style="text-align:right; margin-bottom:10px;"><button class="btn-action" style="width:auto;" onclick="openListingModal()">+ 上架</button></div><div class="card-grid" id="market-list"></div></div>
+            <div id="roster" class="section"><h2>冒險者名冊 (隊伍)</h2><div class="roster-grid" id="roster-list"></div></div>
+        </main>
+    </div>
+
+    <div id="view-private" class="view-container">
+        <div class="theme-bar">
+            <div class="theme-btn t-scholar" onclick="setTheme('scholar')" title="學者書房"><i class="fas fa-feather-alt"></i></div>
+            <div class="theme-btn t-warrior" onclick="setTheme('warrior')" title="戰士地窖"><i class="fas fa-shield-alt"></i></div>
+            <div class="theme-btn t-jungle" onclick="setTheme('jungle')" title="叢林樹屋"><i class="fas fa-tree"></i></div>
+            <div class="theme-btn t-tavern" onclick="setTheme('tavern')" title="溫暖酒館"><i class="fas fa-beer"></i></div>
+        </div>
+
+        <nav class="nav-container">
+            <button class="nav-btn active" onclick="showSection('my-chars','private')"><span>角色資料</span></button>
+            <button class="nav-btn" onclick="showSection('my-journal','private')"><span>私人日記</span></button>
+        </nav>
+        <main>
+            <div id="my-chars" class="section active">
+                <div class="forge-wrapper">
+                    <div class="char-list-sidebar">
+                        <div class="char-list-header">我的角色</div>
+                        <div class="char-list-content" id="char-list-items"></div>
+                        <button class="btn-new-char" onclick="createNewChar()">+ 創建</button>
+                    </div>
+                    <div class="editor-main">
+                        <div class="json-zone" onclick="document.getElementById('sheet-upload').click()">📂 上傳 FVTT JSON<input type="file" id="sheet-upload" accept=".json" style="display:none" onchange="loadJsonToEditor(this)"></div>
+                        
+                        <div class="editor-layout">
+                            <div class="editor-left">
+                                <label class="editor-label">頭像 (點擊更換)</label>
+                                <input type="file" id="avatar-file" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+                                <div class="avatar-upload-wrapper" onclick="document.getElementById('avatar-file').click()">
+                                    <img id="avatar-preview" class="avatar-img" src="">
+                                    <div class="avatar-overlay"><i class="fas fa-camera"></i></div>
+                                </div>
+                                <input type="hidden" id="edit-avatar">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                                    <div><label class="editor-label">HP</label><input type="number" class="game-input" id="edit-hp"></div>
+                                    <div><label class="editor-label">WP</label><input type="number" class="game-input" id="edit-wp"></div>
+                                </div>
+                                <div class="currency-row">
+                                    <div class="curr-box"><div class="curr-label">Gold</div><input class="curr-input c-gold" style="color:#ffd700;" id="curr-gc" value="0"></div>
+                                    <div class="curr-box"><div class="curr-label">Silver</div><input class="curr-input c-silver" style="color:#e0e0e0;" id="curr-sc" value="0"></div>
+                                    <div class="curr-box"><div class="curr-label">Copper</div><input class="curr-input c-copper" style="color:#cd7f32;" id="curr-cc" value="0"></div>
+                                </div>
+                            </div>
+                            <div class="editor-right">
+                                <input type="hidden" id="edit-char-id">
+                                <div style="display:flex; gap:10px;">
+                                    <div style="flex:1"><label class="editor-label">姓名</label><input class="game-input" id="edit-name"></div>
+                                    <div style="flex:1"><label class="editor-label">種族</label><input class="game-input" id="edit-race"></div>
+                                    <div style="flex:1"><label class="editor-label">職業</label><input class="game-input" id="edit-class"></div>
+                                    <div style="flex:0 0 80px"><label class="editor-label">資歷</label><input type="number" class="game-input" id="edit-rank" placeholder="0"></div>
+                                </div>
+                                
+                                <div class="editor-tabs">
+                                    <button class="editor-tab active" onclick="switchEditorTab(event, 'edit-tab-core')">核心</button>
+                                    <button class="editor-tab" onclick="switchEditorTab(event, 'edit-tab-skills')">技能</button>
+                                    <button class="editor-tab" onclick="switchEditorTab(event, 'edit-tab-magic')">魔法</button>
+                                    <button class="editor-tab" onclick="switchEditorTab(event, 'edit-tab-inv')">裝備</button>
+                                    <button class="editor-tab" onclick="switchEditorTab(event, 'edit-tab-bio')">傳記</button>
+                                </div>
+
+                                <div id="edit-tab-core" class="editor-panel active">
+                                    <div class="editor-section">
+                                        <label class="editor-label">基礎屬性</label>
+                                        <div class="attr-hex-grid">
+                                            <div class="attr-hex"><label>STR</label><input class="game-input" id="attr-str"></div>
+                                            <div class="attr-hex"><label>CON</label><input class="game-input" id="attr-con"></div>
+                                            <div class="attr-hex"><label>AGL</label><input class="game-input" id="attr-agl"></div>
+                                            <div class="attr-hex"><label>INT</label><input class="game-input" id="attr-int"></div>
+                                            <div class="attr-hex"><label>WIL</label><input class="game-input" id="attr-wil"></div>
+                                            <div class="attr-hex"><label>CHA</label><input class="game-input" id="attr-cha"></div>
+                                        </div>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">族裔能力</label>
+                                        <div id="kin-abilities-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('feature', 'kin')">+ 新增</button>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">英雄能力</label>
+                                        <div id="heroic-abilities-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('ability', 'heroic')">+ 新增</button>
+                                    </div>
+                                </div>
+
+                                <div id="edit-tab-skills" class="editor-panel">
+                                    <div class="editor-section">
+                                        <label class="editor-label">主要技能</label>
+                                        <div id="skills-core-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('skill','core')">+ 新增</button>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">武器技能</label>
+                                        <div id="skills-weapon-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('skill','weapon')">+ 新增</button>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">次要技能</label>
+                                        <div id="skills-secondary-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('skill','secondary')">+ 新增</button>
+                                    </div>
+                                </div>
+
+                                <div id="edit-tab-magic" class="editor-panel">
+                                    <div class="editor-section">
+                                        <label class="editor-label">戲法</label>
+                                        <div id="spells-cantrip-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('spell','cantrip')">+ 新增</button>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">環階法術</label>
+                                        <div id="spells-ranked-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('spell','ranked')">+ 新增</button>
+                                    </div>
+                                </div>
+
+                                <div id="edit-tab-inv" class="editor-panel">
+                                    <div class="editor-section">
+                                        <label class="editor-label">武器</label>
+                                        <div id="inv-weapon-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('item','weapon')">+ 新增</button>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">護甲</label>
+                                        <div id="inv-armor-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('item','armor')">+ 新增</button>
+                                    </div>
+                                    <div class="editor-section">
+                                        <label class="editor-label">物資</label>
+                                        <div id="inv-gear-container" class="editor-list-box"></div>
+                                        <button class="btn-add" onclick="addEditorItem('item','item')">+ 新增</button>
+                                    </div>
+                                </div>
+
+                                <div id="edit-tab-bio" class="editor-panel">
+                                    <div class="editor-section">
+                                        <label class="editor-label">傳記</label>
+                                        <textarea id="edit-bio" class="game-textarea" rows="8"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div style="display:flex; gap:10px; margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
+                                    <button class="btn-action" onclick="saveCharacterSheet()">💾 保存角色</button>
+                                    <button class="btn-action" style="background:#8a0303;" onclick="deleteCharacter()">🗑️ 刪除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="my-journal" class="section">
+                <h2>我的日記</h2>
+                <div style="text-align:right; margin-bottom:10px;"><button class="btn-action" style="width:auto;" onclick="openJournalModal()">+ 寫日記</button></div>
+                <div class="card-grid" id="my-journal-list"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="quest-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:500px;">
+            <span class="close-btn" onclick="closeModal(event)">×</span>
+            <h2>發布懸賞</h2>
+            <form onsubmit="handleQuestPost(event)">
+                <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:15px;">
+                    <label class="editor-label" style="margin-top:0;">委託人 (GM可偽裝)</label>
+                    <div style="display:flex; gap:10px;">
+                        <input id="q-client-name" class="game-input" placeholder="名稱">
+                        <input id="q-client-img" class="game-input" placeholder="頭像網址">
+                    </div>
+                </div>
+                <label class="editor-label">任務內容</label>
+                <input id="q-title" class="game-input" placeholder="標題" required style="margin-bottom:10px;">
+                <textarea id="q-desc" class="game-textarea" rows="4" placeholder="詳細說明..." required style="margin-bottom:10px;"></textarea>
+                <input id="q-reward" class="game-input" placeholder="報酬" required>
+                <button class="btn-action">發布任務</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="listing-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:400px;"><span class="close-btn" onclick="closeModal(event)">×</span><h2>上架物資</h2>
+        <form onsubmit="postItem(event)"><input id="in-name" class="game-input" placeholder="物品" required><input id="in-price" class="game-input" placeholder="價格" required><textarea id="in-desc" class="game-textarea" rows="3" placeholder="說明"></textarea><button class="btn-action">上架</button></form></div>
+    </div>
+    
+    <div id="journal-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:600px;"><span class="close-btn" onclick="closeModal(event)">×</span><h2>冒險日誌</h2>
+        <form onsubmit="handleJournalPost(event)">
+            <div style="display:flex; gap:10px;"><select id="j-char" class="game-input" style="flex:1"><option value="">-- 無 --</option></select><input type="date" id="j-date" class="game-input" style="flex:1" required></div>
+            <input id="j-title" class="game-input" placeholder="標題" style="margin-top:10px;" required>
+            <div id="j-adv-section" style="background:rgba(255,255,255,0.05); padding:10px; border-radius:4px; margin:10px 0; border:1px dashed #666;">
+                <label class="editor-label" style="margin-top:0;">技能成長 (填 +1 自動升級)</label>
+                <div id="j-adv-container"></div>
+                <button type="button" class="btn-add" onclick="addJournalAdvancement()">+ 新增</button>
+            </div>
+            <textarea id="j-summary" class="game-textarea" rows="2" placeholder="備註" style="margin-top:10px;"></textarea>
+            <textarea id="j-content" class="game-textarea" rows="5" placeholder="內容" style="margin-top:10px;" required></textarea>
+            <button class="btn-action">保存</button>
+        </form></div>
+    </div>
+
+    <div id="party-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:500px;">
+            <span class="close-btn" onclick="closeModal(event)">×</span>
+            <h2 id="party-modal-title" style="color:var(--highlight); margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">隊伍詳情</h2>
+            <div id="party-modal-list" class="char-list-modal"></div>
+        </div>
+    </div>
+
+    <div id="game-char-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content-game">
+            <span class="close-btn" onclick="closeModal(event)">×</span>
+            <div id="char-sheet-body"></div>
+        </div>
+    </div>
+
+    <div id="item-detail-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:500px;"><span class="close-btn" onclick="closeModal(event)">×</span><div id="item-detail-body"></div></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://nlhqslyecdmwqdrtluki.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5saHFzbHllY2Rtd3FkcnRsdWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyMjM4NjAsImV4cCI6MjA3OTc5OTg2MH0.YlCfxdNP_aQh5Vge-dj079l2hdPeLzzAU0crGGU7XkM'; 
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
+
+        const THEMES = {
+            'scholar': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/01.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8))", color: "#2c1e14", panel: "rgba(45, 30, 20, 0.95)", border: "#5d4037", hl: "#ffb74d", text: "#f3e5dc", sub: "#d7ccc8", in_bg: "#eaddcf", in_txt: "#3e2723", btn_bg: "linear-gradient(to bottom, #ffb74d, #e65100)", btn_txt: "#2e1500" },
+            'warrior': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/003.webp'), radial-gradient(circle at 50% 30%, #263238 0%, #000 100%)", color: "#000", panel: "rgba(30, 40, 45, 0.95)", border: "#78909c", hl: "#90a4ae", text: "#eceff1", sub: "#b0bec5", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #90a4ae, #546e7a)", btn_txt: "#000" },
+            'jungle': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/002.webp'), radial-gradient(circle at 50% 20%, #1b5e20 0%, #000 90%)", color: "#051005", panel: "rgba(20, 35, 20, 0.95)", border: "#4caf50", hl: "#a5d6a7", text: "#e8f5e9", sub: "#c8e6c9", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #a5d6a7, #388e3c)", btn_txt: "#000" },
+            'tavern': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/004.webp'), radial-gradient(circle at 50% 50%, #e65100 0%, #3e2723 100%)", color: "#2e1500", panel: "rgba(40, 20, 10, 0.95)", border: "#ff6f00", hl: "#ffcc80", text: "#fff3e0", sub: "#ffe0b2", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #ffcc80, #ef6c00)", btn_txt: "#2e1500" }
+        };
+
+        let editorData = { kinAbilities: [], heroicAbilities: [], coreSkills: [], weaponSkills: [], secondarySkills: [], cantrips: [], rankedSpells: [], weapons: [], armors: [], gear: [] };
+        let myCharacters = [];
+        let globalRoster = [];
+        let introPlayed = false;
+
+        function switchMode(mode) {
+            document.body.className = mode === 'guild' ? 'mode-guild' : 'mode-private';
+            document.getElementById('view-guild').classList.toggle('active', mode === 'guild');
+            document.getElementById('view-private').classList.toggle('active', mode === 'private');
+            if(mode==='private') { const t = localStorage.getItem('maztica_theme') || 'scholar'; setTheme(t); loadMyCharactersList(); } 
+            else { document.body.style.backgroundImage = ""; fetchData(); }
+        }
+
+        function setTheme(t) {
+            const c = THEMES[t]; if(!c) return; document.body.style.backgroundImage = c.bg; const r = document.documentElement.style;
+            r.setProperty('--p-bg-color', c.color); r.setProperty('--p-panel-bg', c.panel); r.setProperty('--p-border-color', c.border);
+            r.setProperty('--p-highlight', c.hl); r.setProperty('--p-text-main', c.text); r.setProperty('--p-text-sub', c.sub); r.setProperty('--p-input-bg', c.in_bg);
+            r.setProperty('--p-input-text', c.in_txt); r.setProperty('--p-btn-bg', c.btn_bg); r.setProperty('--p-btn-text', c.btn_txt);
+            localStorage.setItem('maztica_theme', t); document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`.t-${t}`); if(btn) btn.classList.add('active');
+        }
+
+        function showSection(id, mode) {
+            const root = mode==='guild' ? 'view-guild' : 'view-private';
+            document.getElementById(root).querySelectorAll('.section').forEach(e => e.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            const nav = document.getElementById(root).querySelector('.nav-container');
+            nav.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
+        }
+
+        function switchEditorTab(e, id) {
+            document.querySelectorAll('.editor-panel').forEach(p => p.classList.remove('active')); 
+            document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active'); 
+            e.currentTarget.classList.add('active');
+        }
+
+        function switchGameTab(e, id) {
+            const p = e.target.parentElement.parentElement;
+            p.querySelectorAll('.game-panel').forEach(el=>el.classList.remove('active'));
+            p.querySelectorAll('.game-tab').forEach(el=>el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            e.target.classList.add('active');
+        }
+
+        function getRankTitle(sessions) { const s=parseInt(sessions)||0; if(s<=5)return `🪨 黑曜石學徒 (${s})`; if(s<=10)return `🐆 美洲豹戰士 (${s})`; if(s<=15)return `🦅 雄鷹騎士 (${s})`; if(s<=20)return `☀️ 太陽祭司 (${s})`; return `🐍 羽蛇神選 (${s})`; }
+        function setVal(id, v){const e=document.getElementById(id);if(e)e.value=v;}
+
+        async function loadMyCharactersList() {
+            const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) return;
+            let { data: chars } = await db.from('my_characters').select('*').eq('owner_name', u.name).order('created_at', {ascending: true});
+            myCharacters = chars || [];
+            document.getElementById('char-list-items').innerHTML = myCharacters.map((c, i) => `<div class="char-list-item" onclick="selectCharacter(${i})">${c.name}</div>`).join('');
+            let { data: logs } = await db.from('journals').select('*').eq('author_name', u.name).order('created_at',{ascending:false});
+            document.getElementById('my-journal-list').innerHTML = logs.map(l => {
+                let advHtml = (l.advancements && Array.isArray(l.advancements)) ? `<div style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.1); border:1px dashed var(--border-color); border-radius:4px; font-size:0.85rem;"><div style="color:var(--text-sub); border-bottom:1px dashed var(--border-color); margin-bottom:4px;">技能成長</div>${l.advancements.map(a => `<div style="display:flex; justify-content:space-between;"><span>${a.skill}</span><span style="color:var(--highlight)">${a.note}</span></div>`).join('')}</div>` : '';
+                return `<div class="card"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span class="tag" style="border-color:var(--highlight); color:var(--highlight)">${l.adventure_date || '未知日期'}</span><span class="tag">${myCharacters.find(c => c.id === l.character_id)?.name || '未指定'}</span></div><h3>${l.title}</h3>${l.summary ? `<div style="font-style:italic; color:var(--text-sub); margin-bottom:10px; padding-left:10px; border-left:3px solid #555;">${l.summary}</div>` : ''}<p class="desc">${l.content}</p>${advHtml}</div>`;
+            }).join('');
+            if(myCharacters.length > 0) selectCharacter(0); else createNewChar();
+        }
+
+        function selectCharacter(index) {
+            document.querySelectorAll('.char-list-item').forEach((el, i) => el.classList.toggle('active', i === index));
+            const char = myCharacters[index]; if(!char) return;
+            setVal('edit-char-id', char.id); setVal('edit-name', char.name); setVal('edit-race', char.race); setVal('edit-class', char.class); setVal('edit-avatar', char.avatar_url); setVal('edit-rank', char.rank||0);
+            document.getElementById('avatar-preview').src = char.avatar_url;
+            const sheet = char.sheet_data || {}; const sys = sheet.system || {}; const items = sheet.items || [];
+            ['str','con','agl','int','wil','cha'].forEach(k => { if(sys.attributes?.[k]) setVal(`attr-${k}`, sys.attributes[k].value||10); });
+            setVal('edit-hp', sys.hitPoints?.value||10); setVal('edit-wp', sys.willPoints?.value||10); setVal('edit-bio', (sys.notes||"").replace(/<[^>]*>?/gm, ''));
+            if(sys.currency) { setVal('curr-gc', sys.currency.gc||0); setVal('curr-sc', sys.currency.sc||0); setVal('curr-cc', sys.currency.cc||0); }
+            editorData.kinAbilities = items.filter(i => i.system.abilityType === 'kin');
+            editorData.heroicAbilities = items.filter(i => i.system.abilityType === 'heroic');
+            editorData.coreSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'core');
+            editorData.weaponSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'weapon');
+            editorData.secondarySkills = items.filter(i => i.type === 'skill' && i.system.skillType !== 'weapon' && i.system.skillType !== 'core');
+            editorData.cantrips = items.filter(i => i.type === 'spell' && i.system.rank == 0);
+            editorData.rankedSpells = items.filter(i => i.type === 'spell' && i.system.rank > 0);
+            editorData.weapons = items.filter(i => i.type === 'weapon');
+            editorData.armors = items.filter(i => ['armor','helmet'].includes(i.type));
+            editorData.gear = items.filter(i => i.type === 'item');
+            renderAllLists();
+        }
+
+        function createNewChar() {
+            setVal('edit-char-id', ''); setVal('edit-name', '新角色'); setVal('edit-race', ''); setVal('edit-class', ''); setVal('edit-avatar', ''); setVal('edit-rank', 0);
+            document.getElementById('avatar-preview').src = ""; ['str','con','agl','int','wil','cha'].forEach(k => setVal(`attr-${k}`, 10)); setVal('edit-hp', 10); setVal('edit-wp', 10); setVal('edit-bio', '');
+            editorData = { kinAbilities:[], heroicAbilities:[], coreSkills:[], weaponSkills:[], secondarySkills:[], cantrips:[], rankedSpells:[], weapons:[], armors:[], gear:[] };
+            renderAllLists(); document.querySelectorAll('.char-list-item').forEach(el => el.classList.remove('active'));
+        }
+
+        function renderAllLists() {
+            renderBox('kin-abilities-container', editorData.kinAbilities, 'kinAbilities');
+            renderBox('heroic-abilities-container', editorData.heroicAbilities, 'heroicAbilities');
+            renderBox('skills-core-container', editorData.coreSkills, 'coreSkills');
+            renderBox('skills-weapon-container', editorData.weaponSkills, 'weaponSkills');
+            renderBox('skills-secondary-container', editorData.secondarySkills, 'secondarySkills');
+            renderBox('spells-cantrip-container', editorData.cantrips, 'cantrips');
+            renderBox('spells-ranked-container', editorData.rankedSpells, 'rankedSpells');
+            renderBox('inv-weapon-container', editorData.weapons, 'weapons');
+            renderBox('inv-armor-container', editorData.armors, 'armors');
+            renderBox('inv-gear-container', editorData.gear, 'gear');
+        }
+
+        function renderBox(id, list, type) {
+            document.getElementById(id).innerHTML = list.map((item, idx) => {
+                const qty = item.system.quantity || 1; const showQty = ['weapons', 'armors', 'gear'].includes(type);
+                const valInput = !showQty ? `<input type="number" value="${item.system?.value||0}" onchange="updateEditorItem('${type}', ${idx}, 'val', this.value)" style="width:50px;">` : '';
+                const qtyInput = showQty ? `<input type="number" value="${qty}" class="qty-input" onchange="updateEditorItem('${type}', ${idx}, 'qty', this.value)">` : '';
+                return `<div class="item-row-edit"><input type="text" value="${item.name}" onchange="updateEditorItem('${type}', ${idx}, 'name', this.value)" style="flex:2;">${valInput}${qtyInput}<button class="btn-icon" onclick="removeEditorItem('${type}', ${idx})">✖</button></div>`;
+            }).join('');
+        }
+
+        function updateEditorItem(type, idx, key, val) {
+            if(key==='name') editorData[type][idx].name = val;
+            if(key==='val') { if(!editorData[type][idx].system) editorData[type][idx].system={}; editorData[type][idx].system.value = val; }
+            if(key==='qty') { if(!editorData[type][idx].system) editorData[type][idx].system={}; editorData[type][idx].system.quantity = parseInt(val); }
+        }
+        function removeEditorItem(type, idx) { editorData[type].splice(idx, 1); renderAllLists(); }
+        function addEditorItem(baseType, subtype) {
+            let tList, newItem = { name:'新項目', type:baseType, system:{quantity:1} };
+            if (baseType === 'feature' && subtype === 'kin') { newItem.system.abilityType='kin'; tList = 'kinAbilities'; }
+            else if (baseType === 'ability' && subtype === 'heroic') { newItem.system.abilityType='heroic'; tList = 'heroicAbilities'; }
+            else if (baseType === 'skill') {
+                if(subtype==='weapon') { newItem.system.skillType='weapon'; tList='weaponSkills'; }
+                else if(subtype==='core') { newItem.system.skillType='core'; tList='coreSkills'; }
+                else { newItem.system.skillType='secondary'; tList='secondarySkills'; }
+            } else if (baseType === 'spell') {
+                if(subtype==='cantrip') { newItem.system.rank=0; tList='cantrips'; }
+                else { newItem.system.rank=1; tList='rankedSpells'; }
+            } else {
+                newItem.system.quantity = 1;
+                if(subtype==='weapon') { newItem.type='weapon'; tList='weapons'; }
+                else if(subtype==='armor') { newItem.type='armor'; tList='armors'; }
+                else { newItem.type='item'; tList='gear'; }
+            }
+            editorData[tList].push(newItem); renderAllLists();
+        }
+
+        // --- NPC INTRO ---
+        async function showNPCIntro() {
+            if(introPlayed) return; introPlayed = true;
+            const overlay = document.getElementById('npc-intro-layer'); const textBox = document.getElementById('intro-text'); const u = JSON.parse(localStorage.getItem('maztica_user'));
+            let nC = 0, qC = 0, mC = 0;
+            try { const r1 = await db.from('notices').select('*', { count: 'exact', head: true }); nC = r1.count||0; const r2 = await db.from('quests').select('*', { count: 'exact', head: true }); qC = r2.count||0; const r3 = await db.from('market').select('*', { count: 'exact', head: true }); mC = r3.count||0; } catch(e) {}
+            const text = `歡迎回來，${u.name}。今天公會也很熱鬧呢。\n目前有 ${nC} 則重要公告，${qC} 個懸賞正在招募勇者，市集裡也有 ${mC} 件新貨上架。\n祝您武運昌隆！`;
+            overlay.classList.add('active'); typeWriter(text, textBox, 0);
+        }
+        function typeWriter(text, element, i) { if (i < text.length) { element.innerHTML += text.charAt(i); setTimeout(() => typeWriter(text, element, i + 1), 30); } }
+        function dismissIntro() { const overlay = document.getElementById('npc-intro-layer'); overlay.style.opacity = '0'; setTimeout(() => { overlay.classList.remove('active'); overlay.style.opacity = ''; document.getElementById('intro-text').innerHTML = ''; }, 500); }
+
+        // --- FETCH DATA ---
+        async function fetchData() {
+            // Roster Grouped by Party
+            let { data: chars } = await db.from('my_characters').select('*').eq('is_public', true).order('created_at',{ascending:false});
+            const parties = {};
+            (chars || []).forEach(c => {
+                const pName = c.party || '自由之翼 (Freelancers)'; // Default Group
+                if (!parties[pName]) parties[pName] = [];
+                parties[pName].push(c);
+            });
+
+            document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
+                const members = parties[pName];
+                const leader = members[0]; // Just use first as visual rep
+                const safePName = pName.replace(/'/g, "\\'");
+                return `
+                <div class="party-card" onclick="openPartyDetail('${safePName}')">
+                    <div class="party-icon"><i class="fas fa-users"></i></div>
+                    <div class="party-name">${pName}</div>
+                    <div class="party-count">${members.length} 名成員</div>
+                    <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
+                        ${members.slice(0,3).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
+                        ${members.length > 3 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            // Store for modal access
+            window.currentParties = parties;
+
+            let { data: n } = await db.from('notices').select('*'); document.getElementById('notice-list').innerHTML = n.map(x=>`<div class="card card-notice"><h3>${x.title}</h3><p class="desc">${x.content}</p></div>`).join('');
+            
+            // Quests with Client Info
+            let { data: q } = await db.from('quests').select('*'); 
+            document.getElementById('quest-list').innerHTML = q.map(x=>`
+                <div class="card card-quest">
+                    <div class="quest-header">
+                        <img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img">
+                        <span class="quest-client-name">${x.client_name || '匿名委託人'}</span>
+                    </div>
+                    <div class="quest-body">
+                        <div class="quest-title">${x.title}</div>
+                        <p class="quest-desc">${x.desc}</p>
+                    </div>
+                    <div class="quest-footer">報酬: ${x.reward || '面議'}</div>
+                </div>`).join('');
+            
+            // Market with Seller Info
+            let { data: m } = await db.from('market').select('*'); 
+            document.getElementById('market-list').innerHTML = m.map(x=>`
+                <div class="card card-market">
+                    <div class="market-header">
+                        <img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img">
+                        <span class="market-seller-name">${x.owner || '神秘商人'}</span>
+                    </div>
+                    <div class="market-body">
+                        <div class="market-item">${x.item_name}</div>
+                        <div class="market-desc">${x.description||'無說明'}</div>
+                    </div>
+                    <div class="market-footer">價格: ${x.price}</div>
+                </div>`).join('');
+        }
+
+        function openPartyDetail(pName) {
+            const members = window.currentParties[pName];
+            const html = members.map(m => `
+                <div class="char-row">
+                    <img src="${m.avatar_url||DEFAULT_AVATAR}">
+                    <div>
+                        <div style="font-weight:bold; color:var(--highlight);">${m.name}</div>
+                        <div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | Lv.${m.rank||0}</div>
+                    </div>
+                </div>`).join('');
+            
+            document.getElementById('party-modal-title').innerText = pName;
+            document.getElementById('party-modal-list').innerHTML = html;
+            document.getElementById('party-modal').classList.add('open');
+        }
+
+        // Quest Posting
+        function openQuestModal() {
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            setVal('q-client-name', u.name);
+            setVal('q-client-img', u.avatar_url || ''); // Default to user avatar
+            document.getElementById('quest-modal').classList.add('open');
+        }
+        
+        async function handleQuestPost(e) {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('q-title').value,
+                desc: document.getElementById('q-desc').value,
+                reward: document.getElementById('q-reward').value,
+                client_name: document.getElementById('q-client-name').value,
+                client_avatar: document.getElementById('q-client-img').value
+            };
+            const { error } = await db.from('quests').insert(payload);
+            if(error) alert(error.message);
+            else { showToast("任務已發布"); closeModal({target:{classList:{contains:()=>true}}}); fetchData(); }
+        }
+
+        // ... (Remaining JS: loadJson, saveCharacter, etc. kept same as V41.2) ...
+        function loadJsonToEditor(input) {
+            const file = input.files[0]; if(!file) return;
+            const r = new FileReader();
+            r.onload = e => {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    setVal('edit-name', json.name); setVal('edit-avatar', json.img); document.getElementById('avatar-preview').src=json.img;
+                    const raceItem = json.items.find(i=>i.type==='kin'); if(raceItem) setVal('edit-race', raceItem.name);
+                    const classItem = json.items.find(i=>i.type==='profession'); if(classItem) setVal('edit-class', classItem.name);
+                    const sys = json.system || {};
+                    ['str','con','agl','int','wil','cha'].forEach(k => { if(sys.attributes?.[k]) { const attr = sys.attributes[k]; const val = (attr.base !== undefined && attr.base !== null && attr.base !== 0 && attr.base !== "") ? attr.base : attr.value; setVal(`attr-${k}`, val); } });
+                    if(sys.hitPoints) setVal('edit-hp', sys.hitPoints.value||sys.hitPoints.max);
+                    if(sys.willPoints) setVal('edit-wp', sys.willPoints.value||sys.willPoints.max);
+                    if(sys.notes) setVal('edit-bio', sys.notes.replace(/<[^>]*>?/gm, ''));
+                    if(sys.currency) { setVal('curr-gc', sys.currency.gc||0); setVal('curr-sc', sys.currency.sc||0); setVal('curr-cc', sys.currency.cc||0); }
+                    const items = json.items || [];
+                    const fixSkill = (s) => { if(!s.system.value || s.system.value==0) { const k = s.system.attribute; if(k && sys.attributes && sys.attributes[k]) s.system.value = sys.attributes[k].value || sys.attributes[k].base; } return s; };
+                    editorData.kinAbilities = items.filter(i => i.system.abilityType === 'kin');
+                    editorData.heroicAbilities = items.filter(i => i.system.abilityType === 'heroic');
+                    editorData.coreSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'core').map(fixSkill);
+                    editorData.weaponSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'weapon').map(fixSkill);
+                    editorData.secondarySkills = items.filter(i => i.type === 'skill' && i.system.skillType !== 'weapon' && i.system.skillType !== 'core').map(fixSkill);
+                    editorData.cantrips = items.filter(i => i.type === 'spell' && i.system.rank == 0);
+                    editorData.rankedSpells = items.filter(i => i.type === 'spell' && i.system.rank > 0);
+                    editorData.weapons = items.filter(i => i.type === 'weapon');
+                    editorData.armors = items.filter(i => ['armor','helmet'].includes(i.type));
+                    editorData.gear = items.filter(i => i.type === 'item');
+                    renderAllLists();
+                    showToast('✅ JSON 資料已匯入');
+                } catch(err) { alert('JSON Error: '+err); }
+            };
+            r.readAsText(file);
+        }
+
+        async function saveCharacterSheet() {
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const charId = document.getElementById('edit-char-id').value;
+            const allItems = [ ...editorData.kinAbilities, ...editorData.heroicAbilities, ...editorData.coreSkills, ...editorData.weaponSkills, ...editorData.secondarySkills, ...editorData.cantrips, ...editorData.rankedSpells, ...editorData.weapons, ...editorData.armors, ...editorData.gear ];
+            const newSheet = { name: document.getElementById('edit-name').value, img: document.getElementById('edit-avatar').value, system: { attributes: { str: { value: document.getElementById('attr-str').value }, con: { value: document.getElementById('attr-con').value }, agl: { value: document.getElementById('attr-agl').value }, int: { value: document.getElementById('attr-int').value }, wil: { value: document.getElementById('attr-wil').value }, cha: { value: document.getElementById('attr-cha').value }, }, hitPoints: { value: document.getElementById('edit-hp').value, max: document.getElementById('edit-hp').value }, willPoints: { value: document.getElementById('edit-wp').value, max: document.getElementById('edit-wp').value }, currency: { gc: document.getElementById('curr-gc')?.value || 0, sc: document.getElementById('curr-sc')?.value || 0, cc: document.getElementById('curr-cc')?.value || 0 }, notes: document.getElementById('edit-bio').value }, items: allItems };
+            const payload = { owner_name: u.name, name: newSheet.name, race: document.getElementById('edit-race').value, class: document.getElementById('edit-class').value, avatar_url: newSheet.img, rank: document.getElementById('edit-rank').value, sheet_data: newSheet };
+            let error; if (charId) { const res = await db.from('my_characters').update(payload).eq('id', charId); error = res.error; } else { const res = await db.from('my_characters').insert(payload); error = res.error; }
+            if(error) alert("保存失敗: " + error.message); else { showToast("💾 保存成功！"); loadMyCharactersList(); }
+        }
+        async function deleteCharacter() { const charId = document.getElementById('edit-char-id').value; if(!charId) return; if(confirm("確定刪除?")) { await db.from('my_characters').delete().eq('id', charId); showToast("已刪除"); loadMyCharactersList(); } }
+        async function uploadAvatar(input) {
+            const file = input.files[0]; if(!file) return;
+            const fileExt = file.name.split('.').pop();
+            const fileName = `avatar_${Date.now()}_${Math.floor(Math.random()*10000)}.${fileExt}`;
+            const path = `avatars/${fileName}`;
+            const { error } = await db.storage.from('avatars').upload(path, file);
+            if(error) { alert('上傳失敗: '+error.message); return; }
+            const { data } = db.storage.from('avatars').getPublicUrl(path);
+            setVal('edit-avatar', data.publicUrl);
+            document.getElementById('avatar-preview').src = data.publicUrl;
+            showToast("圖片上傳成功！");
+        }
+        function toggleReg(show){document.getElementById('reg-panel').classList.toggle('hidden',!show);}
+        async function handleLogin(){ const n=document.getElementById('login-name').value; const p=document.getElementById('login-pass').value; const {data}=await db.from('roster').select('*').eq('name',n).eq('password',p).single(); if(data){localStorage.setItem('maztica_user',JSON.stringify(data)); enterGuild(data);} else alert("失敗"); }
+        async function handleRegistration(){ const n=document.getElementById('reg-name').value; const id="MZ-"+Math.floor(1000+Math.random()*9000); await db.from('roster').insert({name:n, password:id, adventurer_id:id, rank:'青銅', status:'新進', is_hidden:false}); alert(`註冊成功! 證號: ${id}`); location.reload(); }
+        function enterGuild(u){ document.getElementById('login-gate').style.display='none'; document.getElementById('user-status').style.display='block'; document.getElementById('current-user').innerText=u.name; document.getElementById('view-guild').style.display='block'; document.querySelector('.mode-switch').style.display='flex'; document.querySelector('.nav-container').style.display='flex'; fetchData(); showNPCIntro(); }
+        function checkSession(){const s=localStorage.getItem('maztica_user'); if(s) enterGuild(JSON.parse(s));}
+        function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
+        function showToast(m){const t=document.getElementById('toast');t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+        function openListingModal(){document.getElementById('listing-modal').classList.add('open');}
+        function openJournalModal(){ const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); }
+        function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
+        async function postItem(e){e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); closeModal({target:{classList:{contains:()=>true}}}); fetchData(); }
+        async function handleJournalPost(e) { e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user')); const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); closeModal({target:{classList:{contains:()=>true}}}); loadMyCharactersList(); }
+        function toggleChat(){const b=document.getElementById('chat-box'); b.style.display=b.style.display==='flex'?'none':'flex'; if(b.style.display==='flex') scrollChat();}
+        async function sendChat(){const i=document.getElementById('chat-in'); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('messages').insert({user_name:u.name, content:i.value}); i.value='';}
+        function scrollChat(){const b=document.getElementById('chat-msgs'); b.scrollTop=b.scrollHeight;}
+        
+        window.onload = checkSession;
+    </script>
+</body>
+</html>
