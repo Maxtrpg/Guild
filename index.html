@@ -28,6 +28,20 @@
             background-attachment: fixed; background-size: cover; background-position: center; background-color: #000;
         }
         * { box-sizing: border-box; transition: border-color 0.2s, background-color 0.2s, color 0.2s; }
+
+        /* ★★★ SECURITY: Default Hidden State ★★★ */
+        /* If body does NOT have .authenticated class, hide EVERYTHING except login-gate */
+        body:not(.authenticated) header,
+        body:not(.authenticated) .view-container,
+        body:not(.authenticated) #chat-widget,
+        body:not(.authenticated) #npc-intro-layer {
+            display: none !important;
+        }
+        
+        /* If body HAS .authenticated class, hide login-gate */
+        body.authenticated #login-gate {
+            display: none !important;
+        }
         
         .hidden { display: none !important; }
 
@@ -81,22 +95,15 @@
 
         /* Compact Controls */
         .controls-wrapper { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 20px; 
-            padding: 8px 0; 
-            background: rgba(0,0,0,0.3); 
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            position: relative; z-index: 2;
+            display: flex; justify-content: center; align-items: center; 
+            gap: 20px; padding: 8px 0; background: rgba(0,0,0,0.3); 
+            border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 2;
         }
-        
-        .nav-container { display: flex; justify-content: center; gap: 10px; padding: 5px 0; margin-bottom: 0; position: relative; z-index: 2; }
-        .nav-btn { background: var(--panel-bg); border: 1px solid var(--border-color); color: #888; padding: 6px 20px; border-radius: 4px; cursor: pointer; font-family: var(--font-title); font-size: 0.85rem; transform: skewX(-15deg); }
+        .nav-container { display: flex; gap: 5px; margin: 0; }
+        .nav-btn { background: var(--panel-bg); border: 1px solid var(--border-color); color: #888; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: var(--font-title); font-size: 0.85rem; transform: skewX(-15deg); }
         .nav-btn span { display: block; transform: skewX(15deg); font-weight: bold; }
         .nav-btn.active { background: rgba(255,255,255,0.1); border-color: var(--highlight); color: var(--highlight); }
-
-        .theme-bar { display: flex; justify-content: center; gap: 8px; margin: 0; background: transparent; padding: 0; border: none; position: relative; z-index: 2; }
+        .theme-bar { display: flex; gap: 8px; margin: 0; background: transparent; padding: 0; border: none; }
         .theme-btn { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #555; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 0.7rem; background: rgba(0,0,0,0.5); }
         .theme-btn:hover { transform: scale(1.2); border-color: #fff; }
         .theme-btn.active { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 8px #fff; }
@@ -155,44 +162,29 @@
         .btn-add:hover { background: var(--btn-add-hover); color: var(--btn-add-text-hover); box-shadow: 0 0 10px var(--btn-add-border); }
 
         /* Editor */
-        .forge-wrapper { 
-            display: flex; gap: 20px; 
-            align-items: flex-start; 
-            position: relative;
-            padding-top: 10px; 
-        }
+        .forge-wrapper { display: flex; gap: 20px; height: 80vh; align-items: flex-start; position: relative; padding-top: 10px; }
         @media (max-width: 900px) { .forge-wrapper { flex-direction: column; } }
-        
-        .char-list-sidebar { 
-            width: 220px; min-width: 220px; flex-shrink: 0; 
-            background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: 8px; 
-            display: flex; flex-direction: column; overflow: hidden;
-            position: sticky; top: 70px; max-height: calc(100vh - 90px); 
-        }
+        .char-list-sidebar { width: 220px; min-width: 220px; flex-shrink: 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: sticky; top: 70px; max-height: calc(100vh - 90px); }
         .char-list-header { padding: 10px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color); text-align: center; color: var(--highlight); font-weight: bold; }
         .char-list-content { flex: 1; overflow-y: auto; padding: 5px; }
         .char-list-item { padding: 8px; cursor: pointer; color: #aaa; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .char-list-item:hover, .char-list-item.active { background: var(--highlight); color: var(--btn-text); font-weight: bold; }
         .btn-new-char { width:100%; padding:10px; background:rgba(0,0,0,0.3); border:none; border-top:1px solid var(--border-color); color:var(--highlight); font-weight:bold; cursor:pointer; }
         .btn-new-char:hover { background:rgba(255,255,255,0.1); }
-
         .editor-main { flex: 1; width: 100%; } 
         .editor-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; }
         @media (max-width: 1100px) { .editor-layout { grid-template-columns: 1fr; } }
-        
         .editor-left { display: flex; flex-direction: column; gap: 15px; }
         .avatar-upload-wrapper { position: relative; width: 100%; aspect-ratio: 2/3; background: #000; border: 2px solid var(--highlight); border-radius: 6px; overflow: hidden; cursor: pointer; }
         .avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .avatar-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; opacity:0; color:#fff; font-size:2rem; transition:0.3s; }
         .avatar-upload-wrapper:hover .avatar-overlay { opacity:1; }
-        
         .editor-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
         .editor-tab { padding: 8px 15px; background: rgba(0,0,0,0.4); color: #888; border: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; min-width: 80px; }
         .editor-tab:hover { background: rgba(255,255,255,0.1); color: #ccc; }
         .editor-tab.active { background: var(--tab-active-bg); color: var(--highlight); border: 1px solid var(--highlight); border-bottom: none; font-weight: bold; }
         .editor-panel { display: none; animation: fadeIn 0.3s; }
         .editor-panel.active { display: block; }
-        
         .game-input { width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--input-text); padding: 8px; border-radius: 4px; font-weight: 600; font-size: 0.95rem; }
         .game-textarea { width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--input-text); padding: 8px; border-radius: 4px; resize: vertical; font-family: inherit; }
         .editor-label { display: block; font-size: 0.7rem; color: #aaa; text-transform: uppercase; margin: 10px 0 2px 0; border-bottom: 1px dashed #666; font-weight: bold; }
@@ -216,7 +208,6 @@
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
         .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card h3 { color: var(--highlight); margin: 0 0 10px 0; font-family: var(--font-title); font-size: 1.2rem; }
-        
         .card-quest { background: #f4e7d1; color: #3e2723; border: 1px solid #8d6e63; padding: 0; overflow:hidden; }
         .quest-header { display: flex; align-items: center; gap: 10px; background: rgba(141, 110, 99, 0.2); padding: 10px 20px; border-bottom: 1px solid #8d6e63; }
         .quest-client-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #3e2723; }
@@ -225,7 +216,6 @@
         .quest-title { font-family: var(--font-title); font-size: 1.4rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; color: #b71c1c; }
         .quest-desc { font-family: var(--font-hand); font-size: 1.1rem; line-height: 1.5; color: #4e342e; }
         .quest-footer { background: rgba(183, 28, 28, 0.1); padding: 10px; text-align: center; border-top: 1px dashed #b71c1c; color: #b71c1c; font-weight: bold; font-family: var(--font-title); }
-
         .card-market { background: #2a1b12; border: 3px solid #4e342e; border-radius: 6px; padding: 0; overflow:hidden; }
         .market-header { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 10px 15px; border-bottom: 1px solid #4e342e; }
         .market-seller-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
@@ -234,12 +224,10 @@
         .market-item { color: var(--highlight); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 5px; }
         .market-desc { color: #bcaaa4; font-size: 0.9rem; font-style: italic; }
         .market-footer { background: #1a1a1a; padding: 8px; text-align: center; color: #fff; font-weight: bold; border-top: 1px solid #4e342e; }
-        
         .card-notice { background: var(--panel-bg); border: 2px solid var(--highlight); padding: 25px; border-radius: 8px; position: relative; }
         .card-notice::before { content:'♔'; position:absolute; top:10px; right:15px; font-size:3rem; color:#8a0303; opacity:0.8; }
         .card-notice h3 { color: var(--highlight); font-family: var(--font-title); margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .card-notice .desc { color: #ccc; font-family: var(--font-hand); font-size: 1.1rem; line-height: 1.6; }
-
         .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .party-card { background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(40,40,40,0.9)); border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
         .party-card:hover { transform: translateY(-5px); border-color: var(--highlight); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
@@ -264,7 +252,11 @@
         .adv-row select { flex: 2; } .adv-row input { flex: 3; }
         .adv-add-btn { background: #333; border: 1px solid #555; color: #ccc; cursor: pointer; padding: 5px 10px; margin-top: 5px; font-size: 0.8rem; }
         
-        /* Game Sheet View */
+        .game-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
+        .game-tab { padding: 8px 15px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; }
+        .game-tab.active { background: rgba(255,255,255,0.1); color: var(--highlight); border-color: var(--highlight); font-weight: bold; }
+        .game-panel { display: none; height: 400px; overflow-y: auto; padding-right: 5px; animation: fadeIn 0.2s; }
+        .game-panel.active { display: block; }
         .char-sheet-game { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
         @media(max-width:900px){.char-sheet-game{grid-template-columns:1fr}}
         .char-portrait-frame { width: 100%; aspect-ratio: 2/3; border: 3px solid var(--highlight); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
@@ -272,13 +264,6 @@
         .hex-box { width: 60px; height: 70px; background: #1a1a1a; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
         .hex-val { font-size: 1.4rem; font-weight: bold; color: var(--highlight); font-family: var(--font-title); }
         .char-right { display: flex; flex-direction: column; gap: 15px; }
-        
-        .game-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
-        .game-tab { padding: 8px 15px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; }
-        .game-tab.active { background: rgba(255,255,255,0.1); color: var(--highlight); border-color: var(--highlight); font-weight: bold; }
-        .game-panel { display: none; height: 400px; overflow-y: auto; padding-right: 5px; animation: fadeIn 0.2s; }
-        .game-panel.active { display: block; }
-        
         .game-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
         .game-item-slot { width: 100%; aspect-ratio: 1/1; background: rgba(0,0,0,0.4); border: 2px solid var(--border-color); border-radius: 6px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .game-item-slot:hover { border-color: var(--highlight); transform: scale(1.05); }
@@ -286,7 +271,6 @@
         .game-item-fallback { font-size: 1.5rem; color: #555; }
         .game-item-slot:hover .game-item-fallback { color: var(--highlight); }
         
-        /* Item Modal */
         .item-modal-layout { display: grid; grid-template-columns: 100px 1fr; gap: 20px; }
         .item-modal-icon-box { width: 100px; height: 100px; border: 2px solid var(--highlight); border-radius: 12px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(212,175,55,0.2); }
         .item-modal-img { width: 100%; height: 100%; object-fit: cover; }
@@ -651,11 +635,16 @@
         let introPlayed = false;
 
         function switchMode(mode) {
-            document.body.className = mode === 'guild' ? 'mode-guild' : 'mode-private';
-            document.getElementById('view-guild').classList.toggle('active', mode === 'guild');
-            document.getElementById('view-private').classList.toggle('active', mode === 'private');
+            // ★★★ Fix: Use classList to avoid overwriting 'authenticated' ★★★
+            document.body.classList.remove('mode-guild', 'mode-private');
+            document.body.classList.add(mode === 'guild' ? 'mode-guild' : 'mode-private');
+            
+            document.getElementById('view-guild').classList.remove('active');
+            document.getElementById('view-private').classList.remove('active');
+            document.getElementById(mode === 'guild' ? 'view-guild' : 'view-private').classList.add('active');
+            
             if(mode==='private') { const t = localStorage.getItem('maztica_theme') || 'scholar'; setTheme(t); loadMyCharactersList(); } 
-            else { document.body.style.backgroundImage = ""; fetchData(); }
+            else { fetchData(); }
         }
 
         function setTheme(t) {
@@ -912,6 +901,7 @@
         // Quest Posting
         function openQuestModal() {
             const u = JSON.parse(localStorage.getItem('maztica_user'));
+            if(!u) { alert('請先登入'); location.reload(); return; }
             setVal('q-client-name', u.name);
             setVal('q-client-img', u.avatar_url || ''); 
             document.getElementById('quest-modal').classList.add('open');
@@ -1035,19 +1025,63 @@
             document.getElementById('avatar-preview').src = data.publicUrl;
             showToast("圖片上傳成功！");
         }
+        
         async function handleLogin(){ const n=document.getElementById('login-name').value; const p=document.getElementById('login-pass').value; const {data}=await db.from('roster').select('*').eq('name',n).eq('password',p).single(); if(data){localStorage.setItem('maztica_user',JSON.stringify(data)); enterGuild(data);} else alert("失敗"); }
         async function handleRegistration(){ const n=document.getElementById('reg-name').value; const id="MZ-"+Math.floor(1000+Math.random()*9000); await db.from('roster').insert({name:n, password:id, adventurer_id:id, rank:'青銅', status:'新進', is_hidden:false}); alert(`註冊成功! 證號: ${id}`); location.reload(); }
-        function enterGuild(u){ document.getElementById('login-gate').style.display='none'; document.getElementById('user-status').style.display='block'; document.getElementById('current-user').innerText=u.name; document.getElementById('view-guild').style.display='block'; document.querySelector('.mode-switch').style.display='flex'; document.querySelector('.nav-container').style.display='flex'; fetchData(); showNPCIntro(); }
-        function checkSession(){const s=localStorage.getItem('maztica_user'); if(s) enterGuild(JSON.parse(s));}
+        
+        function enterGuild(u){ 
+            document.body.classList.add('authenticated'); // ★ Unlock the UI
+            document.getElementById('user-status').style.display='block'; 
+            document.getElementById('current-user').innerText=u.name; 
+            document.getElementById('view-guild').classList.add('active'); // Ensure active
+            fetchData(); 
+            showNPCIntro(); 
+        }
+        
+        function checkSession(){
+            const s=localStorage.getItem('maztica_user'); 
+            if(s) {
+                enterGuild(JSON.parse(s));
+            } else {
+                document.body.classList.remove('authenticated'); // Ensure locked
+            }
+        }
+        
         function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
         function showToast(m){const t=document.getElementById('toast');t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
-        function openListingModal(){document.getElementById('listing-modal').classList.add('open');}
-        function openJournalModal(){ const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); }
+        function openListingModal(){
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            document.getElementById('listing-modal').classList.add('open');
+        }
+        function openJournalModal(){ 
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); 
+        }
         function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
-        async function postItem(e){e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); }
-        async function handleJournalPost(e) { e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user')); const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); document.getElementById('journal-modal').classList.remove('open'); loadMyCharactersList(); }
+        
+        async function postItem(e){
+            e.preventDefault(); 
+            const u=JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); 
+        }
+        
+        async function handleJournalPost(e) { 
+            e.preventDefault(); 
+            const u = JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); document.getElementById('journal-modal').classList.remove('open'); loadMyCharactersList(); 
+        }
+        
         function toggleChat(){const b=document.getElementById('chat-box'); b.style.display=b.style.display==='flex'?'none':'flex'; if(b.style.display==='flex') scrollChat();}
-        async function sendChat(){const i=document.getElementById('chat-in'); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('messages').insert({user_name:u.name, content:i.value}); i.value='';}
+        async function sendChat(){
+            const i=document.getElementById('chat-in'); 
+            const u=JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u) return;
+            await db.from('messages').insert({user_name:u.name, content:i.value}); i.value='';
+        }
         function scrollChat(){const b=document.getElementById('chat-msgs'); b.scrollTop=b.scrollHeight;}
         
         window.onload = checkSession;
