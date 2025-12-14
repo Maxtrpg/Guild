@@ -364,7 +364,7 @@
                 </div>
                 <div class="card-grid" id="quest-list"></div>
             </div>
-            <div id="market" class="section"><h2>自由市集</h2><div style="text-align:right; margin-bottom:10px;"><button class="btn-action" style="width:auto;" onclick="openListingModal()">+ 上架</button></div><div class="card-grid" id="market-list"></div></div>
+            <div id="market" class="section"><h2>交易圓桌</h2><div style="text-align:right; margin-bottom:10px;"><button class="btn-action" style="width:auto;" onclick="openListingModal()">+ 上架</button></div><div class="card-grid" id="market-list"></div></div>
             <div id="roster" class="section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2>冒險者名冊 (隊伍)</h2>
@@ -429,7 +429,7 @@
                                 </div>
                                 <div style="margin-top:10px;">
                                     <label class="editor-label">所屬戰隊 (Party)</label>
-                                    <input class="game-input" id="edit-party" placeholder="填寫已註冊的隊名，例如：黑曜大棒棒">
+                                    <input class="game-input" id="edit-party" placeholder="填寫已註冊的隊名，例如：黑曜利牙">
                                 </div>
                                 
                                 <div class="editor-tabs" style="margin-top:15px;">
@@ -559,8 +559,8 @@
     </div>
 
     <div id="listing-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content" style="max-width:400px;"><span class="close-btn" onclick="closeModal(event)">×</span><h2>上架物資</h2>
-        <form onsubmit="postItem(event)"><input id="in-name" class="game-input" placeholder="物品" required><input id="in-price" class="game-input" placeholder="價格" required><textarea id="in-desc" class="game-textarea" rows="3" placeholder="說明"></textarea><button class="btn-action">上架</button></form></div>
+        <div class="modal-content" style="max-width:400px;"><span class="close-btn" onclick="closeModal(event)">×</span><h2>交易需求</h2>
+        <form onsubmit="postItem(event)"><input id="in-name" class="game-input" placeholder="物品" required><input id="in-price" class="game-input" placeholder="賣價" required><textarea id="in-desc" class="game-textarea" rows="3" placeholder="說明"></textarea><button class="btn-action">上架</button></form></div>
     </div>
     
     <div id="journal-modal" class="modal-overlay" onclick="closeModal(event)">
@@ -574,7 +574,7 @@
                 <button type="button" class="btn-add" onclick="addJournalAdvancement()">+ 新增</button>
             </div>
             <textarea id="j-summary" class="game-textarea" rows="2" placeholder="備註" style="margin-top:10px;"></textarea>
-            <textarea id="j-content" class="game-textarea" rows="5" placeholder="內容" style="margin-top:10px;" required></textarea>
+            <textarea id="j-content" class="game-textarea" rows="5" placeholder="筆記" style="margin-top:10px;" required></textarea>
             <button class="btn-action">保存</button>
         </form></div>
     </div>
@@ -587,7 +587,7 @@
                 <label class="editor-label">戰隊徽章</label>
                 <input id="p-icon" class="game-input" placeholder="圖片網址 (URL)" required style="margin-bottom:10px;">
                 <label class="editor-label">戰隊名稱</label>
-                <input id="p-name" class="game-input" placeholder="例如: 紅龍之牙" required style="margin-bottom:10px;">
+                <input id="p-name" class="game-input" placeholder="例如: 黑曜利牙" required style="margin-bottom:10px;">
                 <label class="editor-label">宣言 / 簡介</label>
                 <textarea id="p-desc" class="game-textarea" rows="3" placeholder="我們是..."></textarea>
                 <button class="btn-action">註冊戰隊</button>
@@ -635,6 +635,7 @@
         let introPlayed = false;
 
         function switchMode(mode) {
+            // ★★★ Fix: Use classList to avoid overwriting 'authenticated' ★★★
             document.body.classList.remove('mode-guild', 'mode-private');
             document.body.classList.add(mode === 'guild' ? 'mode-guild' : 'mode-private');
             
@@ -678,15 +679,26 @@
             e.target.classList.add('active');
         }
 
-        function getRankTitle(sessions) { const s=parseInt(sessions)||0; if(s<=5)return `🪨 黑曜石學徒 (${s})`; if(s<=10)return `🐆 美洲豹戰士 (${s})`; if(s<=15)return `🦅 雄鷹騎士 (${s})`; if(s<=20)return `☀️ 太陽祭司 (${s})`; return `🐍 羽蛇神選 (${s})`; }
+        // ★★★ NEW RANK TITLE LOGIC ★★★
+        function getRankTitle(r) {
+            const rank = parseInt(r) || 0;
+            if (rank <= 4) return `🥉 黃銅`;
+            if (rank <= 9) return `🪨 黑曜石`;
+            if (rank <= 14) return `❇️ 翠玉`;
+            if (rank <= 19) return `🔱 黃金`;
+            return `💠 綠松石`;
+        }
+
         function setVal(id, v){const e=document.getElementById(id);if(e)e.value=v;}
 
         async function loadMyCharactersList(targetId = null) {
             const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) return;
+            // Order by updated_at so recent edits are top
             let { data: chars } = await db.from('my_characters').select('*').eq('owner_name', u.name).order('created_at', {ascending: true});
             myCharacters = chars || [];
             document.getElementById('char-list-items').innerHTML = myCharacters.map((c, i) => `<div class="char-list-item" onclick="selectCharacter(${i})">${c.name}</div>`).join('');
             
+            // Re-select logic
             if(myCharacters.length > 0) {
                 if(targetId) {
                     const idx = myCharacters.findIndex(c => c.id == targetId);
@@ -783,6 +795,7 @@
             editorData[tList].push(newItem); renderAllLists();
         }
 
+        // --- NPC INTRO ---
         async function showNPCIntro() {
             if(introPlayed) return; introPlayed = true;
             const overlay = document.getElementById('npc-intro-layer'); const textBox = document.getElementById('intro-text'); const u = JSON.parse(localStorage.getItem('maztica_user'));
@@ -794,7 +807,9 @@
         function typeWriter(text, element, i) { if (i < text.length) { element.innerHTML += text.charAt(i); setTimeout(() => typeWriter(text, element, i + 1), 30); } }
         function dismissIntro() { const overlay = document.getElementById('npc-intro-layer'); overlay.style.opacity = '0'; setTimeout(() => { overlay.classList.remove('active'); overlay.style.opacity = ''; document.getElementById('intro-text').innerHTML = ''; }, 500); }
 
+        // --- FETCH DATA ---
         async function fetchData() {
+            // 1. Fetch Parties
             let registeredParties = [];
             try {
                 let { data } = await db.from('parties').select('*');
@@ -804,22 +819,33 @@
             const partyMap = {};
             registeredParties.forEach(p => { partyMap[p.name] = p; });
 
+            // 2. Fetch Characters
             let { data: chars } = await db.from('my_characters').select('*').eq('is_public', true).order('created_at',{ascending:false});
             const parties = {};
             
-            registeredParties.forEach(p => { parties[p.name] = []; });
+            // Initialize registered parties first (so they appear even if empty)
+            registeredParties.forEach(p => {
+                parties[p.name] = [];
+            });
+
+            // Distribute characters
             (chars || []).forEach(c => {
                 const pName = c.party || '自由之翼 (Freelancers)'; 
                 if (!parties[pName]) parties[pName] = [];
                 parties[pName].push(c);
             });
-            if(!parties['自由之翼 (Freelancers)'] && chars && chars.some(c => !c.party)) { parties['自由之翼 (Freelancers)'] = []; }
+            
+            // Also ensure default group exists if characters have no party
+            if(!parties['自由之翼 (Freelancers)'] && chars && chars.some(c => !c.party)) {
+                parties['自由之翼 (Freelancers)'] = [];
+            }
 
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
                 const members = parties[pName];
                 const regInfo = partyMap[pName];
                 const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; 
                 const safePName = pName.replace(/'/g, "\\'");
+                
                 return `
                 <div class="party-card" onclick="openPartyDetail('${safePName}')">
                     ${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}
@@ -831,36 +857,80 @@
                     </div>
                 </div>`;
             }).join('');
+            
             window.currentParties = parties;
 
             let { data: n } = await db.from('notices').select('*'); document.getElementById('notice-list').innerHTML = n.map(x=>`<div class="card card-notice"><h3>${x.title}</h3><p class="desc">${x.content}</p></div>`).join('');
-            let { data: q } = await db.from('quests').select('*'); document.getElementById('quest-list').innerHTML = q.map(x=>`<div class="card card-quest"><div class="quest-header"><img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img"><span class="quest-client-name">${x.client_name || '匿名委託人'}</span></div><div class="quest-body"><div class="quest-title">${x.title}</div><p class="quest-desc">${x.desc}</p></div><div class="quest-footer">報酬: ${x.reward || '面議'}</div></div>`).join('');
-            let { data: m } = await db.from('market').select('*'); document.getElementById('market-list').innerHTML = m.map(x=>`<div class="card card-market"><div class="market-header"><img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img"><span class="market-seller-name">${x.owner || '神秘商人'}</span></div><div class="market-body"><div class="market-item">${x.item_name}</div><div class="market-desc">${x.description||'無說明'}</div></div><div class="market-footer">價格: ${x.price}</div></div>`).join('');
+            
+            let { data: q } = await db.from('quests').select('*'); 
+            document.getElementById('quest-list').innerHTML = q.map(x=>`
+                <div class="card card-quest">
+                    <div class="quest-header">
+                        <img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img">
+                        <span class="quest-client-name">${x.client_name || '匿名委託人'}</span>
+                    </div>
+                    <div class="quest-body">
+                        <div class="quest-title">${x.title}</div>
+                        <p class="quest-desc">${x.desc}</p>
+                    </div>
+                    <div class="quest-footer">報酬: ${x.reward || '面議'}</div>
+                </div>`).join('');
+            
+            let { data: m } = await db.from('market').select('*'); 
+            document.getElementById('market-list').innerHTML = m.map(x=>`
+                <div class="card card-market">
+                    <div class="market-header">
+                        <img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img">
+                        <span class="market-seller-name">${x.owner || '神秘商人'}</span>
+                    </div>
+                    <div class="market-body">
+                        <div class="market-item">${x.item_name}</div>
+                        <div class="market-desc">${x.description||'無說明'}</div>
+                    </div>
+                    <div class="market-footer">價格: ${x.price}</div>
+                </div>`).join('');
         }
 
         function openPartyDetail(pName) {
             const members = window.currentParties[pName];
-            const html = members.length > 0 ? members.map(m => `<div class="char-row"><img src="${m.avatar_url||DEFAULT_AVATAR}"><div><div style="font-weight:bold; color:var(--highlight);">${m.name}</div><div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | Lv.${m.rank||0}</div></div></div>`).join('') : '<div style="text-align:center; color:#888; padding:20px;">尚無成員</div>';
+            const html = members.length > 0 ? members.map(m => `
+                <div class="char-row">
+                    <img src="${m.avatar_url||DEFAULT_AVATAR}">
+                    <div>
+                        <div style="font-weight:bold; color:var(--highlight);">${m.name}</div>
+                        <div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | <span style="color:#ffd700">${getRankTitle(m.rank)}</span> (${m.rank||0})</div>
+                    </div>
+                </div>`).join('') : '<div style="text-align:center; color:#888; padding:20px;">尚無成員</div>';
+            
             document.getElementById('party-modal-title').innerText = pName;
             document.getElementById('party-modal-list').innerHTML = html;
             document.getElementById('party-modal').classList.add('open');
         }
 
+        // Quest Posting
         function openQuestModal() {
             const u = JSON.parse(localStorage.getItem('maztica_user'));
             if(!u) { alert('請先登入'); location.reload(); return; }
-            setVal('q-client-name', u.name); setVal('q-client-img', u.avatar_url || ''); 
+            setVal('q-client-name', u.name);
+            setVal('q-client-img', u.avatar_url || ''); 
             document.getElementById('quest-modal').classList.add('open');
         }
         
         async function handleQuestPost(e) {
             e.preventDefault();
-            const payload = { title: document.getElementById('q-title').value, desc: document.getElementById('q-desc').value, reward: document.getElementById('q-reward').value, client_name: document.getElementById('q-client-name').value, client_avatar: document.getElementById('q-client-img').value };
+            const payload = {
+                title: document.getElementById('q-title').value,
+                desc: document.getElementById('q-desc').value,
+                reward: document.getElementById('q-reward').value,
+                client_name: document.getElementById('q-client-name').value,
+                client_avatar: document.getElementById('q-client-img').value
+            };
             const { error } = await db.from('quests').insert(payload);
             if(error) alert(error.message);
             else { showToast("任務已發布"); document.getElementById('quest-modal').classList.remove('open'); fetchData(); }
         }
 
+        // Party Creation
         function openCreatePartyModal() {
             const u = JSON.parse(localStorage.getItem('maztica_user'));
             if(!u) { alert('請先登入'); location.reload(); return; }
@@ -870,17 +940,29 @@
         async function handleCreateParty(e) {
             e.preventDefault();
             const u = JSON.parse(localStorage.getItem('maztica_user'));
-            const payload = { name: document.getElementById('p-name').value, icon_url: document.getElementById('p-icon').value, description: document.getElementById('p-desc').value, leader_name: u.name };
+            const payload = {
+                name: document.getElementById('p-name').value,
+                icon_url: document.getElementById('p-icon').value,
+                description: document.getElementById('p-desc').value,
+                leader_name: u.name
+            };
             const { error } = await db.from('parties').insert(payload);
             if(error) alert(error.message);
             else { showToast("戰隊註冊成功！"); document.getElementById('create-party-modal').classList.remove('open'); fetchData(); }
         }
         
+        // Utils
         function toggleReg(show){
-            if(show) { document.getElementById('login-view').classList.add('hidden'); document.getElementById('reg-view').classList.remove('hidden'); } 
-            else { document.getElementById('login-view').classList.remove('hidden'); document.getElementById('reg-view').classList.add('hidden'); }
+            if(show) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('reg-view').classList.remove('hidden');
+            } else {
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('reg-view').classList.add('hidden');
+            }
         }
         
+        // ... (Remaining JS: loadJson, saveCharacter, etc.) ...
         function loadJsonToEditor(input) {
             const file = input.files[0]; if(!file) return;
             const r = new FileReader();
@@ -915,17 +997,32 @@
             r.readAsText(file);
         }
 
+        // ★★★ REAL-TIME SAVE FIX ★★★
         async function saveCharacterSheet() {
             const u = JSON.parse(localStorage.getItem('maztica_user'));
             if(!u) { alert('請先登入'); location.reload(); return; }
             const charId = document.getElementById('edit-char-id').value;
             const allItems = [ ...editorData.kinAbilities, ...editorData.heroicAbilities, ...editorData.coreSkills, ...editorData.weaponSkills, ...editorData.secondarySkills, ...editorData.cantrips, ...editorData.rankedSpells, ...editorData.weapons, ...editorData.armors, ...editorData.gear ];
             const newSheet = { name: document.getElementById('edit-name').value, img: document.getElementById('edit-avatar').value, system: { attributes: { str: { value: document.getElementById('attr-str').value }, con: { value: document.getElementById('attr-con').value }, agl: { value: document.getElementById('attr-agl').value }, int: { value: document.getElementById('attr-int').value }, wil: { value: document.getElementById('attr-wil').value }, cha: { value: document.getElementById('attr-cha').value }, }, hitPoints: { value: document.getElementById('edit-hp').value, max: document.getElementById('edit-hp').value }, willPoints: { value: document.getElementById('edit-wp').value, max: document.getElementById('edit-wp').value }, currency: { gc: document.getElementById('curr-gc')?.value || 0, sc: document.getElementById('curr-sc')?.value || 0, cc: document.getElementById('curr-cc')?.value || 0 }, notes: document.getElementById('edit-bio').value }, items: allItems };
-            const payload = { owner_name: u.name, name: newSheet.name, race: document.getElementById('edit-race').value, class: document.getElementById('edit-class').value, avatar_url: newSheet.img, rank: document.getElementById('edit-rank').value, sheet_data: newSheet, party: document.getElementById('edit-party').value };
-            let targetId = charId; let error; 
-            if (charId) { const res = await db.from('my_characters').update(payload).eq('id', charId); error = res.error; } 
-            else { const res = await db.from('my_characters').insert(payload).select(); error = res.error; if(res.data && res.data.length > 0) targetId = res.data[0].id; }
-            if(error) alert("保存失敗: " + error.message); else { showToast("💾 保存成功！"); await loadMyCharactersList(targetId); }
+            // ★★★ ADDED is_public: true HERE ★★★
+            const payload = { owner_name: u.name, name: newSheet.name, race: document.getElementById('edit-race').value, class: document.getElementById('edit-class').value, avatar_url: newSheet.img, rank: document.getElementById('edit-rank').value, sheet_data: newSheet, party: document.getElementById('edit-party').value, is_public: true };
+            
+            let targetId = charId; // Remember the ID
+            let error; 
+            if (charId) { 
+                const res = await db.from('my_characters').update(payload).eq('id', charId); 
+                error = res.error; 
+            } else { 
+                const res = await db.from('my_characters').insert(payload).select(); 
+                error = res.error; 
+                if(res.data && res.data.length > 0) targetId = res.data[0].id;
+            }
+
+            if(error) alert("保存失敗: " + error.message); 
+            else { 
+                showToast("💾 保存成功！"); 
+                await loadMyCharactersList(targetId); // Reload list and re-select this character
+            }
         }
 
         async function deleteCharacter() { const charId = document.getElementById('edit-char-id').value; if(!charId) return; if(confirm("確定刪除?")) { await db.from('my_characters').delete().eq('id', charId); showToast("已刪除"); loadMyCharactersList(); } }
@@ -946,19 +1043,23 @@
         async function handleRegistration(){ const n=document.getElementById('reg-name').value; const id="MZ-"+Math.floor(1000+Math.random()*9000); await db.from('roster').insert({name:n, password:id, adventurer_id:id, rank:'青銅', status:'新進', is_hidden:false}); alert(`註冊成功! 證號: ${id}`); location.reload(); }
         
         function enterGuild(u){ 
-            document.body.classList.add('authenticated');
+            document.body.classList.add('authenticated'); // ★ Unlock the UI
             document.getElementById('user-status').style.display='block'; 
             document.getElementById('current-user').innerText=u.name; 
-            document.getElementById('view-guild').classList.add('active'); 
+            document.getElementById('view-guild').classList.add('active'); // Ensure active
             fetchData(); 
             showNPCIntro(); 
-            subChat(); 
-            fetchMessages(); 
+            subChat(); // Start listening to chat
+            fetchMessages(); // Load history
         }
         
         function checkSession(){
             const s=localStorage.getItem('maztica_user'); 
-            if(s) { enterGuild(JSON.parse(s)); } else { document.body.classList.remove('authenticated'); }
+            if(s) {
+                enterGuild(JSON.parse(s));
+            } else {
+                document.body.classList.remove('authenticated'); // Ensure locked
+            }
         }
         
         function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
@@ -973,18 +1074,39 @@
             }
         }
 
-        function openListingModal(){ const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) { alert('請先登入'); location.reload(); return; } document.getElementById('listing-modal').classList.add('open'); }
-        function openJournalModal(){ const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) { alert('請先登入'); location.reload(); return; } const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); }
+        function openListingModal(){
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            document.getElementById('listing-modal').classList.add('open');
+        }
+        function openJournalModal(){ 
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); 
+        }
         function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
         
-        async function postItem(e){ e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); if(!u) { alert('請先登入'); location.reload(); return; } await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); }
+        async function postItem(e){
+            e.preventDefault(); 
+            const u=JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); 
+        }
         
-        async function handleJournalPost(e) { e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) { alert('請先登入'); location.reload(); return; } const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); document.getElementById('journal-modal').classList.remove('open'); loadMyCharactersList(); }
+        async function handleJournalPost(e) { 
+            e.preventDefault(); 
+            const u = JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u) { alert('請先登入'); location.reload(); return; }
+            const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); document.getElementById('journal-modal').classList.remove('open'); loadMyCharactersList(); 
+        }
         
         function toggleChat(){const b=document.getElementById('chat-box'); b.style.display=b.style.display==='flex'?'none':'flex'; if(b.style.display==='flex') scrollChat();}
         async function sendChat(){
-            const i=document.getElementById('chat-in'); const u=JSON.parse(localStorage.getItem('maztica_user')); if(!u) return;
-            await db.from('messages').insert({user_name:u.name, content:i.value}); i.value='';
+            const i=document.getElementById('chat-in'); 
+            const u=JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u) return;
+            await db.from('messages').insert({user_name:u.name, content:i.value}); 
+            i.value='';
         }
         function scrollChat(){const b=document.getElementById('chat-msgs'); b.scrollTop=b.scrollHeight;}
 
@@ -1001,9 +1123,12 @@
         async function fetchMessages(){
             const { data } = await db.from('messages').select('*').order('created_at', { ascending: true }).limit(50);
             if (data) {
+                // Clear and add static welcome first
                 const box = document.getElementById('chat-msgs');
                 box.innerHTML = '<div class="chat-msg msg-npc">歡迎來到公會通訊頻道，請保持禮貌。</div>';
-                data.forEach(m => { renderMsgElement(m.user_name, m.content); });
+                data.forEach(m => {
+                    renderMsgElement(m.user_name, m.content);
+                });
             }
         }
 
