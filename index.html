@@ -276,13 +276,13 @@
 
     <div id="login-gate">
         <h2>🛡️ 冒險者認證</h2>
-        <input type="text" class="game-input" id="login-name" placeholder="代號">
+        <input type="text" class="game-input" id="login-name" placeholder="稱呼">
         <input type="password" class="game-input" id="login-pass" placeholder="證號">
-        <button class="btn-action" onclick="handleLogin()">進入系統</button>
+        <button class="btn-action" onclick="handleLogin()">進入公會</button>
         <p style="margin-top:15px; font-size:0.8rem; color:#888; cursor:pointer;" onclick="toggleReg(true)">新進人員登記</p>
         <div id="reg-panel" class="hidden" style="margin-top:20px; border-top:1px solid #444; padding-top:20px;">
-            <input type="text" class="game-input" id="reg-name" placeholder="設定代號">
-            <button class="btn-action" onclick="handleRegistration()">註冊</button>
+            <input type="text" class="game-input" id="reg-name" placeholder="設定稱呼(你的登入ID,密碼(證號)將會自動生成)">
+            <button class="btn-action" onclick="handleRegistration()">點擊註冊</button>
         </div>
     </div>
 
@@ -318,7 +318,7 @@
     <div id="view-guild" class="view-container active">
         <div class="reception-area">
              <div style="text-align:center; color:var(--text-sub); font-family:var(--font-hand); font-style:italic;">
-                "歡迎來到馬茲提卡冒險者公會。請隨意查看佈告欄，有事請呼叫右下角的櫃檯人員。"
+                "歡迎來到馬茲提卡冒險者公會。"
             </div>
         </div>
 
