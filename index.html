@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAZTICA | 冒險者公會</title>
+    <title> 佩澤拉客 | 冒險者公會</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -298,10 +298,10 @@
 <body class="mode-guild">
 
     <header>
-        <div class="brand">MAZTICA</div>
+        <div class="brand">佩澤拉克冒險者公會</div>
         <div class="mode-switch">
-            <button class="mode-btn active" onclick="switchMode('guild')">🏛️ 公會</button>
-            <button class="mode-btn" onclick="switchMode('private')">🕯️ 書房</button>
+            <button class="mode-btn active" onclick="switchMode('guild')">🏛️ 公會大廳</button>
+            <button class="mode-btn" onclick="switchMode('private')">🕯️ 個人書房</button>
         </div>
         <div id="user-status" style="display:none; font-size:0.9rem;">
             <span id="current-user" style="color:var(--highlight); margin-right:10px;"></span> 
@@ -316,7 +316,7 @@
         <button class="btn-action" onclick="handleLogin()">進入系統</button>
         <p style="margin-top:15px; font-size:0.8rem; color:#888; cursor:pointer;" onclick="toggleReg(true)">新進人員登記</p>
         <div id="reg-panel" class="hidden" style="margin-top:20px; border-top:1px solid #444; padding-top:20px;">
-            <input type="text" class="game-input" id="reg-name" placeholder="設定暱稱(密碼/證號自動生成)">
+            <input type="text" class="game-input" id="reg-name" placeholder="設定暱稱(證號自動生成)">
             <button class="btn-action" onclick="handleRegistration()">註冊</button>
         </div>
     </div>
@@ -437,7 +437,7 @@
                                 </div>
                                 <div style="margin-top:10px;">
                                     <label class="editor-label">所屬戰隊 (Party)</label>
-                                    <input class="game-input" id="edit-party" placeholder="填寫已註冊的隊名，例如：紅龍之牙">
+                                    <input class="game-input" id="edit-party" placeholder="填寫已註冊的隊名，例如：黑曜大棒棒">
                                 </div>
                                 
                                 <div class="editor-tabs" style="margin-top:15px;">
@@ -595,9 +595,9 @@
                 <label class="editor-label">戰隊徽章</label>
                 <input id="p-icon" class="game-input" placeholder="圖片網址 (URL)" required style="margin-bottom:10px;">
                 <label class="editor-label">戰隊名稱</label>
-                <input id="p-name" class="game-input" placeholder="例如: 紅龍之牙" required style="margin-bottom:10px;">
+                <input id="p-name" class="game-input" placeholder="例如: 黑曜大棒棒" required style="margin-bottom:10px;">
                 <label class="editor-label">宣言 / 簡介</label>
-                <textarea id="p-desc" class="game-textarea" rows="3" placeholder="我們是..."></textarea>
+                <textarea id="p-desc" class="game-textarea" rows="3" placeholder="簡介"></textarea>
                 <button class="btn-action">註冊戰隊</button>
             </form>
         </div>
@@ -1034,6 +1034,7 @@
     </script>
 </body>
 </html>
+
 
 
 
