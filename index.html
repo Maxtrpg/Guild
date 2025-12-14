@@ -91,16 +91,10 @@
         .section.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Reception (Visual) */
+        /* Reception Area */
         .reception-area { display: flex; align-items: center; justify-content: center; gap: 30px; padding: 30px; margin-bottom: 20px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
         
-        /* Buttons */
-        .btn-action { width: 100%; padding: 10px; margin-top: 10px; background: var(--btn-bg); color: var(--btn-text); font-weight: bold; border: none; border-radius: 4px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; }
-        .btn-action:hover { filter: brightness(1.2); }
-        .btn-add { margin-top: 8px; padding: 6px 12px; font-size: 0.85rem; background: rgba(0,0,0,0.6); border: 1px solid var(--btn-add-border); color: var(--btn-add-border); border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; display: inline-block; transition: 0.2s; }
-        .btn-add:hover { background: var(--btn-add-hover); color: var(--btn-add-text-hover); box-shadow: 0 0 10px var(--btn-add-border); }
-
-        /* --- NPC INTRO --- */
+        /* NPC Intro Overlay */
         #npc-intro-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9000; display: none; flex-direction: column; justify-content: flex-end; align-items: center; }
         #npc-intro-layer.active { display: flex; animation: fadeInOverlay 0.5s forwards; }
         .npc-full-body { height: 80vh; max-height: 800px; width: auto; position: absolute; bottom: -50px; left: 10%; filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); transform: translateY(100%); animation: slideInUp 0.8s 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: none; }
@@ -108,9 +102,14 @@
         .npc-dialogue-ui::after { content: '▼'; position: absolute; bottom: 10px; right: 20px; color: var(--highlight); animation: bounce 1s infinite; }
         .npc-label { position: absolute; top: -20px; left: 30px; background: var(--highlight); color: #000; padding: 5px 20px; font-family: var(--font-title); font-weight: bold; border-radius: 4px; border: 2px solid #fff; transform: skewX(-15deg); }
         .typewriter-text { font-family: var(--font-hand); font-size: 1.3rem; color: #eee; line-height: 1.6; min-height: 60px; }
-        @keyframes slideInUp { to { transform: translateY(0); } } @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } } @keyframes fadeInUI { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } } @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
+        
+        @keyframes slideInUp { to { transform: translateY(0); } }
+        @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } }
+        @keyframes fadeInUI { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
+        @media (max-width: 768px) { .npc-full-body { left: 50%; transform: translateX(-50%) translateY(100%); bottom: 150px; height: 50vh; } @keyframes slideInUp { to { transform: translateX(-50%) translateY(0); } } }
 
-        /* --- Chat Widget --- */
+        /* Chat Widget */
         #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 8000; display: flex; flex-direction: column; align-items: flex-end; }
         #npc-chat-toggle { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.4); cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; background: #000; overflow: hidden; }
         #npc-chat-toggle:hover { transform: scale(1.1); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 0 40px rgba(212,175,55,0.8); }
@@ -129,7 +128,13 @@
         #chat-in { margin: 0; width: 100%; border-radius: 20px; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff; }
         #chat-send { background: transparent; border: none; color: var(--highlight); cursor: pointer; font-size: 1.2rem; }
 
-        /* --- Editor --- */
+        /* Buttons & Forms */
+        .btn-action { width: 100%; padding: 10px; margin-top: 10px; background: var(--btn-bg); color: var(--btn-text); font-weight: bold; border: none; border-radius: 4px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; }
+        .btn-action:hover { filter: brightness(1.2); }
+        .btn-add { margin-top: 8px; padding: 6px 12px; font-size: 0.85rem; background: rgba(0,0,0,0.6); border: 1px solid var(--btn-add-border); color: var(--btn-add-border); border-radius: 4px; cursor: pointer; font-weight: bold; text-transform: uppercase; display: inline-block; transition: 0.2s; }
+        .btn-add:hover { background: var(--btn-add-hover); color: var(--btn-add-text-hover); box-shadow: 0 0 10px var(--btn-add-border); }
+
+        /* Editor */
         .forge-wrapper { display: flex; gap: 20px; height: 80vh; align-items: flex-start; }
         @media (max-width: 900px) { .forge-wrapper { flex-direction: column; height: auto; } }
         .char-list-sidebar { width: 220px; min-width: 220px; flex-shrink: 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; height: 100%; display: flex; flex-direction: column; }
@@ -561,7 +566,7 @@
         const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
 
         const THEMES = {
-            'scholar': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/01.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8))", color: "#2c1e14", panel: "rgba(45, 30, 20, 0.95)", border: "#5d4037", hl: "#ffb74d", text: "#f3e5dc", sub: "#d7ccc8", in_bg: "#eaddcf", in_txt: "#3e2723", btn_bg: "linear-gradient(to bottom, #ffb74d, #e65100)", btn_txt: "#2e1500" },
+            'scholar': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/001.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8))", color: "#2c1e14", panel: "rgba(45, 30, 20, 0.95)", border: "#5d4037", hl: "#ffb74d", text: "#f3e5dc", sub: "#d7ccc8", in_bg: "#eaddcf", in_txt: "#3e2723", btn_bg: "linear-gradient(to bottom, #ffb74d, #e65100)", btn_txt: "#2e1500" },
             'warrior': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/003.webp'), radial-gradient(circle at 50% 30%, #263238 0%, #000 100%)", color: "#000", panel: "rgba(30, 40, 45, 0.95)", border: "#78909c", hl: "#90a4ae", text: "#eceff1", sub: "#b0bec5", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #90a4ae, #546e7a)", btn_txt: "#000" },
             'jungle': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/002.webp'), radial-gradient(circle at 50% 20%, #1b5e20 0%, #000 90%)", color: "#051005", panel: "rgba(20, 35, 20, 0.95)", border: "#4caf50", hl: "#a5d6a7", text: "#e8f5e9", sub: "#c8e6c9", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #a5d6a7, #388e3c)", btn_txt: "#000" },
             'tavern': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/004.webp'), radial-gradient(circle at 50% 50%, #e65100 0%, #3e2723 100%)", color: "#2e1500", panel: "rgba(40, 20, 10, 0.95)", border: "#ff6f00", hl: "#ffcc80", text: "#fff3e0", sub: "#ffe0b2", in_bg: "rgba(0,0,0,0.5)", in_txt: "#fff", btn_bg: "linear-gradient(to bottom, #ffcc80, #ef6c00)", btn_txt: "#2e1500" }
@@ -731,6 +736,7 @@
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
                 const members = parties[pName];
                 const leader = members[0]; // Just use first as visual rep
+                // Escape quotes for onclick
                 const safePName = pName.replace(/'/g, "\\'");
                 return `
                 <div class="party-card" onclick="openPartyDetail('${safePName}')">
@@ -815,7 +821,7 @@
             };
             const { error } = await db.from('quests').insert(payload);
             if(error) alert(error.message);
-            else { showToast("任務已發布"); closeModal({target:{classList:{contains:()=>true}}}); fetchData(); }
+            else { showToast("任務已發布"); document.getElementById('quest-modal').classList.remove('open'); fetchData(); }
         }
 
         // ... (Remaining JS: loadJson, saveCharacter, etc. kept same as V41.2) ...
@@ -885,8 +891,8 @@
         function openListingModal(){document.getElementById('listing-modal').classList.add('open');}
         function openJournalModal(){ const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); }
         function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
-        async function postItem(e){e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); closeModal({target:{classList:{contains:()=>true}}}); fetchData(); }
-        async function handleJournalPost(e) { e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user')); const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); closeModal({target:{classList:{contains:()=>true}}}); loadMyCharactersList(); }
+        async function postItem(e){e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); }
+        async function handleJournalPost(e) { e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user')); const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); document.getElementById('journal-modal').classList.remove('open'); loadMyCharactersList(); }
         function toggleChat(){const b=document.getElementById('chat-box'); b.style.display=b.style.display==='flex'?'none':'flex'; if(b.style.display==='flex') scrollChat();}
         async function sendChat(){const i=document.getElementById('chat-in'); const u=JSON.parse(localStorage.getItem('maztica_user')); await db.from('messages').insert({user_name:u.name, content:i.value}); i.value='';}
         function scrollChat(){const b=document.getElementById('chat-msgs'); b.scrollTop=b.scrollHeight;}
