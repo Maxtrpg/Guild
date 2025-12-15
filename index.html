@@ -202,37 +202,78 @@
         .json-zone { border: 2px dashed var(--border-color); padding: 15px; text-align: center; color: #888; border-radius: 8px; cursor: pointer; margin-bottom: 15px; background: rgba(0,0,0,0.1); font-size: 0.9rem; }
         .json-zone:hover { border-color: var(--highlight); color: var(--highlight); }
 
-        /* --- Cards & Roster --- */
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        /* --- Cards & Roster (Parchment Style) --- */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding-bottom:20px; }
         .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card h3 { color: var(--highlight); margin: 0 0 10px 0; font-family: var(--font-title); font-size: 1.2rem; }
-        .card-quest { background: #f4e7d1; color: #3e2723; border: 1px solid #8d6e63; padding: 0; overflow:hidden; }
-        .quest-header { display: flex; align-items: center; gap: 10px; background: rgba(141, 110, 99, 0.2); padding: 10px 20px; border-bottom: 1px solid #8d6e63; }
-        .quest-client-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #3e2723; }
-        .quest-client-name { font-weight: bold; font-family: var(--font-title); font-size: 0.9rem; }
-        .quest-body { padding: 15px 20px; }
-        .quest-title { font-family: var(--font-title); font-size: 1.4rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; color: #b71c1c; }
-        .quest-desc { font-family: var(--font-hand); font-size: 1.1rem; line-height: 1.5; color: #4e342e; }
-        .quest-footer { background: rgba(183, 28, 28, 0.1); padding: 10px; text-align: center; border-top: 1px dashed #b71c1c; color: #b71c1c; font-weight: bold; font-family: var(--font-title); }
-        .card-market { background: #2a1b12; border: 3px solid #4e342e; border-radius: 6px; padding: 0; overflow:hidden; }
-        .market-header { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 10px 15px; border-bottom: 1px solid #4e342e; }
-        .market-seller-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
-        .market-seller-name { color: #ccc; font-size: 0.85rem; }
+        
+        /* Parchment Texture Base */
+        .parchment-base {
+            background-color: #f7f1e3;
+            background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
+            border: 1px solid #8d6e63;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: #3e2723;
+            font-family: var(--font-hand);
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+        .parchment-base:hover { transform: scale(1.01); z-index: 5; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+
+        .card-quest { /* Parchment Style for Quests */
+            background-color: #f7f1e3;
+            background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
+            border: 1px solid #8d6e63;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: #3e2723;
+            padding: 0; overflow:hidden;
+            font-family: var(--font-hand);
+        }
+        .quest-header { display: flex; align-items: center; gap: 10px; background: rgba(141, 110, 99, 0.15); padding: 12px 20px; border-bottom: 1px dashed #8d6e63; }
+        .quest-client-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #5d4037; filter: sepia(0.3); }
+        .quest-client-name { font-weight: bold; font-family: var(--font-title); font-size: 1rem; color: #3e2723; }
+        .quest-body { padding: 20px; }
+        .quest-title { font-family: var(--font-title); font-size: 1.5rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; color: #b71c1c; letter-spacing: 1px; }
+        .quest-desc { font-size: 1.15rem; line-height: 1.6; color: #4e342e; }
+        .quest-footer { background: rgba(183, 28, 28, 0.05); padding: 12px; text-align: center; border-top: 2px double #b71c1c; color: #b71c1c; font-weight: bold; font-family: var(--font-title); font-size: 1.1rem; }
+
+        .card-market { /* Parchment Style for Market */
+            background-color: #efdcd5; /* Rose-tinted parchment */
+            background-image: url('https://www.transparenttextures.com/patterns/lined-paper-2.png');
+            border: 1px solid #8d6e63;
+            padding: 0; overflow:hidden;
+            color: #3e2723;
+            font-family: var(--font-hand);
+        }
+        .market-header { display: flex; align-items: center; gap: 10px; background: rgba(93, 64, 55, 0.1); padding: 10px 15px; border-bottom: 1px solid #8d6e63; }
+        .market-seller-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #5d4037; }
+        .market-seller-name { color: #5d4037; font-size: 0.9rem; font-weight: bold; }
         .market-body { padding: 15px; text-align: center; }
-        .market-item { color: var(--highlight); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 5px; }
-        .market-desc { color: #bcaaa4; font-size: 0.9rem; font-style: italic; }
-        .market-footer { background: #1a1a1a; padding: 8px; text-align: center; color: #fff; font-weight: bold; border-top: 1px solid #4e342e; }
-        .card-notice { background: var(--panel-bg); border: 2px solid var(--highlight); padding: 25px; border-radius: 8px; position: relative; }
-        .card-notice::before { content:'♔'; position:absolute; top:10px; right:15px; font-size:3rem; color:#8a0303; opacity:0.8; }
-        .card-notice h3 { color: var(--highlight); font-family: var(--font-title); margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .card-notice .desc { color: #ccc; font-family: var(--font-hand); font-size: 1.1rem; line-height: 1.6; }
+        .market-item { color: #bf360c; font-family: var(--font-title); font-size: 1.4rem; margin-bottom: 5px; font-weight: bold; }
+        .market-desc { color: #5d4037; font-size: 1rem; font-style: italic; }
+        .market-footer { background: rgba(62, 39, 35, 0.1); padding: 8px; text-align: center; color: #3e2723; font-weight: bold; border-top: 1px dashed #8d6e63; font-family: var(--font-title); }
+        
+        .card-notice { /* Parchment Style for Notices */
+            background-color: #fff8e1;
+            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+            border: 4px double #5d4037;
+            padding: 25px; 
+            position: relative;
+            color: #3e2723;
+        }
+        .card-notice::before { content:'♔'; position:absolute; top:5px; right:15px; font-size:4rem; color:#8a0303; opacity:0.1; }
+        .card-notice h3 { color: #b71c1c; font-family: var(--font-title); margin-bottom: 15px; border-bottom: 1px solid #5d4037; padding-bottom: 10px; font-size: 1.4rem; }
+        .card-notice .desc { color: #3e2723; font-family: var(--font-hand); font-size: 1.2rem; line-height: 1.6; }
+
         .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .party-card { background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(40,40,40,0.9)); border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
         .party-card:hover { transform: translateY(-5px); border-color: var(--highlight); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
         .party-icon { font-size: 2.5rem; color: var(--highlight); margin-bottom: 10px; }
         .party-icon-img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 10px; border: 2px solid var(--highlight); }
         .party-name { font-family: var(--font-title); font-size: 1.4rem; color: #fff; margin-bottom: 5px; }
-        .party-count { color: #888; font-size: 0.9rem; }
+        .party-count { color: #888; font-size: 0.9rem; font-family: var(--font-hand); font-style: italic; }
+        .party-slogan { color: var(--highlight); font-size: 0.95rem; margin-bottom: 5px; font-family: var(--font-hand); min-height: 1.2em; }
+        
         .char-row { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
         .char-row img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
 
@@ -276,6 +317,21 @@
         .item-modal-header h3 { margin: 0 0 5px 0; color: var(--highlight); font-family: var(--font-title); font-size: 1.5rem; }
         .item-modal-type { color: var(--text-sub); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
         .item-modal-desc { margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: #ccc; border-top: 1px solid var(--border-color); padding-top: 15px; max-height: 200px; overflow-y: auto; }
+        
+        /* Iframe Styles for Library */
+        #library-iframe-wrapper {
+            max-width: 1000px;
+            margin: 20px auto;
+            border: 1px solid #5d4037;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        #library-iframe {
+            width: 100%;
+            height: 90vh; /* Adjust height for visibility */
+            display: block;
+        }
     </style>
 </head>
 <body class="mode-guild">
@@ -354,6 +410,7 @@
             <button class="nav-btn" onclick="showSection('quests','guild')"><span>任務</span></button>
             <button class="nav-btn" onclick="showSection('market','guild')"><span>市集</span></button>
             <button class="nav-btn" onclick="showSection('roster','guild')"><span>名冊</span></button>
+            <button class="nav-btn" onclick="showSection('library','guild')"><span>書庫</span></button>
         </nav>
         <main>
             <div id="notices" class="section active"><h2>公會公告</h2><div class="card-grid" id="notice-list"></div></div>
@@ -372,6 +429,19 @@
                 </div>
                 <div class="roster-grid" id="roster-list"></div>
             </div>
+            
+            <div id="library" class="section">
+                <div id="library-iframe-wrapper">
+                    <iframe 
+                        id="library-iframe" 
+                        src="library.html" 
+                        title="公會書庫" 
+                        onload="this.style.height=this.contentWindow.document.body.scrollHeight + 'px';" 
+                        style="width: 100%; border: none; min-height: 80vh;">
+                    </iframe>
+                </div>
+            </div>
+            
         </main>
     </div>
 
@@ -574,7 +644,7 @@
                 <button type="button" class="btn-add" onclick="addJournalAdvancement()">+ 新增</button>
             </div>
             <textarea id="j-summary" class="game-textarea" rows="2" placeholder="備註" style="margin-top:10px;"></textarea>
-            <textarea id="j-content" class="game-textarea" rows="5" placeholder="筆記" style="margin-top:10px;" required></textarea>
+            <textarea id="j-content" class="game-textarea" rows="5" placeholder="內容" style="margin-top:10px;" required></textarea>
             <button class="btn-action">保存</button>
         </form></div>
     </div>
@@ -598,7 +668,13 @@
     <div id="party-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content" style="max-width:500px;">
             <span class="close-btn" onclick="closeModal(event)">×</span>
-            <h2 id="party-modal-title" style="color:var(--highlight); margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">隊伍詳情</h2>
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
+                 <img id="party-modal-icon" src="" style="width:60px; height:60px; object-fit:cover; border-radius:50%; border:2px solid var(--highlight); display:none;">
+                 <div>
+                    <h2 id="party-modal-title" style="color:var(--highlight); margin:0;">隊伍詳情</h2>
+                    <div id="party-modal-desc" style="color:#aaa; font-size:0.9rem; font-style:italic;"></div>
+                 </div>
+             </div>
             <div id="party-modal-list" class="char-list-modal"></div>
         </div>
     </div>
@@ -635,7 +711,6 @@
         let introPlayed = false;
 
         function switchMode(mode) {
-            // ★★★ Fix: Use classList to avoid overwriting 'authenticated' ★★★
             document.body.classList.remove('mode-guild', 'mode-private');
             document.body.classList.add(mode === 'guild' ? 'mode-guild' : 'mode-private');
             
@@ -661,7 +736,26 @@
             document.getElementById(root).querySelectorAll('.section').forEach(e => e.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             const nav = document.getElementById(root).querySelector('.nav-container');
-            nav.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); if(b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
+            nav.querySelectorAll('.nav-btn').forEach(b => { 
+                b.classList.remove('active'); 
+                // Check if the button belongs to the current section (including the library button)
+                if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(id)) {
+                    b.classList.add('active');
+                } else if (id === 'library' && b.getAttribute('onclick') && b.getAttribute('onclick').includes('library.html')) {
+                    // This is for the previous implementation, let's ensure the correct button is highlighted now.
+                    if (b.innerText.includes('書庫')) {
+                        b.classList.add('active');
+                    }
+                }
+            });
+            // Specific logic for iframe content (if used) - not strictly necessary here since the whole section is the iframe.
+            if(id === 'library') {
+                const iframe = document.getElementById('library-iframe');
+                // Optional: Reload iframe if it was hidden, ensuring it loads fresh content
+                if (iframe.contentWindow.location.href !== iframe.src) {
+                    iframe.src = iframe.src; 
+                }
+            }
         }
 
         function switchEditorTab(e, id) {
@@ -679,7 +773,6 @@
             e.target.classList.add('active');
         }
 
-        // ★★★ NEW RANK TITLE LOGIC ★★★
         function getRankTitle(r) {
             const rank = parseInt(r) || 0;
             if (rank <= 4) return `🥉 黃銅`;
@@ -693,12 +786,10 @@
 
         async function loadMyCharactersList(targetId = null) {
             const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u) return;
-            // Order by updated_at so recent edits are top
             let { data: chars } = await db.from('my_characters').select('*').eq('owner_name', u.name).order('created_at', {ascending: true});
             myCharacters = chars || [];
             document.getElementById('char-list-items').innerHTML = myCharacters.map((c, i) => `<div class="char-list-item" onclick="selectCharacter(${i})">${c.name}</div>`).join('');
             
-            // Re-select logic
             if(myCharacters.length > 0) {
                 if(targetId) {
                     const idx = myCharacters.findIndex(c => c.id == targetId);
@@ -801,7 +892,7 @@
             const overlay = document.getElementById('npc-intro-layer'); const textBox = document.getElementById('intro-text'); const u = JSON.parse(localStorage.getItem('maztica_user'));
             let nC = 0, qC = 0, mC = 0;
             try { const r1 = await db.from('notices').select('*', { count: 'exact', head: true }); nC = r1.count||0; const r2 = await db.from('quests').select('*', { count: 'exact', head: true }); qC = r2.count||0; const r3 = await db.from('market').select('*', { count: 'exact', head: true }); mC = r3.count||0; } catch(e) {}
-            const text = `歡迎回來，${u.name}。今天公會也很熱鬧呢。\n目前有 ${nC} 則重要公告，${qC} 個懸賞正在招募勇者，市集裡也有 ${mC} 件新貨上架。\n祝您武運昌隆！`;
+            const text = `歡迎回來，${u.name}。今天公會也很熱鬧呢。\n目前有 ${nC} 則重要公告，${qC} 個懸賞正在招募勇者，市集裡也有 ${mC} 件交易請求。\n祝您武運昌隆！`;
             overlay.classList.add('active'); typeWriter(text, textBox, 0);
         }
         function typeWriter(text, element, i) { if (i < text.length) { element.innerHTML += text.charAt(i); setTimeout(() => typeWriter(text, element, i + 1), 30); } }
@@ -845,12 +936,14 @@
                 const regInfo = partyMap[pName];
                 const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; 
                 const safePName = pName.replace(/'/g, "\\'");
+                const desc = regInfo ? regInfo.description : '招募中...'; // Default slogan
                 
                 return `
                 <div class="party-card" onclick="openPartyDetail('${safePName}')">
                     ${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}
                     <div class="party-name">${pName}</div>
-                    <div class="party-count">${members.length > 0 ? members.length + ' 名成員' : '<span style="color:#d4af37">招募中...</span>'}</div>
+                    <div class="party-slogan">${desc}</div>
+                    <div class="party-count">${members.length > 0 ? members.length + ' 名成員' : ''}</div>
                     <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
                         ${members.slice(0,3).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
                         ${members.length > 3 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
@@ -859,6 +952,7 @@
             }).join('');
             
             window.currentParties = parties;
+            window.partyMap = partyMap; // Save for modal
 
             let { data: n } = await db.from('notices').select('*'); document.getElementById('notice-list').innerHTML = n.map(x=>`<div class="card card-notice"><h3>${x.title}</h3><p class="desc">${x.content}</p></div>`).join('');
             
@@ -893,6 +987,21 @@
 
         function openPartyDetail(pName) {
             const members = window.currentParties[pName];
+            const regInfo = window.partyMap ? window.partyMap[pName] : null;
+            
+            // Show/Hide Header Icon
+            const iconImg = document.getElementById('party-modal-icon');
+            const descDiv = document.getElementById('party-modal-desc');
+            
+            if(regInfo && regInfo.icon_url) {
+                iconImg.src = regInfo.icon_url;
+                iconImg.style.display = 'block';
+                descDiv.innerText = regInfo.description || '';
+            } else {
+                iconImg.style.display = 'none';
+                descDiv.innerText = '';
+            }
+
             const html = members.length > 0 ? members.map(m => `
                 <div class="char-row">
                     <img src="${m.avatar_url||DEFAULT_AVATAR}">
@@ -1064,7 +1173,6 @@
         
         function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
         
-        // ★★★ SAFE TOAST ★★★
         function showToast(m){
             const t=document.getElementById('toast');
             if(t) {
