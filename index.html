@@ -936,7 +936,7 @@
                 const regInfo = partyMap[pName];
                 const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; 
                 const safePName = pName.replace(/'/g, "\\'");
-                const desc = regInfo ? regInfo.description : '招募中...'; // Default slogan
+                const desc = regInfo ? regInfo.description : '隊名還沒想好或等待隊伍招募的人底加啦'; // Default slogan
                 
                 return `
                 <div class="party-card" onclick="openPartyDetail('${safePName}')">
@@ -1258,4 +1258,5 @@
     </script>
 </body>
 </html>
+
 
