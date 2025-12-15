@@ -921,14 +921,14 @@
 
             // Distribute characters
             (chars || []).forEach(c => {
-                const pName = c.party || '自由之翼 (Freelancers)'; 
+                const pName = c.party || '未登記隊伍'; 
                 if (!parties[pName]) parties[pName] = [];
                 parties[pName].push(c);
             });
             
             // Also ensure default group exists if characters have no party
-            if(!parties['自由之翼 (Freelancers)'] && chars && chars.some(c => !c.party)) {
-                parties['自由之翼 (Freelancers)'] = [];
+            if(!parties['未登記隊伍'] && chars && chars.some(c => !c.party)) {
+                parties['未登記隊伍'] = [];
             }
 
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
@@ -1258,3 +1258,4 @@
     </script>
 </body>
 </html>
+
