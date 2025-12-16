@@ -945,7 +945,7 @@
                     <div class="party-slogan">${desc}</div>
                     <div class="party-count">${members.length > 0 ? members.length + ' 名成員' : ''}</div>
                     <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
-                        ${members.slice(0,3).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
+                        ${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
                         ${members.length > 4 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
                     </div>
                 </div>`;
@@ -1258,6 +1258,7 @@
     </script>
 </body>
 </html>
+
 
 
 
