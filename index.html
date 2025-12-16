@@ -269,13 +269,13 @@
         .party-card { background: linear-gradient(135deg, rgba(20,20,20,0.9), rgba(40,40,40,0.9)); border: 2px solid var(--border-color); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
         .party-card:hover { transform: translateY(-5px); border-color: var(--highlight); box-shadow: 0 0 20px rgba(212,175,55,0.2); }
         .party-icon { font-size: 2.5rem; color: var(--highlight); margin-bottom: 10px; }
-        .party-icon-img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 10px; border: 2px solid var(--highlight); }
+        .party-icon-img { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; margin-bottom: 10px; border: 2px solid var(--highlight); }
         .party-name { font-family: var(--font-title); font-size: 1.4rem; color: #fff; margin-bottom: 5px; }
         .party-count { color: #888; font-size: 0.9rem; font-family: var(--font-hand); font-style: italic; }
         .party-slogan { color: var(--highlight); font-size: 0.95rem; margin-bottom: 5px; font-family: var(--font-hand); min-height: 1.2em; }
         
         .char-row { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
-        .char-row img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
+        .char-row img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
 
         /* --- Modals (Fixed) --- */
         #login-gate { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; background: #111; padding: 30px; border: 2px solid var(--highlight); text-align: center; z-index: 2000; border-radius: 10px; }
@@ -669,7 +669,7 @@
         <div class="modal-content" style="max-width:500px;">
             <span class="close-btn" onclick="closeModal(event)">×</span>
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
-                 <img id="party-modal-icon" src="" style="width:60px; height:60px; object-fit:cover; border-radius:50%; border:2px solid var(--highlight); display:none;">
+                 <img id="party-modal-icon" src="" style="width:200px; height:200px; object-fit:cover; border-radius:50%; border:2px solid var(--highlight); display:none;">
                  <div>
                     <h2 id="party-modal-title" style="color:var(--highlight); margin:0;">隊伍詳情</h2>
                     <div id="party-modal-desc" style="color:#aaa; font-size:0.9rem; font-style:italic;"></div>
@@ -945,8 +945,8 @@
                     <div class="party-slogan">${desc}</div>
                     <div class="party-count">${members.length > 0 ? members.length + ' 名成員' : ''}</div>
                     <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
-                        ${members.slice(0,3).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
-                        ${members.length > 3 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
+                        ${members.slice(0,3).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
+                        ${members.length > 4 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
                     </div>
                 </div>`;
             }).join('');
@@ -1258,6 +1258,7 @@
     </script>
 </body>
 </html>
+
 
 
 
