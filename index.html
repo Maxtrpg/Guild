@@ -1436,6 +1436,22 @@ async function uploadAvatar(input) {
         function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
         function showToast(m){ const t=document.getElementById('toast'); if(t){t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}else alert(m); }
 
+
+// ★★★ 補上遺失的切換函式 ★★★
+function toggleReg(show) {
+    const loginView = document.getElementById('login-view');
+    const regView = document.getElementById('reg-view');
+    
+    if (show) {
+        // 顯示註冊，隱藏登入
+        loginView.classList.add('hidden');
+        regView.classList.remove('hidden');
+    } else {
+        // 顯示登入，隱藏註冊
+        loginView.classList.remove('hidden');
+        regView.classList.add('hidden');
+    }
+}
         // ★★★ RE-ADDED MISSING LOGIN FUNCTIONS ★★★
         async function handleLogin(){ 
             const n=document.getElementById('login-name').value; 
