@@ -13,8 +13,6 @@
             --font-title: 'Cinzel', serif;
             --font-body: 'Inter', sans-serif;
             --font-hand: 'Crimson Pro', serif;
-            
-            /* Private Mode Defaults */
             --private-bg-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/01.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8));
             --private-bg-color: #2c1e14;
         }
@@ -29,21 +27,15 @@
         }
         * { box-sizing: border-box; transition: border-color 0.2s, background-color 0.2s, color 0.2s; }
 
-        /* ★★★ SECURITY: Default Hidden State ★★★ */
+        /* Security */
         body:not(.authenticated) header,
         body:not(.authenticated) .view-container,
         body:not(.authenticated) #chat-widget,
-        body:not(.authenticated) #npc-intro-layer {
-            display: none !important;
-        }
-        
-        body.authenticated #login-gate {
-            display: none !important;
-        }
-        
+        body:not(.authenticated) #npc-intro-layer { display: none !important; }
+        body.authenticated #login-gate { display: none !important; }
         .hidden { display: none !important; }
 
-        /* --- Mode A: Guild --- */
+        /* Modes */
         body.mode-guild {
             background-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/bg-guild02.webp');
             color: #e0e0e0;
@@ -65,7 +57,6 @@
         body.mode-guild::after { content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05), transparent 40%); animation: lightShift 15s infinite alternate ease-in-out; pointer-events: none; z-index: 0; mix-blend-mode: screen; }
         @keyframes lightShift { 0% { transform: translate(0,0); opacity: 0.5; } 100% { transform: translate(-20px, 20px); opacity: 0.8; } }
 
-        /* --- Mode B: Private --- */
         body.mode-private {
             color: var(--p-text-main, #f3e5dc);
             --panel-bg: var(--p-panel-bg, rgba(40, 30, 25, 0.95));
@@ -91,12 +82,8 @@
         .btn-logout { background: none; border: 1px solid var(--border-color); color: #888; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
         .btn-logout:hover { color: var(--highlight); border-color: var(--highlight); }
 
-        /* Compact Controls */
-        .controls-wrapper { 
-            display: flex; justify-content: center; align-items: center; 
-            gap: 20px; padding: 8px 0; background: rgba(0,0,0,0.3); 
-            border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 2;
-        }
+        /* Controls */
+        .controls-wrapper { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 8px 0; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 2; }
         .nav-container { display: flex; gap: 5px; margin: 0; }
         .nav-btn { background: var(--panel-bg); border: 1px solid var(--border-color); color: #888; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: var(--font-title); font-size: 0.85rem; transform: skewX(-15deg); }
         .nav-btn span { display: block; transform: skewX(15deg); font-weight: bold; }
@@ -107,7 +94,7 @@
         .theme-btn.active { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 8px #fff; }
         .t-scholar { background: #5d4037; } .t-warrior { background: #37474f; } .t-jungle { background: #1b5e20; } .t-tavern { background: #e65100; }
 
-        /* Layout */
+        /* Main Layout */
         main { max-width: 1200px; margin: 0 auto; padding: 0 15px 80px; position: relative; z-index: 1; }
         .view-container { display: none; opacity: 0; transition: opacity 0.4s ease; }
         .view-container.active { display: block; opacity: 1; }
@@ -117,12 +104,27 @@
 
         /* Reception */
         .reception-area { display: flex; align-items: center; justify-content: center; gap: 30px; padding: 30px; margin-bottom: 20px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-        .npc-standee { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
-        .npc-standee:hover { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 5px 25px rgba(0,0,0,1), 0 0 40px rgba(212, 175, 55, 0.8); }
-        .dialogue-box { max-width: 500px; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 12px; border: 1px solid var(--highlight); position: relative; }
-        .dialogue-box::after { content:''; position: absolute; left: -10px; top: 50%; transform: translateY(-50%); border: 10px solid transparent; border-right-color: var(--highlight); }
-        .npc-name { color: var(--highlight); font-weight: bold; display: block; margin-bottom: 2px; font-size: 0.9rem; }
-        .dialogue-text { font-family: var(--font-hand); font-size: 1rem; color: #ddd; font-style: italic; }
+        
+        /* Chat Widget */
+        #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 8000; display: flex; flex-direction: column; align-items: flex-end; }
+        #npc-chat-toggle { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.4); cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; background: #000; overflow: hidden; }
+        #npc-chat-toggle:hover { transform: scale(1.1); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 0 40px rgba(212,175,55,0.8); }
+        #npc-chat-img { width: 100%; height: 100%; object-fit: cover; }
+        #chat-notify { position: absolute; top: 0; right: 0; width: 20px; height: 20px; background: #ff4444; border-radius: 50%; border: 2px solid #fff; display: none; animation: pulse-red 2s infinite; text-align: center; color: white; font-size: 12px; line-height: 16px; font-weight: bold; }
+        @keyframes pulse-red { 0%{box-shadow:0 0 0 0 rgba(255,68,68,0.7)} 70%{box-shadow:0 0 0 10px rgba(255,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(255,68,68,0)} }
+        #chat-box { width: 350px; height: 450px; background: rgba(15, 10, 5, 0.95); border: 1px solid var(--highlight); border-radius: 12px; margin-bottom: 15px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); backdrop-filter: blur(10px); transform-origin: bottom right; animation: popOpen 0.3s; }
+        @keyframes popOpen { from{transform:scale(0);opacity:0;} to{transform:scale(1);opacity:1;} }
+        .chat-header { padding: 15px; background: rgba(var(--highlight), 0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--highlight); font-weight: bold; font-family: var(--font-title); display: flex; align-items: center; gap: 10px; }
+        .chat-header img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--highlight); }
+        .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; display: flex; gap: 10px; align-items: flex-end; }
+        .chat-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #aaa; flex-shrink: 0; }
+        .msg-npc { align-self: flex-start; background: rgba(255,255,255,0.1); color: #ddd; border-left: 3px solid var(--highlight); flex-direction: row; }
+        .msg-player { align-self: flex-end; background: var(--highlight); color: #000; border-radius: 8px 8px 0 8px; flex-direction: row-reverse; }
+        .chat-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 5px; flex-direction: column; }
+        .chat-input-row { display: flex; gap: 5px; }
+        #chat-in { margin: 0; width: 100%; border-radius: 20px; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff; }
+        #chat-send { background: transparent; border: none; color: var(--highlight); cursor: pointer; font-size: 1.2rem; }
 
         /* NPC Intro */
         #npc-intro-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9000; display: none; flex-direction: column; justify-content: flex-end; align-items: center; }
@@ -133,25 +135,6 @@
         .npc-label { position: absolute; top: -20px; left: 30px; background: var(--highlight); color: #000; padding: 5px 20px; font-family: var(--font-title); font-weight: bold; border-radius: 4px; border: 2px solid #fff; transform: skewX(-15deg); }
         .typewriter-text { font-family: var(--font-hand); font-size: 1.3rem; color: #eee; line-height: 1.6; min-height: 60px; }
         @keyframes slideInUp { to { transform: translateY(0); } } @keyframes fadeInOverlay { from { opacity:0; } to { opacity:1; } } @keyframes fadeInUI { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } } @keyframes bounce { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(5px); } }
-        
-        /* Chat Widget */
-        #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 8000; display: flex; flex-direction: column; align-items: flex-end; }
-        #npc-chat-toggle { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212,175,55,0.4); cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; background: #000; overflow: hidden; }
-        #npc-chat-toggle:hover { transform: scale(1.1); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 0 40px rgba(212,175,55,0.8); }
-        #npc-chat-img { width: 100%; height: 100%; object-fit: cover; }
-        #chat-notify { position: absolute; top: 0; right: 0; width: 15px; height: 15px; background: #ff4444; border-radius: 50%; border: 2px solid #fff; display: none; animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0%{box-shadow:0 0 0 0 rgba(255,68,68,0.7)} 70%{box-shadow:0 0 0 10px rgba(255,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(255,68,68,0)} }
-        #chat-box { width: 300px; height: 400px; background: rgba(15, 10, 5, 0.95); border: 1px solid var(--highlight); border-radius: 12px; margin-bottom: 15px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); backdrop-filter: blur(10px); transform-origin: bottom right; animation: popOpen 0.3s; }
-        @keyframes popOpen { from{transform:scale(0);opacity:0;} to{transform:scale(1);opacity:1;} }
-        .chat-header { padding: 15px; background: rgba(var(--highlight), 0.1); border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--highlight); font-weight: bold; font-family: var(--font-title); display: flex; align-items: center; gap: 10px; }
-        .chat-header img { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--highlight); }
-        .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .chat-msg { font-size: 0.9rem; padding: 8px 12px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
-        .msg-npc { align-self: flex-start; background: rgba(255,255,255,0.1); color: #ddd; border-left: 3px solid var(--highlight); }
-        .msg-player { align-self: flex-end; background: var(--highlight); color: #000; border-radius: 8px 8px 0 8px; }
-        .chat-footer { padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 5px; }
-        #chat-in { margin: 0; width: 100%; border-radius: 20px; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid #555; color: #fff; }
-        #chat-send { background: transparent; border: none; color: var(--highlight); cursor: pointer; font-size: 1.2rem; }
 
         /* Buttons & Forms */
         .btn-action { width: 100%; padding: 10px; margin-top: 10px; background: var(--btn-bg); color: var(--btn-text); font-weight: bold; border: none; border-radius: 4px; font-family: var(--font-title); cursor: pointer; text-transform: uppercase; }
@@ -202,49 +185,23 @@
         .json-zone { border: 2px dashed var(--border-color); padding: 15px; text-align: center; color: #888; border-radius: 8px; cursor: pointer; margin-bottom: 15px; background: rgba(0,0,0,0.1); font-size: 0.9rem; }
         .json-zone:hover { border-color: var(--highlight); color: var(--highlight); }
 
-        /* --- Cards & Roster (Parchment Style) --- */
+        /* Parchment Cards */
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding-bottom:20px; }
         .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card h3 { color: var(--highlight); margin: 0 0 10px 0; font-family: var(--font-title); font-size: 1.2rem; }
         
-        /* Parchment Texture Base */
-        .parchment-base {
-            background-color: #f7f1e3;
-            background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
-            border: 1px solid #8d6e63;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            color: #3e2723;
-            font-family: var(--font-hand);
-            border-radius: 2px;
-            transition: 0.3s;
-        }
+        .parchment-base { background-color: #f7f1e3; background-image: url('https://www.transparenttextures.com/patterns/parchment.png'); border: 1px solid #8d6e63; box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: #3e2723; font-family: var(--font-hand); border-radius: 2px; transition: 0.3s; }
         .parchment-base:hover { transform: scale(1.01); z-index: 5; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-
-        .card-quest { /* Parchment Style for Quests */
-            background-color: #f7f1e3;
-            background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
-            border: 1px solid #8d6e63;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            color: #3e2723;
-            padding: 0; overflow:hidden;
-            font-family: var(--font-hand);
-        }
+        .card-quest { background-color: #f7f1e3; background-image: url('https://www.transparenttextures.com/patterns/parchment.png'); border: 1px solid #8d6e63; box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: #3e2723; padding: 0; overflow:hidden; font-family: var(--font-hand); }
         .quest-header { display: flex; align-items: center; gap: 10px; background: rgba(141, 110, 99, 0.15); padding: 12px 20px; border-bottom: 1px dashed #8d6e63; }
         .quest-client-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #5d4037; filter: sepia(0.3); }
         .quest-client-name { font-weight: bold; font-family: var(--font-title); font-size: 1rem; color: #3e2723; }
         .quest-body { padding: 20px; }
         .quest-title { font-family: var(--font-title); font-size: 1.5rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; color: #b71c1c; letter-spacing: 1px; }
         .quest-desc { font-size: 1.15rem; line-height: 1.6; color: #4e342e; }
-        .quest-footer { background: rgba(183, 28, 28, 0.05); padding: 12px; text-align: center; border-top: 2px double #b71c1c; color: #b71c1c; font-weight: bold; font-family: var(--font-title); font-size: 1.1rem; }
+        .quest-footer { background: rgba(183, 28, 28, 0.05); padding: 12px; text-align: center; border-top: 2px double #b71c1c; color: #b71c1c; font-weight: bold; font-family: var(--font-title); font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
 
-        .card-market { /* Parchment Style for Market */
-            background-color: #efdcd5; /* Rose-tinted parchment */
-            background-image: url('https://www.transparenttextures.com/patterns/lined-paper-2.png');
-            border: 1px solid #8d6e63;
-            padding: 0; overflow:hidden;
-            color: #3e2723;
-            font-family: var(--font-hand);
-        }
+        .card-market { background-color: #efdcd5; background-image: url('https://www.transparenttextures.com/patterns/lined-paper-2.png'); border: 1px solid #8d6e63; padding: 0; overflow:hidden; color: #3e2723; font-family: var(--font-hand); }
         .market-header { display: flex; align-items: center; gap: 10px; background: rgba(93, 64, 55, 0.1); padding: 10px 15px; border-bottom: 1px solid #8d6e63; }
         .market-seller-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid #5d4037; }
         .market-seller-name { color: #5d4037; font-size: 0.9rem; font-weight: bold; }
@@ -253,14 +210,7 @@
         .market-desc { color: #5d4037; font-size: 1rem; font-style: italic; }
         .market-footer { background: rgba(62, 39, 35, 0.1); padding: 8px; text-align: center; color: #3e2723; font-weight: bold; border-top: 1px dashed #8d6e63; font-family: var(--font-title); }
         
-        .card-notice { /* Parchment Style for Notices */
-            background-color: #fff8e1;
-            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
-            border: 4px double #5d4037;
-            padding: 25px; 
-            position: relative;
-            color: #3e2723;
-        }
+        .card-notice { background-color: #fff8e1; background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png'); border: 4px double #5d4037; padding: 25px; position: relative; color: #3e2723; }
         .card-notice::before { content:'♔'; position:absolute; top:5px; right:15px; font-size:4rem; color:#8a0303; opacity:0.1; }
         .card-notice h3 { color: #b71c1c; font-family: var(--font-title); margin-bottom: 15px; border-bottom: 1px solid #5d4037; padding-bottom: 10px; font-size: 1.4rem; }
         .card-notice .desc { color: #3e2723; font-family: var(--font-hand); font-size: 1.2rem; line-height: 1.6; }
@@ -273,31 +223,46 @@
         .party-name { font-family: var(--font-title); font-size: 1.4rem; color: #fff; margin-bottom: 5px; }
         .party-count { color: #888; font-size: 0.9rem; font-family: var(--font-hand); font-style: italic; }
         .party-slogan { color: var(--highlight); font-size: 0.95rem; margin-bottom: 5px; font-family: var(--font-hand); min-height: 1.2em; }
-        
         .char-row { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
         .char-row img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight); }
+        .member-preview-icon { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 1px solid #aaa; }
 
-        /* --- Modals (Fixed) --- */
+        /* Status Tags */
+        .status-tag { padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; border: 1px solid #333; cursor:pointer; }
+        .st-open { background: #2e7d32; color: #fff; }
+        .st-taken { background: #f9a825; color: #000; }
+        .st-done { background: #424242; color: #ccc; }
+
+        /* Comments */
+        .comment-section { display: none; background: rgba(0,0,0,0.05); margin-top: 10px; padding: 10px; border-top: 1px dashed #8d6e63; }
+        .comment-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; text-align: left; }
+        .comment-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #8d6e63; }
+        .comment-content { background: rgba(255,255,255,0.5); padding: 5px 10px; border-radius: 8px; font-size: 0.9rem; }
+        .comment-author { font-weight: bold; font-size: 0.8rem; color: #5d4037; }
+
+        /* Iframe Styles for Library */
+        #library-iframe-wrapper { max-width: 1000px; margin: 20px auto; border: 1px solid #5d4037; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #library-iframe { width: 100%; height: 90vh; display: block; }
+        
+        /* Modals */
         #login-gate { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; background: #111; padding: 30px; border: 2px solid var(--highlight); text-align: center; z-index: 2000; border-radius: 10px; }
         .modal-overlay { position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(5px); z-index: 9999; display: none; justify-content: center; align-items: center; }
         .modal-overlay.open { display: flex !important; }
         .modal-content { background: #151515; border: 1px solid var(--highlight); width: 95%; max-width: 700px; padding: 25px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; margin: auto; }
-        .modal-content-game { width: 95%; max-width: 900px; max-height: 95vh; overflow-y: auto; background: transparent; position: relative; margin: auto; }
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; color: #888; cursor: pointer; }
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--highlight); color: var(--highlight); padding: 8px 20px; display: none; z-index: 4000; border-radius: 20px; }
         
+        /* Game Specific */
         .adv-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
         .adv-row select, .adv-row input { background: rgba(0,0,0,0.5); border: 1px solid #444; color: #ccc; padding: 5px; border-radius: 4px; font-size: 0.9rem; }
         .adv-row select { flex: 2; } .adv-row input { flex: 3; }
         .adv-add-btn { background: #333; border: 1px solid #555; color: #ccc; cursor: pointer; padding: 5px 10px; margin-top: 5px; font-size: 0.8rem; }
-        
         .game-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
         .game-tab { padding: 8px 15px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; }
         .game-tab.active { background: rgba(255,255,255,0.1); color: var(--highlight); border-color: var(--highlight); font-weight: bold; }
         .game-panel { display: none; height: 400px; overflow-y: auto; padding-right: 5px; animation: fadeIn 0.2s; }
         .game-panel.active { display: block; }
         .char-sheet-game { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
-        @media(max-width:900px){.char-sheet-game{grid-template-columns:1fr}}
         .char-portrait-frame { width: 100%; aspect-ratio: 2/3; border: 3px solid var(--highlight); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .hex-stat-display { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; }
         .hex-box { width: 60px; height: 70px; background: #1a1a1a; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
@@ -309,7 +274,6 @@
         .game-item-img { width: 100%; height: 100%; object-fit: cover; }
         .game-item-fallback { font-size: 1.5rem; color: #555; }
         .game-item-slot:hover .game-item-fallback { color: var(--highlight); }
-        
         .item-modal-layout { display: grid; grid-template-columns: 100px 1fr; gap: 20px; }
         .item-modal-icon-box { width: 100px; height: 100px; border: 2px solid var(--highlight); border-radius: 12px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(212,175,55,0.2); }
         .item-modal-img { width: 100%; height: 100%; object-fit: cover; }
@@ -317,21 +281,7 @@
         .item-modal-header h3 { margin: 0 0 5px 0; color: var(--highlight); font-family: var(--font-title); font-size: 1.5rem; }
         .item-modal-type { color: var(--text-sub); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
         .item-modal-desc { margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: #ccc; border-top: 1px solid var(--border-color); padding-top: 15px; max-height: 200px; overflow-y: auto; }
-        
-        /* Iframe Styles for Library */
-        #library-iframe-wrapper {
-            max-width: 1000px;
-            margin: 20px auto;
-            border: 1px solid #5d4037;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        #library-iframe {
-            width: 100%;
-            height: 90vh; /* Adjust height for visibility */
-            display: block;
-        }
+        @media(max-width:900px){.char-sheet-game{grid-template-columns:1fr}}
     </style>
 </head>
 <body class="mode-guild">
@@ -356,7 +306,6 @@
             <button class="btn-action" onclick="handleLogin()">進入系統</button>
             <p style="margin-top:15px; font-size:0.8rem; color:#888; cursor:pointer;" onclick="toggleReg(true)">新進人員登記</p>
         </div>
-
         <div id="reg-view" class="hidden">
             <h2 style="color:var(--highlight)">📝 新進人員登記</h2>
             <p style="color:#ccc; font-size:0.9rem; margin-bottom:15px; line-height:1.5;">
@@ -388,8 +337,11 @@
                 <div class="chat-msg msg-npc">歡迎來到公會通訊頻道，請保持禮貌。</div>
             </div>
             <div class="chat-footer">
-                <input id="chat-in" placeholder="輸入訊息...">
-                <button id="chat-send" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+                <select id="chat-char-select" class="game-input" style="margin-bottom:5px; font-size:0.8rem; padding:4px;"><option value="">(使用玩家身分)</option></select>
+                <div class="chat-input-row">
+                    <input id="chat-in" placeholder="輸入訊息...">
+                    <button id="chat-send" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
         <div id="npc-chat-toggle" onclick="toggleChat()">
@@ -584,10 +536,9 @@
                                 </div>
 
                                 <div id="edit-tab-bio" class="editor-panel">
-                                    <div class="editor-section">
-                                        <label class="editor-label">傳記</label>
-                                        <textarea id="edit-bio" class="game-textarea" rows="8"></textarea>
-                                    </div>
+                                    <div class="editor-section"><label class="editor-label">外觀</label><textarea id="edit-appearance" class="game-textarea" rows="3" placeholder="描述角色的外觀特徵..."></textarea></div>
+                                    <div class="editor-section"><label class="editor-label">弱點</label><textarea id="edit-weakness" class="game-textarea" rows="3" placeholder="角色的弱點或缺陷..."></textarea></div>
+                                    <div class="editor-section"><label class="editor-label">傳記</label><textarea id="edit-bio" class="game-textarea" rows="8" placeholder="角色的背景故事..."></textarea></div>
                                 </div>
                                 
                                 <div style="display:flex; gap:10px; margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
@@ -613,7 +564,7 @@
             <h2>發布懸賞</h2>
             <form onsubmit="handleQuestPost(event)">
                 <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:15px;">
-                    <label class="editor-label" style="margin-top:0;">委託人 (GM可偽裝)</label>
+                    <label class="editor-label" style="margin-top:0;">委託人 (發布前請先跟櫃台人員確認)</label>
                     <div style="display:flex; gap:10px;">
                         <input id="q-client-name" class="game-input" placeholder="名稱">
                         <input id="q-client-img" class="game-input" placeholder="頭像網址">
@@ -629,24 +580,44 @@
     </div>
 
     <div id="listing-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content" style="max-width:400px;"><span class="close-btn" onclick="closeModal(event)">×</span><h2>交易需求</h2>
-        <form onsubmit="postItem(event)"><input id="in-name" class="game-input" placeholder="物品" required><input id="in-price" class="game-input" placeholder="賣價" required><textarea id="in-desc" class="game-textarea" rows="3" placeholder="說明"></textarea><button class="btn-action">上架</button></form></div>
+        <div class="modal-content" style="max-width:400px;">
+            <span class="close-btn" onclick="closeModal(event)">×</span>
+            <h2>交易需求</h2>
+            <form onsubmit="postItem(event)">
+                <label class="editor-label" style="margin-top:0;">張貼者角色</label>
+                <select id="in-char" class="game-input" required></select>
+                <label class="editor-label">物品名稱</label>
+                <input id="in-name" class="game-input" placeholder="物品" required>
+                <label class="editor-label">價格 / 需求</label>
+                <input id="in-price" class="game-input" placeholder="賣價" required>
+                <label class="editor-label">物品描述</label>
+                <textarea id="in-desc" class="game-textarea" rows="3" placeholder="說明"></textarea>
+                <button class="btn-action">上架</button>
+            </form>
+        </div>
     </div>
     
     <div id="journal-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content" style="max-width:600px;"><span class="close-btn" onclick="closeModal(event)">×</span><h2>冒險日誌</h2>
-        <form onsubmit="handleJournalPost(event)">
-            <div style="display:flex; gap:10px;"><select id="j-char" class="game-input" style="flex:1"><option value="">-- 無 --</option></select><input type="date" id="j-date" class="game-input" style="flex:1" required></div>
-            <input id="j-title" class="game-input" placeholder="標題" style="margin-top:10px;" required>
-            <div id="j-adv-section" style="background:rgba(255,255,255,0.05); padding:10px; border-radius:4px; margin:10px 0; border:1px dashed #666;">
-                <label class="editor-label" style="margin-top:0;">技能成長 (填 +1 自動升級)</label>
-                <div id="j-adv-container"></div>
-                <button type="button" class="btn-add" onclick="addJournalAdvancement()">+ 新增</button>
-            </div>
-            <textarea id="j-summary" class="game-textarea" rows="2" placeholder="備註" style="margin-top:10px;"></textarea>
-            <textarea id="j-content" class="game-textarea" rows="5" placeholder="內容" style="margin-top:10px;" required></textarea>
-            <button class="btn-action">保存</button>
-        </form></div>
+        <div class="modal-content" style="max-width:600px;">
+            <span class="close-btn" onclick="closeModal(event)">×</span>
+            <h2>冒險日誌</h2>
+            <form onsubmit="handleJournalPost(event)">
+                <input type="hidden" id="j-edit-id"> 
+                <div style="display:flex; gap:10px;"><select id="j-char" class="game-input" style="flex:1"><option value="">-- 無 --</option></select><input type="date" id="j-date" class="game-input" style="flex:1" required></div>
+                <input id="j-title" class="game-input" placeholder="標題" style="margin-top:10px;" required>
+                <div id="j-adv-section" style="background:rgba(255,255,255,0.05); padding:10px; border-radius:4px; margin:10px 0; border:1px dashed #666;">
+                    <label class="editor-label" style="margin-top:0;">技能成長 (填 +1 自動升級)</label>
+                    <div id="j-adv-container"></div>
+                    <button type="button" class="btn-add" onclick="addJournalAdvancement()">+ 新增</button>
+                </div>
+                <textarea id="j-summary" class="game-textarea" rows="2" placeholder="備註" style="margin-top:10px;"></textarea>
+                <textarea id="j-content" class="game-textarea" rows="5" placeholder="內容" style="margin-top:10px;" required></textarea>
+                <div style="display:flex; justify-content:space-between; margin-top:15px;">
+                    <button class="btn-action" style="background:#8a0303; width:auto; display:none;" id="btn-delete-journal" type="button" onclick="deleteJournal()">🗑️ 刪除</button>
+                    <button class="btn-action" style="width:auto;">保存</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div id="create-party-modal" class="modal-overlay" onclick="closeModal(event)">
@@ -654,8 +625,12 @@
             <span class="close-btn" onclick="closeModal(event)">×</span>
             <h2>成立戰隊</h2>
             <form onsubmit="handleCreateParty(event)">
-                <label class="editor-label">戰隊徽章</label>
-                <input id="p-icon" class="game-input" placeholder="圖片網址 (URL)" required style="margin-bottom:10px;">
+                <label class="editor-label">戰隊徽章 (檔案上傳)</label>
+                <input type="file" id="party-icon-upload" accept="image/png, image/jpeg, image/webp" style="margin-bottom: 10px;">
+                <div id="icon-preview-container" style="margin-top: 10px; display: none; text-align: center; margin-bottom: 15px;">
+                    <img id="icon-preview" src="#" alt="隊徽預覽" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--highlight);">
+                    <p id="icon-upload-status" style="font-size: 0.8rem; color: #888; margin-top: 5px;">等待上傳...</p>
+                </div>
                 <label class="editor-label">戰隊名稱</label>
                 <input id="p-name" class="game-input" placeholder="例如: 黑曜利牙" required style="margin-bottom:10px;">
                 <label class="editor-label">宣言 / 簡介</label>
@@ -679,17 +654,24 @@
         </div>
     </div>
 
-    <div id="game-char-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content-game">
+    <div id="comments-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" style="max-width:500px;">
             <span class="close-btn" onclick="closeModal(event)">×</span>
-            <div id="char-sheet-body"></div>
+            <h2 id="comments-title">交易留言</h2>
+            <div id="comments-list" style="max-height:300px; overflow-y:auto; margin-bottom:15px; border:1px solid #444; padding:10px; background:rgba(0,0,0,0.3);"></div>
+            <div style="display:flex; gap:5px; align-items:center;">
+                <img id="comment-char-avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" style="width:35px; height:35px; border-radius:50%; object-fit:cover; border:1px solid #777;">
+                <select id="comment-char-select" class="game-input" style="flex:1" onchange="updateCommentAvatar()">
+                    <option value="">(使用玩家本帳)</option>
+                </select>
+                <input id="comment-in" class="game-input" style="flex:2" placeholder="輸入留言...">
+                <button class="btn-action" style="width:auto; margin:0;" onclick="postComment()">發送</button>
+            </div>
+            <input type="hidden" id="current-market-id">
         </div>
     </div>
 
-    <div id="item-detail-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content" style="max-width:500px;"><span class="close-btn" onclick="closeModal(event)">×</span><div id="item-detail-body"></div></div>
-    </div>
-
+    <div id="item-detail-modal" class="modal-overlay" onclick="closeModal(event)"><div class="modal-content" style="max-width:500px;"><span class="close-btn" onclick="closeModal(event)">×</span><div id="item-detail-body"></div></div></div>
     <div id="toast">Msg</div>
 
     <script>
@@ -697,6 +679,10 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5saHFzbHllY2Rtd3FkcnRsdWtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyMjM4NjAsImV4cCI6MjA3OTc5OTg2MH0.YlCfxdNP_aQh5Vge-dj079l2hdPeLzzAU0crGGU7XkM'; 
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
+
+        // V67.0: Last Read Time for Chat
+        let lastReadTime = new Date().toISOString(); 
+        let isChatOpen = false;
 
         const THEMES = {
             'scholar': { bg: "url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/001.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8))", color: "#2c1e14", panel: "rgba(45, 30, 20, 0.95)", border: "#5d4037", hl: "#ffb74d", text: "#f3e5dc", sub: "#d7ccc8", in_bg: "#eaddcf", in_txt: "#3e2723", btn_bg: "linear-gradient(to bottom, #ffb74d, #e65100)", btn_txt: "#2e1500" },
@@ -714,10 +700,14 @@
             document.body.classList.remove('mode-guild', 'mode-private');
             document.body.classList.add(mode === 'guild' ? 'mode-guild' : 'mode-private');
             
-            document.getElementById('view-guild').classList.remove('active');
-            document.getElementById('view-private').classList.remove('active');
-            document.getElementById(mode === 'guild' ? 'view-guild' : 'view-private').classList.add('active');
+            document.getElementById('view-guild').classList.toggle('active', mode === 'guild');
+            document.getElementById('view-private').classList.toggle('active', mode === 'private');
             
+            // Header buttons update
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            const btnIndex = mode === 'guild' ? 0 : 1;
+            document.querySelectorAll('.mode-btn')[btnIndex].classList.add('active');
+
             if(mode==='private') { const t = localStorage.getItem('maztica_theme') || 'scholar'; setTheme(t); loadMyCharactersList(); } 
             else { document.body.style.backgroundImage = ""; fetchData(); }
         }
@@ -738,20 +728,16 @@
             const nav = document.getElementById(root).querySelector('.nav-container');
             nav.querySelectorAll('.nav-btn').forEach(b => { 
                 b.classList.remove('active'); 
-                // Check if the button belongs to the current section (including the library button)
                 if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(id)) {
                     b.classList.add('active');
                 } else if (id === 'library' && b.getAttribute('onclick') && b.getAttribute('onclick').includes('library.html')) {
-                    // This is for the previous implementation, let's ensure the correct button is highlighted now.
                     if (b.innerText.includes('書庫')) {
                         b.classList.add('active');
                     }
                 }
             });
-            // Specific logic for iframe content (if used) - not strictly necessary here since the whole section is the iframe.
             if(id === 'library') {
                 const iframe = document.getElementById('library-iframe');
-                // Optional: Reload iframe if it was hidden, ensuring it loads fresh content
                 if (iframe.contentWindow.location.href !== iframe.src) {
                     iframe.src = iframe.src; 
                 }
@@ -763,14 +749,6 @@
             document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active'); 
             e.currentTarget.classList.add('active');
-        }
-
-        function switchGameTab(e, id) {
-            const p = e.target.parentElement.parentElement;
-            p.querySelectorAll('.game-panel').forEach(el=>el.classList.remove('active'));
-            p.querySelectorAll('.game-tab').forEach(el=>el.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            e.target.classList.add('active');
         }
 
         function getRankTitle(r) {
@@ -790,14 +768,27 @@
             myCharacters = chars || [];
             document.getElementById('char-list-items').innerHTML = myCharacters.map((c, i) => `<div class="char-list-item" onclick="selectCharacter(${i})">${c.name}</div>`).join('');
             
+            const chatSel = document.getElementById('chat-char-select');
+            const commSel = document.getElementById('comment-char-select');
+            
+            // Clear and Re-populate
+            chatSel.innerHTML = '<option value="">(使用玩家身分)</option>';
+            commSel.innerHTML = '<option value="">(使用玩家本帳)</option>';
+            
+            myCharacters.forEach(c => {
+                const opt = new Option(c.name, c.id);
+                chatSel.add(opt.cloneNode(true));
+                commSel.add(opt);
+            });
+
             if(myCharacters.length > 0) {
-                if(targetId) {
-                    const idx = myCharacters.findIndex(c => c.id == targetId);
-                    if(idx >= 0) selectCharacter(idx);
-                    else selectCharacter(0);
-                } else {
-                    selectCharacter(0);
-                }
+                 if(targetId) {
+                     const idx = myCharacters.findIndex(c => c.id == targetId);
+                     selectCharacter(idx >= 0 ? idx : 0);
+                 } else {
+                     // Don't auto-select character details on initial load to keep UI clean, 
+                     // unless in private mode. But we can default to 0 index internally.
+                 }
             } else {
                 createNewChar();
             }
@@ -805,19 +796,90 @@
             let { data: logs } = await db.from('journals').select('*').eq('author_name', u.name).order('created_at',{ascending:false});
             document.getElementById('my-journal-list').innerHTML = logs.map(l => {
                 let advHtml = (l.advancements && Array.isArray(l.advancements)) ? `<div style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.1); border:1px dashed var(--border-color); border-radius:4px; font-size:0.85rem;"><div style="color:var(--text-sub); border-bottom:1px dashed var(--border-color); margin-bottom:4px;">技能成長</div>${l.advancements.map(a => `<div style="display:flex; justify-content:space-between;"><span>${a.skill}</span><span style="color:var(--highlight)">${a.note}</span></div>`).join('')}</div>` : '';
-                return `<div class="card"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span class="tag" style="border-color:var(--highlight); color:var(--highlight)">${l.adventure_date || '未知日期'}</span><span class="tag">${myCharacters.find(c => c.id === l.character_id)?.name || '未指定'}</span></div><h3>${l.title}</h3>${l.summary ? `<div style="font-style:italic; color:var(--text-sub); margin-bottom:10px; padding-left:10px; border-left:3px solid #555;">${l.summary}</div>` : ''}<p class="desc">${l.content}</p>${advHtml}</div>`;
+                return `<div class="card" onclick="editJournal('${l.id}')" style="cursor:pointer;"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span class="tag" style="border-color:var(--highlight); color:var(--highlight)">${l.adventure_date || '未知日期'}</span><span class="tag">${myCharacters.find(c => c.id === l.character_id)?.name || '未指定'}</span></div><h3>${l.title}</h3>${l.summary ? `<div style="font-style:italic; color:var(--text-sub); margin-bottom:10px; padding-left:10px; border-left:3px solid #555;">${l.summary}</div>` : ''}<p class="desc">${l.content}</p>${advHtml}</div>`;
             }).join('');
         }
 
+        async function editJournal(jid) {
+            const { data } = await db.from('journals').select('*').eq('id', jid).single();
+            if(!data) return;
+            setVal('j-edit-id', data.id);
+            setVal('j-title', data.title);
+            setVal('j-date', data.adventure_date);
+            setVal('j-summary', data.summary);
+            setVal('j-content', data.content);
+            const sel = document.getElementById('j-char');
+            sel.innerHTML = '<option value="">-- 無 --</option>'; 
+            myCharacters.forEach(c => sel.add(new Option(c.name, c.id)));
+            if(data.character_id) sel.value = data.character_id;
+            
+            document.getElementById('j-adv-container').innerHTML=''; 
+            if(data.advancements) {
+                data.advancements.forEach(adv => addJournalAdvancement(adv.skill, adv.note));
+            }
+            
+            // Show Delete Button
+            document.getElementById('btn-delete-journal').style.display = 'block';
+            document.getElementById('journal-modal').classList.add('open');
+        }
+
+        async function deleteJournal() {
+            const jid = document.getElementById('j-edit-id').value;
+            if(!jid) return;
+            if(confirm("確定刪除這篇日誌嗎？此操作無法復原。")) {
+                await db.from('journals').delete().eq('id', jid);
+                showToast("日誌已刪除");
+                document.getElementById('journal-modal').classList.remove('open');
+                loadMyCharactersList();
+            }
+        }
+
+        function openJournalModal(){ 
+            const u = JSON.parse(localStorage.getItem('maztica_user')); 
+            if(!u){alert('請登入');return;} 
+            document.getElementById('j-edit-id').value=''; 
+            document.getElementById('j-title').value=''; 
+            document.getElementById('j-content').value=''; 
+            document.getElementById('j-summary').value='';
+            const sel=document.getElementById('j-char'); 
+            sel.innerHTML='<option value="">-- 無 --</option>'; 
+            myCharacters.forEach(c=>sel.add(new Option(c.name,c.id))); 
+            document.getElementById('j-date').valueAsDate=new Date(); 
+            document.getElementById('j-adv-container').innerHTML=''; 
+            
+            // Hide Delete Button for new entry
+            document.getElementById('btn-delete-journal').style.display = 'none';
+            document.getElementById('journal-modal').classList.add('open'); 
+        }
+
         function selectCharacter(index) {
+            if(index < 0 || !myCharacters[index]) return;
             document.querySelectorAll('.char-list-item').forEach((el, i) => el.classList.toggle('active', i === index));
-            const char = myCharacters[index]; if(!char) return;
+            const char = myCharacters[index];
             setVal('edit-char-id', char.id); setVal('edit-name', char.name); setVal('edit-race', char.race); setVal('edit-class', char.class); setVal('edit-avatar', char.avatar_url); setVal('edit-rank', char.rank||0); setVal('edit-party', char.party||'');
             document.getElementById('avatar-preview').src = char.avatar_url;
             const sheet = char.sheet_data || {}; const sys = sheet.system || {}; const items = sheet.items || [];
-            ['str','con','agl','int','wil','cha'].forEach(k => { if(sys.attributes?.[k]) setVal(`attr-${k}`, sys.attributes[k].value||10); });
-            setVal('edit-hp', sys.hitPoints?.value||10); setVal('edit-wp', sys.willPoints?.value||10); setVal('edit-bio', (sys.notes||"").replace(/<[^>]*>?/gm, ''));
-            if(sys.currency) { setVal('curr-gc', sys.currency.gc||0); setVal('curr-sc', sys.currency.sc||0); setVal('curr-cc', sys.currency.cc||0); }
+            
+            ['str','con','agl','int','wil','cha'].forEach(k => { 
+                if(sys.attributes && sys.attributes[k]) {
+                    const val = (sys.attributes[k].base !== undefined) ? sys.attributes[k].base : sys.attributes[k].value;
+                    setVal(`attr-${k}`, val||10); 
+                }
+            });
+            
+            setVal('edit-hp', (sys.hitPoints ? (sys.hitPoints.max || sys.hitPoints.value) : 10)); 
+            setVal('edit-wp', (sys.willPoints ? (sys.willPoints.max || sys.willPoints.value) : 10)); 
+            
+            setVal('edit-bio', (sys.notes||"").replace(/<[^>]*>?/gm, ''));
+            setVal('edit-weakness', (sys.weakness||""));
+            setVal('edit-appearance', (sys.appearance||""));
+
+            if(sys.currency) { 
+                setVal('curr-gc', sys.currency.gc||0); 
+                setVal('curr-sc', sys.currency.sc||0); 
+                setVal('curr-cc', sys.currency.cc||0); 
+            }
+
             editorData.kinAbilities = items.filter(i => i.system.abilityType === 'kin');
             editorData.heroicAbilities = items.filter(i => i.system.abilityType === 'heroic');
             editorData.coreSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'core');
@@ -833,60 +895,183 @@
 
         function createNewChar() {
             setVal('edit-char-id', ''); setVal('edit-name', '新角色'); setVal('edit-race', ''); setVal('edit-class', ''); setVal('edit-avatar', ''); setVal('edit-rank', 0); setVal('edit-party', '');
-            document.getElementById('avatar-preview').src = ""; ['str','con','agl','int','wil','cha'].forEach(k => setVal(`attr-${k}`, 10)); setVal('edit-hp', 10); setVal('edit-wp', 10); setVal('edit-bio', '');
+            document.getElementById('avatar-preview').src = ""; ['str','con','agl','int','wil','cha'].forEach(k => setVal(`attr-${k}`, 10)); setVal('edit-hp', 10); setVal('edit-wp', 10); setVal('edit-bio', ''); setVal('edit-weakness', ''); setVal('edit-appearance', '');
+            setVal('curr-gc', 0); setVal('curr-sc', 0); setVal('curr-cc', 0);
             editorData = { kinAbilities:[], heroicAbilities:[], coreSkills:[], weaponSkills:[], secondarySkills:[], cantrips:[], rankedSpells:[], weapons:[], armors:[], gear:[] };
             renderAllLists(); document.querySelectorAll('.char-list-item').forEach(el => el.classList.remove('active'));
         }
-
-        function renderAllLists() {
-            renderBox('kin-abilities-container', editorData.kinAbilities, 'kinAbilities');
-            renderBox('heroic-abilities-container', editorData.heroicAbilities, 'heroicAbilities');
-            renderBox('skills-core-container', editorData.coreSkills, 'coreSkills');
-            renderBox('skills-weapon-container', editorData.weaponSkills, 'weaponSkills');
-            renderBox('skills-secondary-container', editorData.secondarySkills, 'secondarySkills');
-            renderBox('spells-cantrip-container', editorData.cantrips, 'cantrips');
-            renderBox('spells-ranked-container', editorData.rankedSpells, 'rankedSpells');
-            renderBox('inv-weapon-container', editorData.weapons, 'weapons');
-            renderBox('inv-armor-container', editorData.armors, 'armors');
-            renderBox('inv-gear-container', editorData.gear, 'gear');
+        
+        function renderAllLists() { 
+            renderBox('kin-abilities-container',editorData.kinAbilities,'kinAbilities'); 
+            renderBox('heroic-abilities-container',editorData.heroicAbilities,'heroicAbilities'); 
+            renderBox('skills-core-container',editorData.coreSkills,'coreSkills'); 
+            renderBox('skills-weapon-container',editorData.weaponSkills,'weaponSkills'); 
+            renderBox('skills-secondary-container',editorData.secondarySkills,'secondarySkills'); 
+            renderBox('spells-cantrip-container',editorData.cantrips,'cantrips'); 
+            renderBox('spells-ranked-container',editorData.rankedSpells,'rankedSpells'); 
+            renderBox('inv-weapon-container',editorData.weapons,'weapons'); 
+            renderBox('inv-armor-container',editorData.armors,'armors'); 
+            renderBox('inv-gear-container',editorData.gear,'gear'); 
         }
 
         function renderBox(id, list, type) {
             document.getElementById(id).innerHTML = list.map((item, idx) => {
-                const qty = item.system.quantity || 1; const showQty = ['weapons', 'armors', 'gear'].includes(type);
-                const valInput = !showQty ? `<input type="number" value="${item.system?.value||0}" onchange="updateEditorItem('${type}', ${idx}, 'val', this.value)" style="width:50px;">` : '';
-                const qtyInput = showQty ? `<input type="number" value="${qty}" class="qty-input" onchange="updateEditorItem('${type}', ${idx}, 'qty', this.value)">` : '';
-                return `<div class="item-row-edit"><input type="text" value="${item.name}" onchange="updateEditorItem('${type}', ${idx}, 'name', this.value)" style="flex:2;">${valInput}${qtyInput}<button class="btn-icon" onclick="removeEditorItem('${type}', ${idx})">✖</button></div>`;
+                const qty = item.system.quantity || 1;
+                // V65.1: Only show quantity for equipment
+                const showQty = ['weapons', 'armors', 'gear'].includes(type);
+                // V65.1: Only show value/rank for skills (hide for features/spells)
+                const showVal = ['coreSkills', 'weaponSkills', 'secondarySkills'].includes(type);
+                
+                let extraInput = '';
+                if (showQty) extraInput = `<input type="number" value="${qty}" class="qty-input" onchange="updateEditorItem('${type}', ${idx}, 'qty', this.value)">`;
+                else if (showVal) extraInput = `<input type="number" value="${item.system?.value || 0}" onchange="updateEditorItem('${type}', ${idx}, 'val', this.value)" style="width:50px;">`;
+                
+                return `<div class="item-row-edit"><input type="text" value="${item.name}" onchange="updateEditorItem('${type}', ${idx}, 'name', this.value)" style="flex:2;">${extraInput}<button class="btn-icon" onclick="removeEditorItem('${type}', ${idx})">✖</button></div>`;
             }).join('');
         }
 
-        function updateEditorItem(type, idx, key, val) {
-            if(key==='name') editorData[type][idx].name = val;
-            if(key==='val') { if(!editorData[type][idx].system) editorData[type][idx].system={}; editorData[type][idx].system.value = val; }
-            if(key==='qty') { if(!editorData[type][idx].system) editorData[type][idx].system={}; editorData[type][idx].system.quantity = parseInt(val); }
-        }
-        function removeEditorItem(type, idx) { editorData[type].splice(idx, 1); renderAllLists(); }
-        function addEditorItem(baseType, subtype) {
-            let tList, newItem = { name:'新項目', type:baseType, system:{quantity:1} };
-            if (baseType === 'feature' && subtype === 'kin') { newItem.system.abilityType='kin'; tList = 'kinAbilities'; }
-            else if (baseType === 'ability' && subtype === 'heroic') { newItem.system.abilityType='heroic'; tList = 'heroicAbilities'; }
-            else if (baseType === 'skill') {
-                if(subtype==='weapon') { newItem.system.skillType='weapon'; tList='weaponSkills'; }
-                else if(subtype==='core') { newItem.system.skillType='core'; tList='coreSkills'; }
-                else { newItem.system.skillType='secondary'; tList='secondarySkills'; }
-            } else if (baseType === 'spell') {
-                if(subtype==='cantrip') { newItem.system.rank=0; tList='cantrips'; }
-                else { newItem.system.rank=1; tList='rankedSpells'; }
-            } else {
-                newItem.system.quantity = 1;
-                if(subtype==='weapon') { newItem.type='weapon'; tList='weapons'; }
-                else if(subtype==='armor') { newItem.type='armor'; tList='armors'; }
-                else { newItem.type='item'; tList='gear'; }
-            }
-            editorData[tList].push(newItem); renderAllLists();
+        function updateEditorItem(t, i, k, v) {
+            if (k === 'name') editorData[t][i].name = v;
+            if (k === 'val') { if (!editorData[t][i].system) editorData[t][i].system = {}; editorData[t][i].system.value = v; }
+            if (k === 'qty') { if (!editorData[t][i].system) editorData[t][i].system = {}; editorData[t][i].system.quantity = parseInt(v); }
         }
 
-        // --- NPC INTRO ---
+        function removeEditorItem(t, i) {
+            editorData[t].splice(i, 1);
+            renderAllLists();
+        }
+
+        function addEditorItem(b, s) {
+            let t, n = { name: '新項目', type: b, system: { quantity: 1 } };
+            if (b === 'feature') { n.system.abilityType = 'kin'; t = 'kinAbilities'; }
+            else if (b === 'ability') { n.system.abilityType = 'heroic'; t = 'heroicAbilities'; }
+            else if (b === 'skill') { n.system.skillType = s; t = s === 'core' ? 'coreSkills' : s === 'weapon' ? 'weaponSkills' : 'secondarySkills'; }
+            else if (b === 'spell') { n.system.rank = s === 'cantrip' ? 0 : 1; t = s === 'cantrip' ? 'cantrips' : 'rankedSpells'; }
+            else { n.type = s; t = s === 'weapon' ? 'weapons' : s === 'armor' ? 'armors' : 'gear'; }
+            editorData[t].push(n);
+            renderAllLists();
+        }
+
+        // --- SKILL CALCULATION LOGIC ---
+        function getAttributeBase(val) {
+            if(val <= 5) return 3;
+            if(val <= 8) return 4;
+            if(val <= 12) return 5;
+            if(val <= 15) return 6;
+            return 7; // 16-18
+        }
+
+ // ★★★ 修復：加強版 JSON 讀取邏輯 ★★★
+function loadJsonToEditor(input) {
+    const file = input.files[0]; if(!file) return;
+    const r = new FileReader();
+    
+    r.onload = e => {
+        try {
+            const json = JSON.parse(e.target.result);
+            console.log("Loading JSON:", json); // 方便除錯用
+
+            // 1. 基礎資料
+            setVal('edit-name', json.name || "未命名角色");
+            
+            // 處理頭像 (有些 FVTT 格式圖片在 img，有些在 prototypeToken.texture.src)
+            let imgUrl = json.img || "";
+            if (!imgUrl && json.prototypeToken && json.prototypeToken.texture) {
+                imgUrl = json.prototypeToken.texture.src;
+            }
+            setVal('edit-avatar', imgUrl);
+            document.getElementById('avatar-preview').src = imgUrl || DEFAULT_AVATAR;
+            
+            // 2. 自動判斷種族與職業
+            const items = json.items || [];
+            const raceItem = items.find(i => i.type === 'kin' || i.type === 'race'); 
+            if(raceItem) setVal('edit-race', raceItem.name);
+            
+            const classItem = items.find(i => i.type === 'profession' || i.type === 'class'); 
+            if(classItem) setVal('edit-class', classItem.name);
+            
+            // 3. 屬性與狀態 (System Data)
+            const sys = json.system || {};
+            const attrs = sys.attributes || {};
+            
+            // 讀取六大屬性
+            ['str','con','agl','int','wil','cha'].forEach(k => { 
+                if(attrs[k]) { 
+                    // 有些模組用 value，有些用 base
+                    const val = (attrs[k].base !== undefined) ? attrs[k].base : attrs[k].value; 
+                    setVal(`attr-${k}`, val || 10); 
+                } 
+            });
+            
+            // ★★★ HP/WP 修復重點 ★★★
+            // 嘗試多種常見路徑，避免讀不到
+            let hp = 10, wp = 10;
+
+            // 找 HP
+            if (sys.hitPoints) hp = sys.hitPoints.value || sys.hitPoints.base;
+            else if (attrs.hitPoints) hp = attrs.hitPoints.value || attrs.hitPoints.base;
+            else if (sys.health) hp = sys.health.value || sys.health.base; // 其他系統的常見欄位
+
+            // 找 WP
+            if (sys.willPoints) wp = sys.willPoints.value || sys.willPoints.base;
+            else if (attrs.willPoints) wp = attrs.willPoints.value || attrs.willPoints.base;
+            else if (sys.power) wp = sys.power.value || sys.power.base; // 其他系統的常見欄位
+            else if (sys.mana) wp = sys.mana.value || sys.mana.base;
+
+            setVal('edit-hp', hp || 10);
+            setVal('edit-wp', wp || 10);
+
+            // 錢幣
+            if(sys.currency) {
+                setVal('curr-gc', sys.currency.gc || 0);
+                setVal('curr-sc', sys.currency.sc || 0);
+                setVal('curr-cc', sys.currency.cc || 0);
+            }
+
+            // 傳記類
+            if(sys.notes) setVal('edit-bio', (sys.notes || "").replace(/<[^>]*>?/gm, ''));
+            if(sys.weakness) setVal('edit-weakness', (sys.weakness || "").replace(/<[^>]*>?/gm, ''));
+            if(sys.appearance) setVal('edit-appearance', (sys.appearance || "").replace(/<[^>]*>?/gm, ''));
+
+            // 4. 物品與技能過濾
+            // 輔助函式：計算技能基礎值
+            const getAttributeBase = (val) => {
+                if(val <= 5) return 3; if(val <= 8) return 4; if(val <= 12) return 5; if(val <= 15) return 6; return 7;
+            };
+
+            const fixSkill = (s) => { 
+                const attrKey = s.system.attribute; 
+                // 如果技能數值為 0，嘗試自動計算初始值
+                if((!s.system.value || s.system.value == 0) && attrKey && attrs[attrKey]) {
+                    const attrVal = attrs[attrKey].value || attrs[attrKey].base;
+                    const baseSkill = getAttributeBase(attrVal);
+                    const isTrained = s.name.includes("受訓"); 
+                    s.system.value = isTrained ? baseSkill * 2 : baseSkill; 
+                }
+                return s; 
+            };
+
+            editorData.kinAbilities = items.filter(i => i.system.abilityType === 'kin');
+            editorData.heroicAbilities = items.filter(i => i.system.abilityType === 'heroic');
+            editorData.coreSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'core').map(fixSkill);
+            editorData.weaponSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'weapon').map(fixSkill);
+            editorData.secondarySkills = items.filter(i => i.type === 'skill' && i.system.skillType !== 'weapon' && i.system.skillType !== 'core').map(fixSkill);
+            editorData.cantrips = items.filter(i => i.type === 'spell' && i.system.rank == 0);
+            editorData.rankedSpells = items.filter(i => i.type === 'spell' && i.system.rank > 0);
+            editorData.weapons = items.filter(i => i.type === 'weapon');
+            editorData.armors = items.filter(i => ['armor','helmet'].includes(i.type));
+            editorData.gear = items.filter(i => i.type === 'item');
+            
+            renderAllLists();
+            showToast('✅ JSON 資料已匯入');
+        } catch(err) { 
+            console.error(err);
+            alert('JSON 解析錯誤: '+err.message); 
+        }
+    };
+    r.readAsText(file);
+}
+
         async function showNPCIntro() {
             if(introPlayed) return; introPlayed = true;
             const overlay = document.getElementById('npc-intro-layer'); const textBox = document.getElementById('intro-text'); const u = JSON.parse(localStorage.getItem('maztica_user'));
@@ -898,334 +1083,332 @@
         function typeWriter(text, element, i) { if (i < text.length) { element.innerHTML += text.charAt(i); setTimeout(() => typeWriter(text, element, i + 1), 30); } }
         function dismissIntro() { const overlay = document.getElementById('npc-intro-layer'); overlay.style.opacity = '0'; setTimeout(() => { overlay.classList.remove('active'); overlay.style.opacity = ''; document.getElementById('intro-text').innerHTML = ''; }, 500); }
 
-        // --- FETCH DATA ---
+        // --- FETCH & RENDER ---
         async function fetchData() {
-            // 1. Fetch Parties
-            let registeredParties = [];
-            try {
-                let { data } = await db.from('parties').select('*');
-                registeredParties = data || [];
-            } catch(e) { console.warn("Parties table not found or error", e); }
-
-            const partyMap = {};
-            registeredParties.forEach(p => { partyMap[p.name] = p; });
-
-            // 2. Fetch Characters
+            let registeredParties = []; try { let { data } = await db.from('parties').select('*'); registeredParties = data || []; } catch(e) {}
+            const partyMap = {}; registeredParties.forEach(p => { partyMap[p.name] = p; });
             let { data: chars } = await db.from('my_characters').select('*').eq('is_public', true).order('created_at',{ascending:false});
-            const parties = {};
-            
-            // Initialize registered parties first (so they appear even if empty)
-            registeredParties.forEach(p => {
-                parties[p.name] = [];
-            });
-
-            // Distribute characters
-            (chars || []).forEach(c => {
-                const pName = c.party || '未登記隊伍'; 
-                if (!parties[pName]) parties[pName] = [];
-                parties[pName].push(c);
-            });
-            
-            // Also ensure default group exists if characters have no party
-            if(!parties['未登記隊伍'] && chars && chars.some(c => !c.party)) {
-                parties['未登記隊伍'] = [];
-            }
-
+            const parties = {}; registeredParties.forEach(p => { parties[p.name] = []; });
+            (chars || []).forEach(c => { const pName = c.party || '未登記隊伍'; if (!parties[pName]) parties[pName] = []; parties[pName].push(c); });
+            if(!parties['未登記隊伍'] && chars && chars.some(c => !c.party)) { parties['未登記隊伍'] = []; }
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
-                const members = parties[pName];
-                const regInfo = partyMap[pName];
-                const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; 
-                const safePName = pName.replace(/'/g, "\\'");
-                const desc = regInfo ? regInfo.description : '隊名還沒想好或等待招募的人底加啦~'; // Default slogan
-                
-                return `
-                <div class="party-card" onclick="openPartyDetail('${safePName}')">
-                    ${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}
-                    <div class="party-name">${pName}</div>
-                    <div class="party-slogan">${desc}</div>
-                    <div class="party-count">${members.length > 0 ? members.length + ' 名成員' : ''}</div>
-                    <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
-                        ${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:1px solid #aaa;">`).join('')}
-                        ${members.length > 4 ? '<span style="color:#888; font-size:0.8rem; align-self:center;">...</span>' : ''}
-                    </div>
-                </div>`;
+                const members = parties[pName]; const regInfo = partyMap[pName]; const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; const safePName = pName.replace(/'/g, "\\'"); const desc = regInfo ? regInfo.description : '招募中...'; 
+                return `<div class="party-card" onclick="openPartyDetail('${safePName}')">${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}<div class="party-name">${pName}</div><div class="party-slogan">${desc}</div><div class="party-count">${members.length} 名成員</div><div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" class="member-preview-icon">`).join('')}${members.length > 4 ? '<span style="color:#888;">...</span>' : ''}</div></div>`;
             }).join('');
-            
-            window.currentParties = parties;
-            window.partyMap = partyMap; // Save for modal
+            window.currentParties = parties; window.partyMap = partyMap;
 
             let { data: n } = await db.from('notices').select('*'); document.getElementById('notice-list').innerHTML = n.map(x=>`<div class="card card-notice"><h3>${x.title}</h3><p class="desc">${x.content}</p></div>`).join('');
             
-            let { data: q } = await db.from('quests').select('*'); 
-            document.getElementById('quest-list').innerHTML = q.map(x=>`
-                <div class="card card-quest">
-                    <div class="quest-header">
-                        <img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img">
-                        <span class="quest-client-name">${x.client_name || '匿名委託人'}</span>
-                    </div>
-                    <div class="quest-body">
-                        <div class="quest-title">${x.title}</div>
-                        <p class="quest-desc">${x.desc}</p>
-                    </div>
-                    <div class="quest-footer">報酬: ${x.reward || '面議'}</div>
-                </div>`).join('');
+            // Quests with Status
+            let { data: q } = await db.from('quests').select('*').order('created_at',{ascending:false}); 
+            document.getElementById('quest-list').innerHTML = q.map(x=>{
+                let statusClass = x.status === '已完成' ? 'st-done' : (x.status === '進行中' ? 'st-taken' : 'st-open');
+                let statusText = x.status || '未接取';
+                let taker = x.taken_by ? ` (${x.taken_by})` : '';
+                return `<div class="card card-quest"><div class="quest-header"><img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img"><span class="quest-client-name">${x.client_name || '匿名'}</span><span class="status-tag ${statusClass}" style="margin-left:auto" onclick="toggleQuestStatus('${x.id}', '${statusText}')">${statusText}${taker}</span></div><div class="quest-body"><div class="quest-title">${x.title}</div><p class="quest-desc">${x.desc}</p></div><div class="quest-footer">報酬: ${x.reward}</div></div>`;
+            }).join('');
             
-            let { data: m } = await db.from('market').select('*'); 
-            document.getElementById('market-list').innerHTML = m.map(x=>`
-                <div class="card card-market">
-                    <div class="market-header">
-                        <img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img">
-                        <span class="market-seller-name">${x.owner || '神秘商人'}</span>
-                    </div>
-                    <div class="market-body">
-                        <div class="market-item">${x.item_name}</div>
-                        <div class="market-desc">${x.description||'無說明'}</div>
-                    </div>
-                    <div class="market-footer">價格: ${x.price}</div>
-                </div>`).join('');
+            // Market with Comments
+            let { data: m } = await db.from('market').select('*').order('created_at',{ascending:false}); 
+            document.getElementById('market-list').innerHTML = m.map(x=>`<div class="card card-market"><div class="market-header"><img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img"><span class="market-seller-name">${x.owner}</span></div><div class="market-body"><div class="market-item">${x.item_name}</div><div class="market-desc">${x.description||''}</div></div><div class="market-footer">價格: ${x.price}</div><button class="btn-action" style="font-size:0.8rem; margin:5px;" onclick="openComments('${x.id}')">💬 留言 / 詢價</button></div>`).join('');
         }
 
+        async function toggleQuestStatus(qid, currentStatus) {
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const allowed = ['GM', 'NPC']; 
+            if (!u || !allowed.includes(u.name)) {
+                 alert("權限不足：只有公會行政人員才可變更！");
+                 return;
+            }
+            const newStatus = currentStatus.includes('未接取') ? '進行中' : (currentStatus.includes('進行中') ? '已完成' : '未接取');
+            let taker = '';
+            if(newStatus === '進行中') taker = prompt("請輸入接取任務的隊伍名稱:");
+            await db.from('quests').update({ status: newStatus, taken_by: taker }).eq('id', qid);
+            fetchData();
+        }
+
+        // --- Comments Logic ---
+        async function openComments(marketId) {
+            document.getElementById('current-market-id').value = marketId;
+            const { data } = await db.from('market_comments').select('*').eq('market_id', marketId).order('created_at');
+            document.getElementById('comments-list').innerHTML = data ? data.map(c => `<div class="comment-row"><img src="${c.user_avatar||DEFAULT_AVATAR}" class="comment-avatar"><div><div class="comment-author">${c.user_name}</div><div class="comment-content">${c.content}</div></div></div>`).join('') : '暫無留言';
+            document.getElementById('comments-modal').classList.add('open');
+        }
+
+        // V67.0: Dynamic Avatar Update Logic
+        function updateCommentAvatar() {
+            const sel = document.getElementById('comment-char-select');
+            const img = document.getElementById('comment-char-avatar');
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            
+            if (sel.value) {
+                const char = myCharacters.find(c => c.id == sel.value);
+                img.src = char ? char.avatar_url : DEFAULT_AVATAR;
+            } else {
+                img.src = (u && u.avatar_url) ? u.avatar_url : DEFAULT_AVATAR; 
+            }
+        }
+
+        async function postComment() {
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const mid = document.getElementById('current-market-id').value;
+            const txt = document.getElementById('comment-in').value;
+            const charId = document.getElementById('comment-char-select').value;
+            let name = u.name, avatar = u.avatar_url || DEFAULT_AVATAR; 
+            
+            if(charId) {
+                const char = myCharacters.find(c=>c.id==charId);
+                if(char) { name = char.name; avatar = char.avatar_url; }
+            }
+            if(!txt) return;
+            await db.from('market_comments').insert({ market_id: mid, user_name: name, user_avatar: avatar, content: txt });
+            document.getElementById('comment-in').value = '';
+            openComments(mid); // Reload
+        }
+
+        // --- MODAL & UI ---
         function openPartyDetail(pName) {
             const members = window.currentParties[pName];
             const regInfo = window.partyMap ? window.partyMap[pName] : null;
-            
-            // Show/Hide Header Icon
             const iconImg = document.getElementById('party-modal-icon');
             const descDiv = document.getElementById('party-modal-desc');
-            
-            if(regInfo && regInfo.icon_url) {
-                iconImg.src = regInfo.icon_url;
-                iconImg.style.display = 'block';
-                descDiv.innerText = regInfo.description || '';
-            } else {
-                iconImg.style.display = 'none';
-                descDiv.innerText = '';
-            }
-
-            const html = members.length > 0 ? members.map(m => `
-                <div class="char-row">
-                    <img src="${m.avatar_url||DEFAULT_AVATAR}">
-                    <div>
-                        <div style="font-weight:bold; color:var(--highlight);">${m.name}</div>
-                        <div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | <span style="color:#ffd700">${getRankTitle(m.rank)}</span> (${m.rank||0})</div>
-                    </div>
-                </div>`).join('') : '<div style="text-align:center; color:#888; padding:20px;">尚無成員</div>';
-            
+            if(regInfo && regInfo.icon_url) { iconImg.src = regInfo.icon_url; iconImg.style.display = 'block'; descDiv.innerText = regInfo.description || ''; } 
+            else { iconImg.style.display = 'none'; descDiv.innerText = ''; }
             document.getElementById('party-modal-title').innerText = pName;
-            document.getElementById('party-modal-list').innerHTML = html;
+            document.getElementById('party-modal-list').innerHTML = members.length > 0 ? members.map(m => `<div class="char-row"><img src="${m.avatar_url||DEFAULT_AVATAR}"><div><div style="font-weight:bold; color:var(--highlight);">${m.name}</div><div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | <span style="color:#ffd700">${getRankTitle(m.rank)}</span> (${m.rank||0})</div></div></div>`).join('') : '<div style="text-align:center;">無成員</div>';
             document.getElementById('party-modal').classList.add('open');
         }
 
-        // Quest Posting
-        function openQuestModal() {
-            const u = JSON.parse(localStorage.getItem('maztica_user'));
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            setVal('q-client-name', u.name);
-            setVal('q-client-img', u.avatar_url || ''); 
-            document.getElementById('quest-modal').classList.add('open');
-        }
-        
-        async function handleQuestPost(e) {
-            e.preventDefault();
-            const payload = {
-                title: document.getElementById('q-title').value,
-                desc: document.getElementById('q-desc').value,
-                reward: document.getElementById('q-reward').value,
-                client_name: document.getElementById('q-client-name').value,
-                client_avatar: document.getElementById('q-client-img').value
-            };
-            const { error } = await db.from('quests').insert(payload);
-            if(error) alert(error.message);
-            else { showToast("任務已發布"); document.getElementById('quest-modal').classList.remove('open'); fetchData(); }
-        }
+        function openQuestModal() { const u=JSON.parse(localStorage.getItem('maztica_user')); if(!u){alert('請登入');return;} setVal('q-client-name',u.name); setVal('q-client-img',u.avatar_url||''); document.getElementById('quest-modal').classList.add('open'); }
+        async function handleQuestPost(e) { e.preventDefault(); await db.from('quests').insert({ title:document.getElementById('q-title').value, desc:document.getElementById('q-desc').value, reward:document.getElementById('q-reward').value, client_name:document.getElementById('q-client-name').value, client_avatar:document.getElementById('q-client-img').value, status: '未接取' }); showToast("發布成功"); document.getElementById('quest-modal').classList.remove('open'); fetchData(); }
 
-        // Party Creation
-        function openCreatePartyModal() {
+        function openCreatePartyModal() { const u=JSON.parse(localStorage.getItem('maztica_user')); if(!u){alert('請登入');return;} document.getElementById('party-icon-upload').value=''; document.getElementById('icon-preview-container').style.display='none'; document.getElementById('create-party-modal').classList.add('open'); }
+        
+        async function uploadPartyIcon(file) {
             const u = JSON.parse(localStorage.getItem('maztica_user'));
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            document.getElementById('create-party-modal').classList.add('open');
+            const filePath = `guild/${u.adventurer_id}/${Date.now()}_${file.name}`;
+            document.getElementById('icon-upload-status').innerText = '上傳中...';
+            const { error } = await db.storage.from('guild').upload(filePath, file, { upsert: false });
+            if(error) { alert('Upload failed: '+error.message); return null; }
+            const { data } = db.storage.from('guild').getPublicUrl(filePath);
+            return data.publicUrl;
         }
 
         async function handleCreateParty(e) {
-            e.preventDefault();
-            const u = JSON.parse(localStorage.getItem('maztica_user'));
-            const payload = {
-                name: document.getElementById('p-name').value,
-                icon_url: document.getElementById('p-icon').value,
-                description: document.getElementById('p-desc').value,
-                leader_name: u.name
-            };
-            const { error } = await db.from('parties').insert(payload);
-            if(error) alert(error.message);
-            else { showToast("戰隊註冊成功！"); document.getElementById('create-party-modal').classList.remove('open'); fetchData(); }
-        }
-        
-        // Utils
-        function toggleReg(show){
-            if(show) {
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('reg-view').classList.remove('hidden');
-            } else {
-                document.getElementById('login-view').classList.remove('hidden');
-                document.getElementById('reg-view').classList.add('hidden');
-            }
-        }
-        
-        // ... (Remaining JS: loadJson, saveCharacter, etc.) ...
-        function loadJsonToEditor(input) {
-            const file = input.files[0]; if(!file) return;
-            const r = new FileReader();
-            r.onload = e => {
-                try {
-                    const json = JSON.parse(e.target.result);
-                    setVal('edit-name', json.name); setVal('edit-avatar', json.img); document.getElementById('avatar-preview').src=json.img;
-                    const raceItem = json.items.find(i=>i.type==='kin'); if(raceItem) setVal('edit-race', raceItem.name);
-                    const classItem = json.items.find(i=>i.type==='profession'); if(classItem) setVal('edit-class', classItem.name);
-                    const sys = json.system || {};
-                    ['str','con','agl','int','wil','cha'].forEach(k => { if(sys.attributes?.[k]) { const attr = sys.attributes[k]; const val = (attr.base !== undefined && attr.base !== null && attr.base !== 0 && attr.base !== "") ? attr.base : attr.value; setVal(`attr-${k}`, val); } });
-                    if(sys.hitPoints) setVal('edit-hp', sys.hitPoints.value||sys.hitPoints.max);
-                    if(sys.willPoints) setVal('edit-wp', sys.willPoints.value||sys.willPoints.max);
-                    if(sys.notes) setVal('edit-bio', sys.notes.replace(/<[^>]*>?/gm, ''));
-                    if(sys.currency) { setVal('curr-gc', sys.currency.gc||0); setVal('curr-sc', sys.currency.sc||0); setVal('curr-cc', sys.currency.cc||0); }
-                    const items = json.items || [];
-                    const fixSkill = (s) => { if(!s.system.value || s.system.value==0) { const k = s.system.attribute; if(k && sys.attributes && sys.attributes[k]) s.system.value = sys.attributes[k].value || sys.attributes[k].base; } return s; };
-                    editorData.kinAbilities = items.filter(i => i.system.abilityType === 'kin');
-                    editorData.heroicAbilities = items.filter(i => i.system.abilityType === 'heroic');
-                    editorData.coreSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'core').map(fixSkill);
-                    editorData.weaponSkills = items.filter(i => i.type === 'skill' && i.system.skillType === 'weapon').map(fixSkill);
-                    editorData.secondarySkills = items.filter(i => i.type === 'skill' && i.system.skillType !== 'weapon' && i.system.skillType !== 'core').map(fixSkill);
-                    editorData.cantrips = items.filter(i => i.type === 'spell' && i.system.rank == 0);
-                    editorData.rankedSpells = items.filter(i => i.type === 'spell' && i.system.rank > 0);
-                    editorData.weapons = items.filter(i => i.type === 'weapon');
-                    editorData.armors = items.filter(i => ['armor','helmet'].includes(i.type));
-                    editorData.gear = items.filter(i => i.type === 'item');
-                    renderAllLists();
-                    showToast('✅ JSON 資料已匯入');
-                } catch(err) { alert('JSON Error: '+err); }
-            };
-            r.readAsText(file);
+            e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const file = document.getElementById('party-icon-upload').files[0];
+            let url = '';
+            if(file) { url = await uploadPartyIcon(file); if(!url) return; }
+            const { error } = await db.from('parties').insert({ name: document.getElementById('p-name').value, description: document.getElementById('p-desc').value, leader_name: u.name, icon_url: url });
+            if(error) alert(error.message); else { showToast("戰隊建立成功"); document.getElementById('create-party-modal').classList.remove('open'); fetchData(); }
         }
 
-        // ★★★ REAL-TIME SAVE FIX ★★★
-        async function saveCharacterSheet() {
-            const u = JSON.parse(localStorage.getItem('maztica_user'));
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            const charId = document.getElementById('edit-char-id').value;
-            const allItems = [ ...editorData.kinAbilities, ...editorData.heroicAbilities, ...editorData.coreSkills, ...editorData.weaponSkills, ...editorData.secondarySkills, ...editorData.cantrips, ...editorData.rankedSpells, ...editorData.weapons, ...editorData.armors, ...editorData.gear ];
-            const newSheet = { name: document.getElementById('edit-name').value, img: document.getElementById('edit-avatar').value, system: { attributes: { str: { value: document.getElementById('attr-str').value }, con: { value: document.getElementById('attr-con').value }, agl: { value: document.getElementById('attr-agl').value }, int: { value: document.getElementById('attr-int').value }, wil: { value: document.getElementById('attr-wil').value }, cha: { value: document.getElementById('attr-cha').value }, }, hitPoints: { value: document.getElementById('edit-hp').value, max: document.getElementById('edit-hp').value }, willPoints: { value: document.getElementById('edit-wp').value, max: document.getElementById('edit-wp').value }, currency: { gc: document.getElementById('curr-gc')?.value || 0, sc: document.getElementById('curr-sc')?.value || 0, cc: document.getElementById('curr-cc')?.value || 0 }, notes: document.getElementById('edit-bio').value }, items: allItems };
-            // ★★★ ADDED is_public: true HERE ★★★
-            const payload = { owner_name: u.name, name: newSheet.name, race: document.getElementById('edit-race').value, class: document.getElementById('edit-class').value, avatar_url: newSheet.img, rank: document.getElementById('edit-rank').value, sheet_data: newSheet, party: document.getElementById('edit-party').value, is_public: true };
-            
-            let targetId = charId; // Remember the ID
-            let error; 
-            if (charId) { 
-                const res = await db.from('my_characters').update(payload).eq('id', charId); 
-                error = res.error; 
-            } else { 
-                const res = await db.from('my_characters').insert(payload).select(); 
-                error = res.error; 
-                if(res.data && res.data.length > 0) targetId = res.data[0].id;
-            }
+        function openListingModal(){ const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u){alert('請登入');return;} const sel=document.getElementById('in-char'); sel.innerHTML=''; myCharacters.forEach(c=>sel.add(new Option(c.name,c.id))); document.getElementById('listing-modal').classList.add('open'); }
+        async function postItem(e){ e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); const charId=document.getElementById('in-char').value; const char=myCharacters.find(c=>c.id==charId); const name=char?char.name:u.name; const av=char?char.avatar_url:DEFAULT_AVATAR; await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:name, seller_avatar:av, type:'sell'}); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); }
 
-            if(error) alert("保存失敗: " + error.message); 
-            else { 
-                showToast("💾 保存成功！"); 
-                await loadMyCharactersList(targetId); // Reload list and re-select this character
-            }
+        function addJournalAdvancement(skill='', note='') {
+            const div = document.createElement('div'); div.className = 'adv-row';
+            let opts = '<option value="">-- 選擇技能 --</option>';
+            const allSkills = [...editorData.coreSkills, ...editorData.weaponSkills, ...editorData.secondarySkills];
+            allSkills.forEach(s => opts += `<option value="${s.name}" ${s.name===skill?'selected':''}>${s.name}</option>`);
+            div.innerHTML = `<select class="adv-skill-sel game-input">${opts}</select><input class="adv-note-in game-input" placeholder="+1" value="${note}"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">✖</button>`;
+            document.getElementById('j-adv-container').appendChild(div);
         }
 
-        async function deleteCharacter() { const charId = document.getElementById('edit-char-id').value; if(!charId) return; if(confirm("確定刪除?")) { await db.from('my_characters').delete().eq('id', charId); showToast("已刪除"); loadMyCharactersList(); } }
-        async function uploadAvatar(input) {
-            const file = input.files[0]; if(!file) return;
-            const fileExt = file.name.split('.').pop();
-            const fileName = `avatar_${Date.now()}_${Math.floor(Math.random()*10000)}.${fileExt}`;
-            const path = `avatars/${fileName}`;
-            const { error } = await db.storage.from('avatars').upload(path, file);
-            if(error) { alert('上傳失敗: '+error.message); return; }
-            const { data } = db.storage.from('avatars').getPublicUrl(path);
-            setVal('edit-avatar', data.publicUrl);
-            document.getElementById('avatar-preview').src = data.publicUrl;
-            showToast("圖片上傳成功！");
-        }
+        async function handleJournalPost(e) {
+    e.preventDefault(); 
+    const u = JSON.parse(localStorage.getItem('maztica_user'));
+    
+    // 取得日誌 ID，如果有值代表是「編輯模式」，沒值代表是「新增模式」
+    const jid = document.getElementById('j-edit-id').value;
+    
+    const payload = { 
+        author_name: u.name, 
+        title: document.getElementById('j-title').value, 
+        content: document.getElementById('j-content').value, 
+        summary: document.getElementById('j-summary').value, 
+        adventure_date: document.getElementById('j-date').value, 
+        character_id: document.getElementById('j-char').value || null
+    };
+
+// ★★★ 修復：補上遺失的圖片上傳函式 ★★★
+// 確保這個函式是在全域作用域
+async function uploadAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const u = JSON.parse(localStorage.getItem('maztica_user'));
+    if (!u) { alert("請先登入"); return; }
+
+    const preview = document.getElementById('avatar-preview');
+    const hiddenInput = document.getElementById('edit-avatar');
+    
+    preview.style.opacity = '0.5';
+    showToast("正在上傳至頭像館...");
+
+    try {
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+        // 依照你的要求，存放在 'avatar' 儲存桶
+        const filePath = `${u.adventurer_id}/${fileName}`; 
+
+        // 執行上傳
+        const { data, error: uploadError } = await db.storage
+            .from('avatar') 
+            .upload(filePath, file, { 
+                cacheControl: '3600',
+                upsert: true,
+                contentType: file.type 
+            });
+
+        if (uploadError) throw uploadError;
+
+        // 取得網址並更新
+        const { data: urlData } = db.storage.from('avatar').getPublicUrl(filePath);
+        const publicUrl = urlData.publicUrl;
+
+        hiddenInput.value = publicUrl;
+        preview.src = publicUrl;
         
-        async function handleLogin(){ const n=document.getElementById('login-name').value; const p=document.getElementById('login-pass').value; const {data}=await db.from('roster').select('*').eq('name',n).eq('password',p).single(); if(data){localStorage.setItem('maztica_user',JSON.stringify(data)); enterGuild(data);} else alert("失敗"); }
-        async function handleRegistration(){ const n=document.getElementById('reg-name').value; const id="MZ-"+Math.floor(1000+Math.random()*9000); await db.from('roster').insert({name:n, password:id, adventurer_id:id, rank:'青銅', status:'新進', is_hidden:false}); alert(`註冊成功! 證號: ${id}`); location.reload(); }
+        showToast("✅ 上傳成功");
+        console.log("新網址已寫入隱藏欄位:", publicUrl);
+
+    } catch (err) {
+        console.error("上傳過程出錯:", err);
+        alert(`上傳失敗：${err.message}`);
+    } finally {
+        preview.style.opacity = '1';
+        input.value = ''; 
+    }
+}
+    // 收集技能成長欄位
+    const advs = [];
+    document.querySelectorAll('.adv-row').forEach(r => {
+        const s = r.querySelector('.adv-skill-sel').value; 
+        const n = r.querySelector('.adv-note-in').value;
+        if(s) advs.push({ skill: s, note: n });
+    });
+    payload.advancements = advs;
+
+    // ★★★ 修復核心邏輯 ★★★
+    // 條件：1. 必須是新增模式 (!jid) 2. 必須有選角色 3. 必須有填寫成長項目
+    if(!jid && payload.character_id && advs.length > 0) {
         
-        function enterGuild(u){ 
-            document.body.classList.add('authenticated'); // ★ Unlock the UI
-            document.getElementById('user-status').style.display='block'; 
-            document.getElementById('current-user').innerText=u.name; 
-            document.getElementById('view-guild').classList.add('active'); // Ensure active
-            fetchData(); 
-            showNPCIntro(); 
-            subChat(); // Start listening to chat
-            fetchMessages(); // Load history
-        }
-        
-        function checkSession(){
-            const s=localStorage.getItem('maztica_user'); 
-            if(s) {
-                enterGuild(JSON.parse(s));
-            } else {
-                document.body.classList.remove('authenticated'); // Ensure locked
+        // 步驟 1: 直接從資料庫抓取該角色最新的資料，避免使用網頁暫存的舊資料
+        const { data: charData, error: charErr } = await db
+            .from('my_characters')
+            .select('*')
+            .eq('id', payload.character_id)
+            .single();
+
+        if(charData && !charErr) {
+            let updated = false;
+            // 取得深層複製的 sheet_data，確保修改安全
+            const sheet = charData.sheet_data; 
+
+            advs.forEach(adv => {
+                // 檢查筆記欄位是否包含 '+' 號或者是數字 (例如 "+1" 或 "1")
+                if(adv.note.includes('+') || !isNaN(adv.note)) {
+                    // 解析數值：移除 '+' 號後轉為整數
+                    const inc = parseInt(adv.note.replace('+','')) || 0;
+                    
+                    // 步驟 2: 在角色的 items 中尋找名稱相符的技能
+                    if(sheet.items && Array.isArray(sheet.items)) {
+                        // 使用 trim() 去除可能的空白，增加比對成功率
+                        const skillItem = sheet.items.find(i => i.name.trim() === adv.skill.trim());
+                        
+                        if(skillItem) {
+                            // 確保 system 物件存在
+                            if(!skillItem.system) skillItem.system = {};
+                            
+                            // 步驟 3: 進行數值計算 (強制轉為 Int 避免字串串接錯誤)
+                            const currentVal = parseInt(skillItem.system.value) || 0;
+                            skillItem.system.value = currentVal + inc;
+                            
+                            updated = true;
+                            // 可以在這裡加個 log 方便除錯
+                            console.log(`[系統] 技能升級: ${skillItem.name} 從 ${currentVal} 提升至 ${skillItem.system.value}`);
+                        }
+                    }
+                }
+            });
+
+            // 步驟 4: 只有在數值真的有變動時，才寫回資料庫
+            if(updated) {
+                const { error: updateError } = await db.from('my_characters')
+                    .update({ sheet_data: sheet })
+                    .eq('id', charData.id);
+                
+                if(!updateError) {
+                    showToast(`✅ 角色 ${charData.name} 的技能已自動更新`);
+                } else {
+                    console.error("更新角色失敗:", updateError);
+                }
             }
         }
-        
-        function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
-        
-        function showToast(m){
-            const t=document.getElementById('toast');
-            if(t) {
-                t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3000);
-            } else {
-                alert(m); // Fallback if toast missing
+    } else if (jid) {
+        // 這裡確保了編輯模式下不會觸發上述邏輯
+        console.log("編輯模式：略過技能自動升級檢查");
+    }
+
+    // 最後執行日誌本身的 新增 或 更新
+    if(jid) await db.from('journals').update(payload).eq('id', jid);
+    else await db.from('journals').insert(payload);
+    
+    showToast("日誌已保存...重新載入角色才會更新畫面上的數值"); 
+    document.getElementById('journal-modal').classList.remove('open'); 
+    loadMyCharactersList(); // 重新載入列表以更新畫面上的數值
+}
+        // --- CHAT LOGIC ---
+        function toggleChat(){ 
+            const b=document.getElementById('chat-box'); 
+            const wasClosed = b.style.display !== 'flex';
+            b.style.display = wasClosed ? 'flex' : 'none'; 
+            isChatOpen = wasClosed;
+
+            if(isChatOpen) {
+                scrollChat(); 
+                document.getElementById('chat-notify').style.display='none'; 
+                // V66.0: Mark read on open
+                lastReadTime = new Date().toISOString();
+                localStorage.setItem('maztica_last_read', lastReadTime);
             }
         }
 
-        function openListingModal(){
-            const u = JSON.parse(localStorage.getItem('maztica_user'));
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            document.getElementById('listing-modal').classList.add('open');
-        }
-        function openJournalModal(){ 
-            const u = JSON.parse(localStorage.getItem('maztica_user'));
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            const sel = document.getElementById('j-char'); sel.innerHTML = '<option value="">-- 無 --</option>'; myCharacters.forEach(c => { sel.add(new Option(c.name, c.id)); }); document.getElementById('j-date').valueAsDate = new Date(); document.getElementById('j-adv-container').innerHTML=''; document.getElementById('journal-modal').classList.add('open'); 
-        }
-        function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
-        
-        async function postItem(e){
-            e.preventDefault(); 
-            const u=JSON.parse(localStorage.getItem('maztica_user')); 
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:u.name, type:'sell', seller_avatar: u.avatar_url }); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); 
-        }
-        
-        async function handleJournalPost(e) { 
-            e.preventDefault(); 
-            const u = JSON.parse(localStorage.getItem('maztica_user')); 
-            if(!u) { alert('請先登入'); location.reload(); return; }
-            const charId = document.getElementById('j-char').value; const advRows = document.querySelectorAll('.adv-row'); let advancements = []; let charUpdated = false; let targetChar = charId ? myCharacters.find(c => c.id == charId) : null; advRows.forEach(row => { const skillName = row.querySelector('.adv-skill-sel').value; const note = row.querySelector('.adv-note-in').value; if(skillName) { advancements.push({ skill: skillName, note: note }); if (targetChar && (note.includes('+') || !isNaN(note))) { const items = targetChar.sheet_data.items; const skillItem = items.find(i => i.name === skillName); if (skillItem) { const increase = parseInt(note.replace('+', '')) || 0; if (increase !== 0) { const oldVal = parseInt(skillItem.system.value || 0); skillItem.system.value = oldVal + increase; charUpdated = true; } } } } }); if (charUpdated && targetChar) { await db.from('my_characters').update({ sheet_data: targetChar.sheet_data }).eq('id', charId); showToast("技能已升級！"); loadMyCharactersList(); } await db.from('journals').insert({ author_name: u.name, title: document.getElementById('j-title').value, content: document.getElementById('j-content').value, summary: document.getElementById('j-summary').value, adventure_date: document.getElementById('j-date').value, character_id: charId || null, advancements: advancements }); showToast("日誌已保存"); document.getElementById('journal-modal').classList.remove('open'); loadMyCharactersList(); 
-        }
-        
-        function toggleChat(){const b=document.getElementById('chat-box'); b.style.display=b.style.display==='flex'?'none':'flex'; if(b.style.display==='flex') scrollChat();}
         async function sendChat(){
-            const i=document.getElementById('chat-in'); 
-            const u=JSON.parse(localStorage.getItem('maztica_user')); 
-            if(!u) return;
-            await db.from('messages').insert({user_name:u.name, content:i.value}); 
+            const i=document.getElementById('chat-in'); const u=JSON.parse(localStorage.getItem('maztica_user')); 
+            const charId = document.getElementById('chat-char-select').value;
+            let name = u.name, avatar = null;
+            if(charId) {
+                const char = myCharacters.find(c => c.id == charId);
+                if(char) { name = char.name; avatar = char.avatar_url; }
+            }
+            await db.from('messages').insert({user_name: name, content: i.value, avatar_url: avatar}); 
             i.value='';
         }
         function scrollChat(){const b=document.getElementById('chat-msgs'); b.scrollTop=b.scrollHeight;}
 
-        function renderMsgElement(user, content) {
-           const currentUser = JSON.parse(localStorage.getItem('maztica_user'));
+        function renderMsgElement(user, content, avatar, timeStr) {
+           const u = JSON.parse(localStorage.getItem('maztica_user'));
            const div = document.createElement('div');
-           const isMe = currentUser && user === currentUser.name;
+           const isMe = (u && user === u.name) || myCharacters.some(c => c.name === user); 
            div.className = 'chat-msg ' + (isMe ? 'msg-player' : 'msg-npc');
-           div.innerText = `${user}: ${content}`;
+           const imgHTML = avatar ? `<img src="${avatar}" class="chat-avatar">` : '';
+           const textHTML = `<div><div style="font-size:0.75rem; opacity:0.7">${user}</div>${content}</div>`;
+           div.innerHTML = isMe ? (textHTML + imgHTML) : (imgHTML + textHTML);
            document.getElementById('chat-msgs').appendChild(div);
            scrollChat();
+
+           // V66.0: Enhanced Notify Logic
+           const box = document.getElementById('chat-box');
+           // If chat is closed AND message is newer than last read
+           if(box.style.display !== 'flex' && timeStr > lastReadTime) {
+               document.getElementById('chat-notify').style.display = 'block';
+           } else if (box.style.display === 'flex') {
+               // Update read time if chat is open
+               lastReadTime = new Date().toISOString();
+               localStorage.setItem('maztica_last_read', lastReadTime);
+           }
         }
 
         async function fetchMessages(){
@@ -1235,7 +1418,7 @@
                 const box = document.getElementById('chat-msgs');
                 box.innerHTML = '<div class="chat-msg msg-npc">歡迎來到公會通訊頻道，請保持禮貌。</div>';
                 data.forEach(m => {
-                    renderMsgElement(m.user_name, m.content);
+                    renderMsgElement(m.user_name, m.content, m.avatar_url, m.created_at);
                 });
             }
         }
@@ -1243,25 +1426,88 @@
         function subChat(){
             db.channel('public:messages')
               .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-                  renderMsgElement(payload.new.user_name, payload.new.content);
+                  renderMsgElement(payload.new.user_name, payload.new.content, payload.new.avatar_url, payload.new.created_at);
               })
               .subscribe();
         }
         
+        async function saveCharacterSheet() { const u=JSON.parse(localStorage.getItem('maztica_user')); const cid=document.getElementById('edit-char-id').value; const all=[...editorData.kinAbilities,...editorData.heroicAbilities,...editorData.coreSkills,...editorData.weaponSkills,...editorData.secondarySkills,...editorData.cantrips,...editorData.rankedSpells,...editorData.weapons,...editorData.armors,...editorData.gear]; const sheet={name:document.getElementById('edit-name').value,img:document.getElementById('edit-avatar').value,system:{attributes:{str:{value:document.getElementById('attr-str').value},con:{value:document.getElementById('attr-con').value},agl:{value:document.getElementById('attr-agl').value},int:{value:document.getElementById('attr-int').value},wil:{value:document.getElementById('attr-wil').value},cha:{value:document.getElementById('attr-cha').value}},hitPoints:{value:document.getElementById('edit-hp').value,max:document.getElementById('edit-hp').value},willPoints:{value:document.getElementById('edit-wp').value,max:document.getElementById('edit-wp').value},currency:{gc:document.getElementById('curr-gc').value,sc:document.getElementById('curr-sc').value,cc:document.getElementById('curr-cc').value},notes:document.getElementById('edit-bio').value,weakness:document.getElementById('edit-weakness').value,appearance:document.getElementById('edit-appearance').value},items:all}; const payload={owner_name:u.name,name:sheet.name,race:document.getElementById('edit-race').value,class:document.getElementById('edit-class').value,avatar_url:sheet.img,rank:document.getElementById('edit-rank').value,sheet_data:sheet,party:document.getElementById('edit-party').value,is_public:true}; let tid=cid; if(cid) await db.from('my_characters').update(payload).eq('id',cid); else { const{data}=await db.from('my_characters').insert(payload).select(); if(data)tid=data[0].id; } showToast("保存成功"); await loadMyCharactersList(tid); }
+        function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
+        function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
+        function showToast(m){ const t=document.getElementById('toast'); if(t){t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}else alert(m); }
+
+        // ★★★ RE-ADDED MISSING LOGIN FUNCTIONS ★★★
+        async function handleLogin(){ 
+            const n=document.getElementById('login-name').value; 
+            const p=document.getElementById('login-pass').value; 
+            // Using maybeSingle() to avoid error on no rows
+            const {data, error} = await db.from('roster').select('*').eq('name',n).eq('password',p).maybeSingle(); 
+            
+            if(data){
+                localStorage.setItem('maztica_user',JSON.stringify(data)); 
+                enterGuild(data);
+            } else {
+                alert("登入失敗：帳號或密碼錯誤");
+            } 
+        }
+
+        async function handleRegistration(){ 
+            const n=document.getElementById('reg-name').value; 
+            if(!n) return alert("請輸入暱稱");
+            const id="MZ-"+Math.floor(1000+Math.random()*9000); 
+            const {error} = await db.from('roster').insert({
+                name:n, 
+                password:id, 
+                adventurer_id:id, 
+                rank:'青銅', 
+                status:'新進', 
+                is_hidden:false
+            }); 
+            if(error) alert("註冊失敗: " + error.message);
+            else {
+                alert(`註冊成功! 您的證號是: ${id} (請截圖記下)`); 
+                location.reload(); 
+            }
+        }
+
+        function enterGuild(u){ 
+            document.body.classList.add('authenticated');
+            document.getElementById('user-status').style.display='block'; 
+            document.getElementById('current-user').innerText=u.name; 
+            document.getElementById('view-guild').classList.add('active'); 
+            fetchData(); 
+            showNPCIntro(); 
+            subChat(); 
+            fetchMessages(); 
+
+            // V68.0: Load characters on login so Market dropdowns work immediately
+            loadMyCharactersList();
+        }
+        
+        function checkSession(){
+            const s=localStorage.getItem('maztica_user'); 
+            // V66.0: Init last read
+            lastReadTime = localStorage.getItem('maztica_last_read') || new Date(0).toISOString();
+            if(s) { enterGuild(JSON.parse(s)); } 
+            else { document.body.classList.remove('authenticated'); }
+        }
+
         // ★★★ CHAT ENTER KEY LISTENER ★★★
         window.onload = function() {
             checkSession();
             document.getElementById('chat-in').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') { sendChat(); }
             });
+            const iconUp = document.getElementById('party-icon-upload');
+            if(iconUp) iconUp.addEventListener('change', function(e) {
+                const f = e.target.files[0];
+                if(f) {
+                    const r = new FileReader();
+                    r.onload = ev => { document.getElementById('icon-preview').src = ev.target.result; document.getElementById('icon-preview-container').style.display='block'; };
+                    r.readAsDataURL(f);
+                }
+            });
         };
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
