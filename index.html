@@ -1092,7 +1092,7 @@ function loadJsonToEditor(input) {
             (chars || []).forEach(c => { const pName = c.party || '未登記隊伍'; if (!parties[pName]) parties[pName] = []; parties[pName].push(c); });
             if(!parties['未登記隊伍'] && chars && chars.some(c => !c.party)) { parties['未登記隊伍'] = []; }
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
-                const members = parties[pName]; const regInfo = partyMap[pName]; const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; const safePName = pName.replace(/'/g, "\\'"); const desc = regInfo ? regInfo.description : '招募中...'; 
+                const members = parties[pName]; const regInfo = partyMap[pName]; const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; const safePName = pName.replace(/'/g, "\\'"); const desc = regInfo ? regInfo.description : '還沒想好隊名或無隊者底加啦~'; 
                 return `<div class="party-card" onclick="openPartyDetail('${safePName}')">${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}<div class="party-name">${pName}</div><div class="party-slogan">${desc}</div><div class="party-count">${members.length} 名成員</div><div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" class="member-preview-icon">`).join('')}${members.length > 4 ? '<span style="color:#888;">...</span>' : ''}</div></div>`;
             }).join('');
             window.currentParties = parties; window.partyMap = partyMap;
@@ -1511,3 +1511,4 @@ async function uploadAvatar(input) {
     </script>
 </body>
 </html>
+
