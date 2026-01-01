@@ -104,8 +104,6 @@
 
         /* Reception */
         .reception-area { display: flex; align-items: center; justify-content: center; gap: 30px; padding: 30px; margin-bottom: 20px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
-        .npc-standee { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
-        .npc-standee:hover { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 5px 25px rgba(0,0,0,1), 0 0 40px rgba(212, 175, 55, 0.8); }
         
         /* Chat Widget */
         #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 8000; display: flex; flex-direction: column; align-items: flex-end; }
@@ -192,7 +190,7 @@
         .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card h3 { color: var(--highlight); margin: 0 0 10px 0; font-family: var(--font-title); font-size: 1.2rem; }
         
-        /* ★★★ CSS Fix: Preserve newlines in descriptions ★★★ */
+        /* Preserve Newlines in Descriptions */
         .desc, .quest-desc, .market-desc, .item-modal-desc {
             white-space: pre-wrap;
             word-wrap: break-word;
@@ -834,6 +832,7 @@
                 data.advancements.forEach(adv => addJournalAdvancement(adv.skill, adv.note));
             }
             
+            // Show Delete Button
             document.getElementById('btn-delete-journal').style.display = 'block';
             document.getElementById('journal-modal').classList.add('open');
         }
@@ -862,6 +861,7 @@
             document.getElementById('j-date').valueAsDate=new Date(); 
             document.getElementById('j-adv-container').innerHTML=''; 
             
+            // Hide Delete Button for new entry
             document.getElementById('btn-delete-journal').style.display = 'none';
             document.getElementById('journal-modal').classList.add('open'); 
         }
@@ -1089,7 +1089,14 @@
             if(introPlayed) return; introPlayed = true;
             const overlay = document.getElementById('npc-intro-layer'); const textBox = document.getElementById('intro-text'); const u = JSON.parse(localStorage.getItem('maztica_user'));
             let nC = 0, qC = 0, mC = 0;
-            try { const r1 = await db.from('notices').select('*', { count: 'exact', head: true }); nC = r1.count||0; const r2 = await db.from('quests').select('*', { count: 'exact', head: true }); qC = r2.count||0; const r3 = await db.from('market').select('*', { count: 'exact', head: true }); mC = r3.count||0; } catch(e) {}
+            
+            // V69.0 Fix: Wrap in try-catch to prevent crash if data unavailable
+            try { 
+                const { count: c1 } = await db.from('notices').select('*', { count: 'exact', head: true }); nC = c1 || 0; 
+                const { count: c2 } = await db.from('quests').select('*', { count: 'exact', head: true }); qC = c2 || 0; 
+                const { count: c3 } = await db.from('market').select('*', { count: 'exact', head: true }); mC = c3 || 0; 
+            } catch(e) { console.warn("NPC Intro data fetch failed", e); }
+            
             const text = `歡迎回來，${u.name}。今天公會也很熱鬧呢。\n目前有 ${nC} 則重要公告，${qC} 個懸賞正在招募勇者，市集裡也有 ${mC} 件交易請求。\n祝您武運昌隆！`;
             overlay.classList.add('active'); typeWriter(text, textBox, 0);
         }
@@ -1104,7 +1111,7 @@
             (chars || []).forEach(c => { const pName = c.party || '未登記隊伍'; if (!parties[pName]) parties[pName] = []; parties[pName].push(c); });
             if(!parties['未登記隊伍'] && chars && chars.some(c => !c.party)) { parties['未登記隊伍'] = []; }
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
-                const members = parties[pName]; const regInfo = partyMap[pName]; const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; const safePName = pName.replace(/'/g, "\\'"); const desc = regInfo ? regInfo.description : '招募中...'; 
+                const members = parties[pName]; const regInfo = partyMap[pName]; const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; const safePName = encodeURIComponent(pName); const desc = regInfo ? regInfo.description : '招募中...'; 
                 return `<div class="party-card" onclick="openPartyDetail('${safePName}')">${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}<div class="party-name">${pName}</div><div class="party-slogan">${desc}</div><div class="party-count">${members.length} 名成員</div><div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" class="member-preview-icon">`).join('')}${members.length > 4 ? '<span style="color:#888;">...</span>' : ''}</div></div>`;
             }).join('');
             
@@ -1172,30 +1179,65 @@
             openComments(mid);
         }
 
-        // ★★★ V74.0 Fix: Correctly load character skills for Journal ★★★
+        // ★★★ V78.0 Fix: Strengthened party name handling for onclick events ★★★
+        function openPartyDetail(encodedName) {
+            const pName = decodeURIComponent(encodedName);
+            const members = window.currentParties[pName];
+            const regInfo = window.partyMap ? window.partyMap[pName] : null;
+            const iconImg = document.getElementById('party-modal-icon');
+            const descDiv = document.getElementById('party-modal-desc');
+            if(regInfo && regInfo.icon_url) { iconImg.src = regInfo.icon_url; iconImg.style.display = 'block'; descDiv.innerText = regInfo.description || ''; } 
+            else { iconImg.style.display = 'none'; descDiv.innerText = ''; }
+            document.getElementById('party-modal-title').innerText = pName;
+            document.getElementById('party-modal-list').innerHTML = members.length > 0 ? members.map(m => `<div class="char-row"><img src="${m.avatar_url||DEFAULT_AVATAR}"><div><div style="font-weight:bold; color:var(--highlight);">${m.name}</div><div style="font-size:0.8rem; color:#aaa;">${m.race} ${m.class} | <span style="color:#ffd700">${getRankTitle(m.rank)}</span> (${m.rank||0})</div></div></div>`).join('') : '<div style="text-align:center;">無成員</div>';
+            document.getElementById('party-modal').classList.add('open');
+        }
+
+        function openCreatePartyModal() { const u=JSON.parse(localStorage.getItem('maztica_user')); if(!u){alert('請登入');return;} document.getElementById('party-icon-upload').value=''; document.getElementById('icon-preview-container').style.display='none'; document.getElementById('create-party-modal').classList.add('open'); }
+        async function uploadPartyIcon(file) {
+            const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const filePath = `guild/${u.adventurer_id}/${Date.now()}_${file.name}`;
+            document.getElementById('icon-upload-status').innerText = '上傳中...';
+            // V70.0: Unified Bucket 'images'
+            const { error } = await db.storage.from('images').upload(filePath, file, { upsert: false });
+            if(error) { alert('Upload failed: '+error.message); return null; }
+            const { data } = db.storage.from('images').getPublicUrl(filePath);
+            return data.publicUrl;
+        }
+        async function handleCreateParty(e) {
+            e.preventDefault(); const u = JSON.parse(localStorage.getItem('maztica_user'));
+            const file = document.getElementById('party-icon-upload').files[0];
+            let url = '';
+            if(file) { url = await uploadPartyIcon(file); if(!url) return; }
+            const { error } = await db.from('parties').insert({ name: document.getElementById('p-name').value, description: document.getElementById('p-desc').value, leader_name: u.name, icon_url: url });
+            if(error) alert(error.message); else { showToast("戰隊建立成功"); document.getElementById('create-party-modal').classList.remove('open'); fetchData(); }
+        }
+
+        function openListingModal(){ const u = JSON.parse(localStorage.getItem('maztica_user')); if(!u){alert('請登入');return;} const sel=document.getElementById('in-char'); sel.innerHTML=''; myCharacters.forEach(c=>sel.add(new Option(c.name,c.id))); document.getElementById('listing-modal').classList.add('open'); }
+        async function postItem(e){ e.preventDefault(); const u=JSON.parse(localStorage.getItem('maztica_user')); const charId=document.getElementById('in-char').value; const char=myCharacters.find(c=>c.id==charId); const name=char?char.name:u.name; const av=char?char.avatar_url:DEFAULT_AVATAR; await db.from('market').insert({item_name:document.getElementById('in-name').value, price:document.getElementById('in-price').value, description:document.getElementById('in-desc').value, owner:name, seller_avatar:av, type:'sell'}); showToast("上架成功"); document.getElementById('listing-modal').classList.remove('open'); fetchData(); }
+
+        // ★★★ V76.0 Fix: Correctly load character skills for Journal from SELECT value ★★★
         function addJournalAdvancement(skill='', note='') {
             const div = document.createElement('div'); div.className = 'adv-row';
             
             // 1. Get Selected Character from Journal Dropdown
             const charId = document.getElementById('j-char').value;
-            if(!charId) {
-                alert("請先選擇角色，才能新增技能成長項目");
-                return;
-            }
-
-            // 2. Find Character Data
+            
+            // 2. Find Character Data from Global List
             const char = myCharacters.find(c => c.id == charId);
             let skillOptions = '<option value="">-- 選擇技能 --</option>';
 
-            // 3. Extract Skills from that Character
+            // 3. Extract Skills from that Character's Sheet
             if(char && char.sheet_data && char.sheet_data.items) {
-                // Filter only skills
+                // Filter only skills (Core, Weapon, Secondary)
                 const skills = char.sheet_data.items.filter(i => i.type === 'skill');
                 skills.forEach(s => {
-                    skillOptions += `<option value="${s.name}" ${s.name===skill?'selected':''}>${s.name}</option>`;
+                    // Escape quotes in skill name to prevent HTML break
+                    const safeName = s.name.replace(/"/g, '&quot;');
+                    skillOptions += `<option value="${safeName}" ${s.name===skill?'selected':''}>${safeName}</option>`;
                 });
             } else {
-                skillOptions += '<option value="" disabled>無技能資料</option>';
+                skillOptions += '<option value="" disabled>請先選擇角色</option>';
             }
 
             div.innerHTML = `<select class="adv-skill-sel game-input">${skillOptions}</select><input class="adv-note-in game-input" placeholder="+1" value="${note}"><button type="button" class="btn-icon" onclick="this.parentElement.remove()">✖</button>`;
@@ -1331,16 +1373,20 @@
             showNPCIntro(); 
             subChat(); 
             fetchMessages(); 
+            
+            // V68.0: Load characters on login so Market dropdowns work immediately
             loadMyCharactersList();
         }
         
         function checkSession(){
             const s=localStorage.getItem('maztica_user'); 
+            // V66.0: Init last read
             lastReadTime = localStorage.getItem('maztica_last_read') || new Date(0).toISOString();
             if(s) { enterGuild(JSON.parse(s)); } 
             else { document.body.classList.remove('authenticated'); }
         }
 
+        // ★★★ CHAT ENTER KEY LISTENER ★★★
         window.onload = function() {
             checkSession();
             document.getElementById('chat-in').addEventListener('keypress', function (e) {
