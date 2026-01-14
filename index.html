@@ -370,7 +370,7 @@
             <button class="nav-btn" onclick="showSection('market','guild')"><span>市集</span></button>
             <button class="nav-btn" onclick="showSection('roster','guild')"><span>名冊</span></button>
             <button class="nav-btn" onclick="showSection('library','guild')"><span>書庫</span></button>
-            <button class="nav-btn" onclick="showSection('graveyard','guild')" style="color:#aaa;"><span>🪦 英靈殿</span></button>
+            <button class="nav-btn" onclick="showSection('graveyard','guild')" style="color:#aaa;"><span>回音之壁</span></button>
         </nav>
         <main>
             <div id="notices" class="section active">
@@ -1424,7 +1424,7 @@
             
             if(!charId) return;
             
-            const confirmText = prompt(`您確定要將 [${charName}] 標記為陣亡嗎？\n此操作會將角色移出隊伍並進入英靈殿。\n請輸入 "R.I.P." 以確認：`);
+            const confirmText = prompt(`您確定要將 [${charName}] 標記為陣亡嗎？\n此操作會將角色移出隊伍並進入回音之壁。\n請輸入 "R.I.P." 以確認：`);
             
             if(confirmText === "R.I.P.") {
                 // Remove from party and set status to dead
@@ -1435,7 +1435,7 @@
                 if(error) {
                     alert("操作失敗 (請確認資料庫已新增 status 欄位): " + error.message);
                 } else {
-                    showToast(`已將 ${charName} 移入英靈殿`);
+                    showToast(`已將 ${charName} 移入回音之壁`);
                     loadMyCharactersList(); 
                 }
             }
@@ -1525,3 +1525,4 @@
     </script>
 </body>
 </html>
+
