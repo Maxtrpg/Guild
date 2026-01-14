@@ -37,7 +37,7 @@
 
         /* Modes */
         body.mode-guild {
-            background-image: url('https://raw.githubusercontent.com/Maxtrpg/maztica/refs/heads/main/images/bg_guild_hall.webp');
+            background-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/bg-guild02.webp');
             color: #e0e0e0;
             --panel-bg: rgba(20, 20, 20, 0.95);
             --border-color: #444;
@@ -104,6 +104,8 @@
 
         /* Reception */
         .reception-area { display: flex; align-items: center; justify-content: center; gap: 30px; padding: 30px; margin-bottom: 20px; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.4) 50%, transparent 100%); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
+        .npc-standee { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #ffecb3; box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #d4af37, 0 5px 20px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
+        .npc-standee:hover { transform: scale(1.08) rotate(3deg); box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px #fff, 0 5px 25px rgba(0,0,0,1), 0 0 40px rgba(212, 175, 55, 0.8); }
         
         /* Chat Widget */
         #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 8000; display: flex; flex-direction: column; align-items: flex-end; }
@@ -190,12 +192,37 @@
         .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card h3 { color: var(--highlight); margin: 0 0 10px 0; font-family: var(--font-title); font-size: 1.2rem; }
         
-        /* Preserve Newlines in Descriptions */
+        /* Descriptions */
         .desc, .quest-desc, .market-desc, .item-modal-desc {
             white-space: pre-wrap;
             word-wrap: break-word;
             font-family: var(--font-hand);
         }
+
+        /* ★★★ V83.0 Notice Stack Layout ★★★ */
+        .notice-stack { display: flex; flex-direction: column; gap: 15px; } /* Stack vertically */
+        .card-notice {
+            background-color: #fff8e1;
+            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+            border: 4px double #5d4037;
+            padding: 20px;
+            position: relative;
+            color: #3e2723;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .card-notice:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); background-color: #fffde7; }
+        .card-notice::before { content:'♔'; position:absolute; top:5px; right:15px; font-size:3rem; color:#8a0303; opacity:0.1; }
+        .card-notice h3 { 
+            color: #b71c1c; font-family: var(--font-title); margin: 0; padding-bottom: 0; border-bottom: none; 
+            font-size: 1.3rem; display: flex; justify-content: space-between; align-items: center; 
+        }
+        .card-notice h3::after { content: '▼'; font-size: 0.8em; color: #5d4037; transition: transform 0.3s; }
+        .notice-content { display: none; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #5d4037; animation: fadeIn 0.3s; }
+        .card-notice.active .notice-content { display: block; }
+        .card-notice.active h3 { padding-bottom: 10px; }
+        .card-notice.active h3::after { transform: rotate(180deg); }
+        .notice-date { font-size: 0.8rem; color: #888; font-weight: normal; margin-left: 10px; }
 
         .parchment-base { background-color: #f7f1e3; background-image: url('https://www.transparenttextures.com/patterns/parchment.png'); border: 1px solid #8d6e63; box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: #3e2723; font-family: var(--font-hand); border-radius: 2px; transition: 0.3s; }
         .parchment-base:hover { transform: scale(1.01); z-index: 5; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
@@ -217,9 +244,6 @@
         .market-desc { color: #5d4037; font-size: 1rem; font-style: italic; }
         .market-footer { background: rgba(62, 39, 35, 0.1); padding: 8px; text-align: center; color: #3e2723; font-weight: bold; border-top: 1px dashed #8d6e63; font-family: var(--font-title); }
         
-        .card-notice { background-color: #fff8e1; background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png'); border: 4px double #5d4037; padding: 25px; position: relative; color: #3e2723; }
-        .card-notice::before { content:'♔'; position:absolute; top:5px; right:15px; font-size:4rem; color:#8a0303; opacity:0.1; }
-        .card-notice h3 { color: #b71c1c; font-family: var(--font-title); margin-bottom: 15px; border-bottom: 1px solid #5d4037; padding-bottom: 10px; font-size: 1.4rem; }
         .card-notice .desc { color: #3e2723; font-size: 1.2rem; line-height: 1.6; }
 
         .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
@@ -258,37 +282,13 @@
         .modal-content { background: #151515; border: 1px solid var(--highlight); width: 95%; max-width: 700px; padding: 25px; border-radius: 8px; position: relative; max-height: 90vh; overflow-y: auto; margin: auto; }
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; color: #888; cursor: pointer; }
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--highlight); color: var(--highlight); padding: 8px 20px; display: none; z-index: 4000; border-radius: 20px; }
-        
-        /* Game Specific */
-        .adv-row { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
-        .adv-row select, .adv-row input { background: rgba(0,0,0,0.5); border: 1px solid #444; color: #ccc; padding: 5px; border-radius: 4px; font-size: 0.9rem; }
-        .adv-row select { flex: 2; } .adv-row input { flex: 3; }
-        .adv-add-btn { background: #333; border: 1px solid #555; color: #ccc; cursor: pointer; padding: 5px 10px; margin-top: 5px; font-size: 0.8rem; }
-        .game-tabs { display: flex; gap: 5px; border-bottom: 2px solid var(--border-color); margin-bottom: 15px; flex-wrap: wrap; }
-        .game-tab { padding: 8px 15px; background: rgba(0,0,0,0.3); color: #888; border: 1px solid transparent; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--font-title); font-size: 0.9rem; flex: 1; text-align: center; transition: 0.2s; }
-        .game-tab.active { background: rgba(255,255,255,0.1); color: var(--highlight); border-color: var(--highlight); font-weight: bold; }
-        .game-panel { display: none; height: 400px; overflow-y: auto; padding-right: 5px; animation: fadeIn 0.2s; }
-        .game-panel.active { display: block; }
-        .char-sheet-game { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
-        .char-portrait-frame { width: 100%; aspect-ratio: 2/3; border: 3px solid var(--highlight); border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .hex-stat-display { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px; }
-        .hex-box { width: 60px; height: 70px; background: #1a1a1a; border: 1px solid #444; display: flex; flex-direction: column; align-items: center; justify-content: center; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
-        .hex-val { font-size: 1.4rem; font-weight: bold; color: var(--highlight); font-family: var(--font-title); }
-        .char-right { display: flex; flex-direction: column; gap: 15px; }
-        .game-item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
-        .game-item-slot { width: 100%; aspect-ratio: 1/1; background: rgba(0,0,0,0.4); border: 2px solid var(--border-color); border-radius: 6px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        .game-item-slot:hover { border-color: var(--highlight); transform: scale(1.05); }
-        .game-item-img { width: 100%; height: 100%; object-fit: cover; }
-        .game-item-fallback { font-size: 1.5rem; color: #555; }
-        .game-item-slot:hover .game-item-fallback { color: var(--highlight); }
-        .item-modal-layout { display: grid; grid-template-columns: 100px 1fr; gap: 20px; }
-        .item-modal-icon-box { width: 100px; height: 100px; border: 2px solid var(--highlight); border-radius: 12px; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(212,175,55,0.2); }
-        .item-modal-img { width: 100%; height: 100%; object-fit: cover; }
-        .item-modal-fallback { font-size: 3rem; color: var(--highlight); }
-        .item-modal-header h3 { margin: 0 0 5px 0; color: var(--highlight); font-family: var(--font-title); font-size: 1.5rem; }
-        .item-modal-type { color: var(--text-sub); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
-        .item-modal-desc { margin-top: 20px; font-size: 0.95rem; line-height: 1.6; color: #ccc; border-top: 1px solid var(--border-color); padding-top: 15px; max-height: 200px; overflow-y: auto; }
-        @media(max-width:900px){.char-sheet-game{grid-template-columns:1fr}}
+
+        /* V82.0 Hall of Heroes CSS */
+        .dead-card { background: linear-gradient(135deg, #1a1a1a, #000); border: 1px solid #444; border-radius: 8px; padding: 20px; text-align: center; filter: grayscale(100%); opacity: 0.8; transition: 0.3s; position: relative; }
+        .dead-card:hover { filter: grayscale(0%); opacity: 1; transform: translateY(-5px); border-color: #d4af37; }
+        .dead-icon-img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid #555; margin-bottom: 10px; }
+        .dead-ribbon { position: absolute; top: 10px; right: -30px; background: #000; color: #fff; padding: 5px 30px; transform: rotate(45deg); font-size: 0.7rem; border: 1px solid #333; }
+        /* End Hall of Heroes CSS */
     </style>
 </head>
 <body class="mode-guild">
@@ -370,9 +370,14 @@
             <button class="nav-btn" onclick="showSection('market','guild')"><span>市集</span></button>
             <button class="nav-btn" onclick="showSection('roster','guild')"><span>名冊</span></button>
             <button class="nav-btn" onclick="showSection('library','guild')"><span>書庫</span></button>
+            <button class="nav-btn" onclick="showSection('graveyard','guild')" style="color:#aaa;"><span>🪦 英靈殿</span></button>
         </nav>
         <main>
-            <div id="notices" class="section active"><h2>公會公告</h2><div class="card-grid" id="notice-list"></div></div>
+            <div id="notices" class="section active">
+                <h2>公會公告</h2>
+                <div class="notice-stack" id="notice-list"></div>
+            </div>
+            
             <div id="quests" class="section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2>懸賞委託</h2>
@@ -399,6 +404,13 @@
                         style="width: 100%; border: none; min-height: 80vh;">
                     </iframe>
                 </div>
+            </div>
+
+            <div id="graveyard" class="section">
+                <div style="text-align:center; margin-bottom:20px; color:#888; font-family:var(--font-hand); font-style:italic;">
+                    "英雄不朽，只是凋零。在此安息的是佩澤拉克的守護者們。"
+                </div>
+                <div class="roster-grid" id="graveyard-list"></div>
             </div>
             
         </main>
@@ -550,6 +562,7 @@
                                 
                                 <div style="display:flex; gap:10px; margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
                                     <button class="btn-action" onclick="saveCharacterSheet()">💾 保存角色</button>
+                                    <button class="btn-action" style="background:#555;" onclick="markAsDead()">💀 陣亡</button>
                                     <button class="btn-action" style="background:#8a0303;" onclick="deleteCharacter()">🗑️ 刪除</button>
                                 </div>
                             </div>
@@ -1106,29 +1119,106 @@
         async function fetchData() {
             let registeredParties = []; try { let { data } = await db.from('parties').select('*'); registeredParties = data || []; } catch(e) {}
             const partyMap = {}; registeredParties.forEach(p => { partyMap[p.name] = p; });
-            let { data: chars } = await db.from('my_characters').select('*').eq('is_public', true).order('created_at',{ascending:false});
-            const parties = {}; registeredParties.forEach(p => { parties[p.name] = []; });
-            (chars || []).forEach(c => { const pName = c.party || '未登記隊伍'; if (!parties[pName]) parties[pName] = []; parties[pName].push(c); });
-            if(!parties['未登記隊伍'] && chars && chars.some(c => !c.party)) { parties['未登記隊伍'] = []; }
-            document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
-                const members = parties[pName]; const regInfo = partyMap[pName]; const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; const safePName = encodeURIComponent(pName); const desc = regInfo ? regInfo.description : '招募中...'; 
-                return `<div class="party-card" onclick="openPartyDetail('${safePName}')">${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}<div class="party-name">${pName}</div><div class="party-slogan">${desc}</div><div class="party-count">${members.length} 名成員</div><div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" class="member-preview-icon">`).join('')}${members.length > 4 ? '<span style="color:#888;">...</span>' : ''}</div></div>`;
-            }).join('');
             
-            window.currentParties = parties; window.partyMap = partyMap;
+            let allChars = [];
+            try { 
+                // V82.0: Fetch all public characters, ordered by created_at
+                let { data } = await db.from('my_characters')
+                    .select('*')
+                    .eq('is_public', true)
+                    .order('created_at',{ascending:false}); 
+                allChars = data || []; 
+            } catch(e) { console.error("Chars fetch error", e); }
 
-            let { data: n } = await db.from('notices').select('*'); document.getElementById('notice-list').innerHTML = n.map(x=>`<div class="card card-notice"><h3>${x.title}</h3><p class="desc">${x.content}</p></div>`).join('');
+            // V82.0: Filter active vs dead characters
+            const activeChars = allChars.filter(c => c.status !== 'dead');
+            const deadChars = allChars.filter(c => c.status === 'dead');
             
-            let { data: q } = await db.from('quests').select('*').order('created_at',{ascending:false}); 
-            document.getElementById('quest-list').innerHTML = q.map(x=>{
-                let statusClass = x.status === '已完成' ? 'st-done' : (x.status === '進行中' ? 'st-taken' : 'st-open');
-                let statusText = x.status || '未接取';
-                let taker = x.taken_by ? ` (${x.taken_by})` : '';
-                return `<div class="card card-quest"><div class="quest-header"><img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img"><span class="quest-client-name">${x.client_name || '匿名'}</span><span class="status-tag ${statusClass}" style="margin-left:auto" onclick="toggleQuestStatus('${x.id}', '${statusText}')">${statusText}${taker}</span></div><div class="quest-body"><div class="quest-title">${x.title}</div><p class="quest-desc">${x.desc}</p></div><div class="quest-footer">報酬: ${x.reward}</div></div>`;
+            const parties = {}; registeredParties.forEach(p => { parties[p.name] = []; });
+            
+            // Populate active characters into parties
+            activeChars.forEach(c => { 
+                const pName = c.party || '未登記隊伍'; 
+                if (!parties[pName]) parties[pName] = []; 
+                parties[pName].push(c); 
+            });
+            // Handle unassigned active characters
+            if(!parties['未登記隊伍'] && activeChars.some(c => !c.party)) { 
+                parties['未登記隊伍'] = []; 
+            }
+            
+            // Set global variables for onclick access
+            window.currentParties = parties; 
+            window.partyMap = partyMap;
+
+            document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
+                const members = parties[pName]; 
+                // Skip rendering empty parties if desired, but keeping logic simple for now
+                if (!members || members.length === 0) return ''; 
+
+                const regInfo = partyMap[pName]; 
+                const icon = regInfo ? regInfo.icon_url : 'https://cdn-icons-png.flaticon.com/512/32/32441.png'; 
+                const safePName = encodeURIComponent(pName); 
+                const desc = regInfo ? regInfo.description : '招募中...'; 
+                
+                return `<div class="party-card" onclick="openPartyDetail('${safePName}')">
+                            ${regInfo ? `<img src="${icon}" class="party-icon-img">` : `<div class="party-icon"><i class="fas fa-users"></i></div>`}
+                            <div class="party-name">${pName}</div>
+                            <div class="party-slogan">${desc}</div>
+                            <div class="party-count">${members.length} 名成員</div>
+                            <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
+                                ${members.slice(0,4).map(m => `<img src="${m.avatar_url||DEFAULT_AVATAR}" class="member-preview-icon">`).join('')}
+                                ${members.length > 4 ? '<span style="color:#888;">...</span>' : ''}
+                            </div>
+                        </div>`;
             }).join('');
             
-            let { data: m } = await db.from('market').select('*').order('created_at',{ascending:false}); 
-            document.getElementById('market-list').innerHTML = m.map(x=>`<div class="card card-market"><div class="market-header"><img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img"><span class="market-seller-name">${x.owner}</span></div><div class="market-body"><div class="market-item">${x.item_name}</div><div class="market-desc">${x.description||''}</div></div><div class="market-footer">價格: ${x.price}</div><button class="btn-action" style="font-size:0.8rem; margin:5px;" onclick="openComments('${x.id}')">💬 留言 / 詢價</button></div>`).join('');
+            // V82.0: Render Graveyard List
+            const graveyardHtml = deadChars.length > 0 ? deadChars.map(c => {
+                 return `<div class="dead-card">
+                    <div class="dead-ribbon">R.I.P.</div>
+                    <img src="${c.avatar_url || DEFAULT_AVATAR}" class="dead-icon-img">
+                    <div style="font-family:var(--font-title); font-size:1.2rem; color:#ccc;">${c.name}</div>
+                    <div style="font-size:0.9rem; color:#666;">${c.race} ${c.class}</div>
+                    <div style="margin-top:10px; font-size:0.8rem; color:#888;">
+                        <i class="fas fa-cross"></i> 冒險結束於 ${new Date(c.updated_at || c.created_at).toLocaleDateString()}
+                    </div>
+                </div>`;
+            }).join('') : '<div style="width:100%; text-align:center; color:#555; grid-column: 1 / -1;">目前尚無犧牲者...這是件好事。</div>';
+            
+            const graveyardEl = document.getElementById('graveyard-list');
+            if(graveyardEl) graveyardEl.innerHTML = graveyardHtml;
+
+            // V83.0: Notice Stack Layout (with Date)
+            try {
+                let { data: n } = await db.from('notices').select('*').order('created_at', { ascending: false }); // Sort by newest
+                document.getElementById('notice-list').innerHTML = (n||[]).map(x => {
+                    const dateStr = x.created_at ? new Date(x.created_at).toLocaleDateString() : '';
+                    return `<div class="card card-notice" onclick="this.classList.toggle('active')">
+                        <h3>${x.title}<span class="notice-date">${dateStr}</span></h3>
+                        <div class="notice-content">
+                            <p class="desc">${x.content}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch(e) { console.error("Notices error", e); }
+            
+            // Quests
+            try {
+                let { data: q } = await db.from('quests').select('*').order('created_at',{ascending:false}); 
+                document.getElementById('quest-list').innerHTML = (q||[]).map(x=>{
+                    let statusClass = x.status === '已完成' ? 'st-done' : (x.status === '進行中' ? 'st-taken' : 'st-open');
+                    let statusText = x.status || '未接取';
+                    let taker = x.taken_by ? ` (${x.taken_by})` : '';
+                    return `<div class="card card-quest"><div class="quest-header"><img src="${x.client_avatar || DEFAULT_AVATAR}" class="quest-client-img"><span class="quest-client-name">${x.client_name || '匿名'}</span><span class="status-tag ${statusClass}" style="margin-left:auto" onclick="toggleQuestStatus('${x.id}', '${statusText}')">${statusText}${taker}</span></div><div class="quest-body"><div class="quest-title">${x.title}</div><p class="quest-desc">${x.desc}</p></div><div class="quest-footer">報酬: ${x.reward}</div></div>`;
+                }).join('');
+            } catch(e) {}
+            
+            // Market
+            try {
+                let { data: m } = await db.from('market').select('*').order('created_at',{ascending:false}); 
+                document.getElementById('market-list').innerHTML = (m||[]).map(x=>`<div class="card card-market"><div class="market-header"><img src="${x.seller_avatar || DEFAULT_AVATAR}" class="market-seller-img"><span class="market-seller-name">${x.owner}</span></div><div class="market-body"><div class="market-item">${x.item_name}</div><div class="market-desc">${x.description||''}</div></div><div class="market-footer">價格: ${x.price}</div><button class="btn-action" style="font-size:0.8rem; margin:5px;" onclick="openComments('${x.id}')">💬 留言 / 詢價</button></div>`).join('');
+            } catch(e) {}
         }
         
         // ... (Rest of utility functions like toggleQuestStatus, openComments, postComment, etc. are implicitly here or covered by logic above) ...
@@ -1198,7 +1288,7 @@
             const u = JSON.parse(localStorage.getItem('maztica_user'));
             const filePath = `guild/${u.adventurer_id}/${Date.now()}_${file.name}`;
             document.getElementById('icon-upload-status').innerText = '上傳中...';
-            // V70.0: Unified Bucket 'images'
+            // V80.0: Unified Bucket 'images'
             const { error } = await db.storage.from('images').upload(filePath, file, { upsert: false });
             if(error) { alert('Upload failed: '+error.message); return null; }
             const { data } = db.storage.from('images').getPublicUrl(filePath);
@@ -1326,6 +1416,31 @@
 
         async function saveCharacterSheet() { const u=JSON.parse(localStorage.getItem('maztica_user')); const cid=document.getElementById('edit-char-id').value; const all=[...editorData.kinAbilities,...editorData.heroicAbilities,...editorData.coreSkills,...editorData.weaponSkills,...editorData.secondarySkills,...editorData.cantrips,...editorData.rankedSpells,...editorData.weapons,...editorData.armors,...editorData.gear]; const sheet={name:document.getElementById('edit-name').value,img:document.getElementById('edit-avatar').value,system:{attributes:{str:{value:document.getElementById('attr-str').value},con:{value:document.getElementById('attr-con').value},agl:{value:document.getElementById('attr-agl').value},int:{value:document.getElementById('attr-int').value},wil:{value:document.getElementById('attr-wil').value},cha:{value:document.getElementById('attr-cha').value}},hitPoints:{value:document.getElementById('edit-hp').value,max:document.getElementById('edit-hp').value},willPoints:{value:document.getElementById('edit-wp').value,max:document.getElementById('edit-wp').value},currency:{gc:document.getElementById('curr-gc').value,sc:document.getElementById('curr-sc').value,cc:document.getElementById('curr-cc').value},notes:document.getElementById('edit-bio').value,weakness:document.getElementById('edit-weakness').value,appearance:document.getElementById('edit-appearance').value},items:all}; const payload={owner_name:u.name,name:sheet.name,race:document.getElementById('edit-race').value,class:document.getElementById('edit-class').value,avatar_url:sheet.img,rank:document.getElementById('edit-rank').value,sheet_data:sheet,party:document.getElementById('edit-party').value,is_public:true}; let tid=cid; if(cid) await db.from('my_characters').update(payload).eq('id',cid); else { const{data}=await db.from('my_characters').insert(payload).select(); if(data)tid=data[0].id; } showToast("保存成功"); await loadMyCharactersList(tid); }
         async function deleteCharacter() { const charId = document.getElementById('edit-char-id').value; if(!charId) return; if(confirm("確定刪除?")) { await db.from('my_characters').delete().eq('id', charId); showToast("已刪除"); loadMyCharactersList(); } }
+
+        // ★★★ V82.0 New Function: Mark As Dead ★★★
+        async function markAsDead() {
+            const charId = document.getElementById('edit-char-id').value;
+            const charName = document.getElementById('edit-name').value;
+            
+            if(!charId) return;
+            
+            const confirmText = prompt(`您確定要將 [${charName}] 標記為陣亡嗎？\n此操作會將角色移出隊伍並進入英靈殿。\n請輸入 "R.I.P." 以確認：`);
+            
+            if(confirmText === "R.I.P.") {
+                // Remove from party and set status to dead
+                const { error } = await db.from('my_characters')
+                    .update({ status: 'dead', party: '' }) 
+                    .eq('id', charId);
+                    
+                if(error) {
+                    alert("操作失敗 (請確認資料庫已新增 status 欄位): " + error.message);
+                } else {
+                    showToast(`已將 ${charName} 移入英靈殿`);
+                    loadMyCharactersList(); 
+                }
+            }
+        }
+        
         function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
         function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
         function showToast(m){ const t=document.getElementById('toast'); if(t){t.innerText=m;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}else alert(m); }
@@ -1410,4 +1525,3 @@
     </script>
 </body>
 </html>
-
