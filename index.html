@@ -1181,7 +1181,7 @@
                     <div style="font-family:var(--font-title); font-size:1.2rem; color:#ccc;">${c.name}</div>
                     <div style="font-size:0.9rem; color:#666;">${c.race} ${c.class}</div>
                     <div style="margin-top:10px; font-size:0.8rem; color:#888;">
-                        <i class="fas fa-cross"></i> 冒險結束於 ${new Date(c.updated_at || c.created_at).toLocaleDateString()}
+                        <i class="fas fa-cross"></i> 冒險結束於 ${c.death_date || '未知日期'}
                     </div>
                 </div>`;
             }).join('') : '<div style="width:100%; text-align:center; color:#555; grid-column: 1 / -1;">目前尚無犧牲者...這是件好事。</div>';
@@ -1193,7 +1193,7 @@
             try {
                 let { data: n } = await db.from('notices').select('*').order('created_at', { ascending: false }); // Sort by newest
                 document.getElementById('notice-list').innerHTML = (n||[]).map(x => {
-                    const dateStr = x.created_at ? new Date(x.created_at).toLocaleDateString() : '';
+                    const dateStr = x.date_str || '';
                     return `<div class="card card-notice" onclick="this.classList.toggle('active')">
                         <h3>${x.title}<span class="notice-date">${dateStr}</span></h3>
                         <div class="notice-content">
@@ -1419,27 +1419,37 @@
 
         // ★★★ V82.0 New Function: Mark As Dead ★★★
         async function markAsDead() {
-            const charId = document.getElementById('edit-char-id').value;
-            const charName = document.getElementById('edit-name').value;
+    const charId = document.getElementById('edit-char-id').value;
+    const charName = document.getElementById('edit-name').value;
+    
+    if(!charId) return;
+    
+    // 改成輸入視窗，讓您手動打日期
+    const dateInput = prompt(`請輸入 [${charName}] 的冒險結束日期 (遊戲曆法)：\n(例如：帝國曆 405 年 / 凜冬之月)`);
+    
+    // 如果使用者按取消或沒輸入，就終止
+    if (dateInput === null) return; 
+
+    // 二次確認
+    if(confirm(`確定將 [${charName}] 標記為陣亡嗎？\n日期：${dateInput}\n此操作會將角色移出隊伍並進入英靈殿。`)) {
+        
+        // 更新狀態為 dead，清空隊伍，並寫入死亡日期
+        const { error } = await db.from('my_characters')
+            .update({ 
+                status: 'dead', 
+                party: '', 
+                death_date: dateInput // 寫入剛才手打的日期
+            }) 
+            .eq('id', charId);
             
-            if(!charId) return;
-            
-            const confirmText = prompt(`您確定要將 [${charName}] 標記為陣亡嗎？\n此操作會將角色移出隊伍並進入回音之壁。\n請輸入 "R.I.P." 以確認：`);
-            
-            if(confirmText === "R.I.P.") {
-                // Remove from party and set status to dead
-                const { error } = await db.from('my_characters')
-                    .update({ status: 'dead', party: '' }) 
-                    .eq('id', charId);
-                    
-                if(error) {
-                    alert("操作失敗 (請確認資料庫已新增 status 欄位): " + error.message);
-                } else {
-                    showToast(`已將 ${charName} 移入回音之壁`);
-                    loadMyCharactersList(); 
-                }
-            }
+        if(error) {
+            alert("操作失敗: " + error.message);
+        } else {
+            showToast(`已將 ${charName} 移入英靈殿`);
+            loadMyCharactersList(); 
         }
+    }
+}
         
         function closeModal(e){if(e.target===e.currentTarget||e.target.classList.contains('close-btn')) e.target.closest('.modal-overlay').classList.remove('open');}
         function handleLogout(){localStorage.removeItem('maztica_user'); location.reload();}
@@ -1525,4 +1535,5 @@
     </script>
 </body>
 </html>
+
 
