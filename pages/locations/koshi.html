@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 科西村 (Koshi)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(15, 12, 10, 0.9); --text: #e0d0b0; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: transparent; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('koshi.webp'); /* 建議替換為濱海漁村的背景圖 */
+            background-size: cover; background-position: center; 
+            filter: brightness(0.6);
+            z-index: -1;
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: flex-end; 
+            box-sizing: border-box; 
+        }
+
+        /* --- 1. 左側動態展示區 --- */
+        .character-display-zone { 
+            position: absolute; top: 0; left: 0; width: calc(100% - 480px); height: 100%; 
+            pointer-events: none; 
+        }
+
+        .character-sprite { 
+            position: absolute; 
+            left: 2%; 
+            bottom: 0; 
+            height: 95%; 
+            max-width: 50vw; 
+            object-fit: contain; 
+            object-position: bottom left; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1; 
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay { 
+            position: absolute; 
+            right: 8%; 
+            bottom: 8%; 
+            width: 340px; 
+            background: rgba(10, 8, 6, 0.95); 
+            border: 1px solid var(--gold); padding: 20px 25px; 
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(212, 175, 55, 0.1); 
+            opacity: 0; transform: translateY(20px); transition: all 0.4s ease; 
+            text-align: justify; line-height: 1.6; font-size: 0.95rem;
+            pointer-events: auto; 
+            z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateY(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.2rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 1px;
+        }
+
+        /* --- 2. 右側：資訊面板 (480px 寬度) --- */
+        .info-panel { 
+            width: 480px; height: 100%; background: var(--bg-dark); 
+            border-left: 2px solid var(--gold); 
+            display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); 
+            flex-shrink: 0; z-index: 3;
+        }
+        
+        /* 書籤列：橫向文字、可上下滑動 */
+        .bookmarks { 
+            width: 120px; height: 100%; 
+            background: #2c251d; 
+            display: flex; flex-direction: column; border-right: 1px solid var(--gold); 
+            overflow-y: auto; 
+        }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            padding: 20px 10px; 
+            color: var(--gold); text-align: center;
+            cursor: pointer; border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            opacity: 0.7; 
+            letter-spacing: 2px; font-weight: bold; transition: 0.3s; 
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--gold); }
+
+        .scroll-content { flex: 1; padding: 35px 25px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.6rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        /* 地理誌樣式 */
+        .gazetteer-box { 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 15px; margin-bottom: 20px; border-radius: 3px; 
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 0.95rem; line-height: 1.5; }
+        .gazetteer-box strong { color: #b0965b; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc {
+            font-size: 1rem; text-align: justify; margin-bottom: 25px;
+            padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        .interaction-card { 
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(212, 175, 55, 0.1); 
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s; 
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem; }
+        .interaction-card span { font-size: 0.9rem; display: block; color: #ccc;}
+        
+        ul.styled-list { padding-left: 20px; margin-top: 5px; }
+        ul.styled-list li { margin-bottom: 8px; font-size: 0.95rem; }
+        ul.styled-list strong { color: var(--gold); display: inline; font-size: 1rem;}
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 未解鎖：全黑剪影濾鏡 --- */
+        .character-sprite.locked { filter: brightness(0) drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)) !important; }
+        
+        /* --- 未解鎖：神祕巨大問號 --- */
+        .unknown-mark {
+            position: absolute; left: 20%; bottom: 35%; font-size: 15rem; color: rgba(212, 175, 55, 0.6); 
+            font-family: 'Cinzel', serif; text-shadow: 0 0 40px rgba(0,0,0,1), 0 0 15px rgba(212, 175, 55, 0.5); 
+            pointer-events: none; opacity: 0; transform: scale(0.5); transition: all 0.5s ease; z-index: 2; 
+        }
+        .unknown-mark.active { opacity: 1; transform: scale(1); }
+
+        /* 解鎖者標籤樣式 (翡翠玉石綠) */
+        .tt-tag.unlocked-by { 
+            background: rgba(20, 184, 166, 0.15); 
+            color: #5eead4; 
+            border-left: 3px solid #14b8a6; 
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: inline-block; 
+            width: fit-content;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="unknown-mark" class="unknown-mark">?</div>
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('info')">漁村概況</div>
+            <div class="bookmark-btn" onclick="showTab('legend')">起源傳說</div>
+            <div class="bookmark-btn" onclick="showTab('temple')">潮神殿</div>
+            <div class="bookmark-btn" onclick="showTab('tower')">風語塔</div>
+        </div>
+
+        <div class="scroll-content">
+            
+            <div id="info" class="section active">
+                <h2>科西村</h2>
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 科西村</p>
+                    <p><strong>統治者：</strong> 現任村長 庫卡瓦尼</p>
+                    <p><strong>現狀：</strong> 剛遭逢巨變，在冒險者幫助下重建中的濱海漁村。</p>
+                    <p><strong>地點：</strong> 潮神殿、風語塔、科西灣。</p>
+                </div>
+                <div class="lore-desc">
+                    <p>　　這座寧靜的漁村依偎著科西灣的波濤，曾是與海潮和諧共存的樂土。然而，近期的一場駭人巨變摧毀了許多房屋與漁船，讓整個聚落百廢待興。在冒險者的幫助下，村民們正努力從廢墟中重新站起，找回往日的生機。</p>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">當地居民</h3>
+                <div class="interaction-card" onclick="setNpc('庫卡瓦尼', '現任村長', '科西灣遭逢大變後剛接任村長之位的年輕男子。儘管經驗尚淺，但他肩負著重建科西村的沉重擔子，正努力凝聚村民的向心力。', 'npc/kukawani.webp', false)">
+                    <strong>庫卡瓦尼</strong>
+                    <span>現任村長，帶領村民重建家園的年輕人。</span>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('尼柯爾', '半身人男孩', '充滿好奇心的半身人男孩。他對於村莊周遭的環境瞭若指掌，特別擅長在科西灣內採集各式珍稀的草藥。', 'npc/nicol.webp', false)">
+                    <strong>尼柯爾</strong>
+                    <span>擅長採集草藥、充滿好奇心的半身人男孩。</span>
+                </div>
+            </div>
+
+            <div id="legend" class="section">
+                <h2>起源傳說</h2>
+                <div class="lore-desc">
+                    <p>　　很久以前，科西村仍是一片被海浪吞噬的濕沼地。那時的村民四處漂泊，只能仰賴捕魚和採集維生。然而，海潮經常突如其來地暴漲，沖毀棲地、捲走孩童與船隻。村民們便開始將供品丟入水中，向「海的彼岸」祈求寧靜。</p>
+                    <p>　　某夜，月亮高掛，銀色的浪花凝結如玉石，一個頭戴水草、背負龜殼、面如青玉的存在從潮間帶升起。他身形如河童，卻高大挺拔，眉宇間帶著深海的沉靜。他自稱「海緣翁」，是海潮與陸地交界誕生的古靈，能呼喚潮水，也能使其退去。</p>
+                    <p>　　他說：「我來為你們守潮，但你們必須記得與海的盟約。」</p>
+                    <p>　　村民見他驅退暴潮、使魚群靠岸，便為他立下石像，在海岸供奉。他們稱這尊神為「潮神」，也叫「海緣翁」。這正是科西村信仰與安寧的起點。</p>
+                </div>
+            </div>
+
+            <div id="temple" class="section">
+                <h2>潮神殿</h2>
+                <div class="lore-desc">
+                    <p>　　位於海岸邊的神殿，是為了供奉傳說中的「海緣翁」而建。這裡不僅是村民舉行祭海儀式的聖地，也是科西村心靈的寄託之處。即使歷經巨變，神殿的香火與對海的敬畏依然不曾斷絕。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">神殿守護者</h3>
+                <div class="interaction-card" onclick="setNpc('娜莎恩', '神殿守祭', '負責潮神信仰的主要祭司。她在村中是除了村長之外最擁有話語權的人，引導著村民與海洋保持神聖的盟約。', 'npc/nasaan.webp', false)">
+                    <strong>娜莎恩</strong>
+                    <span>神殿守祭，潮神信仰的引導者。</span>
+                </div>
+            </div>
+
+            <div id="tower" class="section">
+                <h2>風語塔</h2>
+                <div class="lore-desc">
+                    <p>　　隱立於科西灣內的一座古老高塔。塔身承接來自海面的強風，發出宛如低語的神秘聲響。這裡遠離村莊的喧囂，是被時代遺忘的靜謐之所。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">塔中隱士</h3>
+                <div class="interaction-card" onclick="setNpc('瑪蓮婆婆', '前任守祭', '前任的潮神殿守祭，因為某些原因退下了職務，目前獨自隱居在科西灣內的風語塔中，鮮少與外界接觸。', 'npc/marlen.webp', false)"> <strong>瑪蓮婆婆</strong>
+                    <span>獨自隱居在風語塔中的前任守祭。</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 🌟 切換分頁時，重置右側資訊區塊的捲動位置到最上方
+        document.querySelector('.scroll-content').scrollTop = 0;
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+        document.getElementById('unknown-mark').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img, isLocked = false, unlockedBy = "") {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        const unknownMark = document.getElementById('unknown-mark');
+        
+        // 切換前先將所有元素淡出
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        unknownMark.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img;
+            
+            if (isLocked) {
+                // 🔒 未解鎖狀態：套用全黑剪影、顯示問號、覆蓋文字
+                sprite.classList.add('locked');
+                unknownMark.classList.add('active');
+                storyBox.innerHTML = `<strong>未解鎖 <span style="font-size:0.8rem; color:#aaa;">| 未知</span></strong><div style="margin-bottom: 12px;">該NPC的情報尚未揭露......</div>`;
+            } else {
+                // 🔓 已解鎖狀態：移除濾鏡
+                sprite.classList.remove('locked');
+                
+                // 利用 div 區塊強制換行，避免標籤黏在故事文字後方
+                let contentHtml = `<strong>${name} <span style="font-size:0.8rem; color:#aaa;">| ${title}</span></strong><div style="margin-bottom: 12px;">${story}</div>`;
+                
+                // 動態判定：如果有填寫解鎖者，就自動在底部塞入翡翠綠標籤
+                if (unlockedBy && unlockedBy.trim() !== "") {
+                    contentHtml += `<div class="tt-tag unlocked-by">🗝️ 解鎖者：${unlockedBy}</div>`;
+                }
+                
+                storyBox.innerHTML = contentHtml;
+            }
+
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>

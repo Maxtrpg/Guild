@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 奧札爾特</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(15, 12, 10, 0.9); --text: #e0d0b0; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: transparent; }
+
+        /* --- 背景場景 (配合彈窗大小) --- */
+        .scene-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('ozalte.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.6); 
+            z-index: -1;
+        }
+
+        /* --- 主容器 (滿合 Iframe) --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: flex-end; 
+            box-sizing: border-box;
+        }
+
+        /* --- 1. 左側動態展示區 (立繪與文字) --- */
+        .character-display-zone {
+            position: absolute; top: 0; left: 0; width: calc(100% - 420px); height: 100%;
+            pointer-events: none; 
+        }
+
+        .character-sprite { 
+            position: absolute;
+            left: 2%; 
+            bottom: 0; 
+            height: 95%; 
+            max-width: 50vw; 
+            object-fit: contain; 
+            object-position: bottom left; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute;
+            right: 8%; /* 向右對齊，填補空白位置 */
+            bottom: 8%; 
+            width: 340px; 
+            background: rgba(10, 8, 6, 0.95); 
+            border: 1px solid var(--gold); padding: 20px 25px;
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(212, 175, 55, 0.1);
+            opacity: 0; transform: translateY(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.6; font-size: 0.95rem;
+            pointer-events: auto; 
+            z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateY(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.2rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 1px;
+        }
+
+        /* --- 2. 右側：資訊面板 (無縫貼合右側) --- */
+        .info-panel { 
+            width: 420px; height: 100%; background: var(--bg-dark); 
+            border-left: 2px solid var(--gold); 
+            display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); 
+            flex-shrink: 0; z-index: 3;
+        }
+        
+        /* 書籤列 */
+        .bookmarks { 
+            width: 60px; height: 100%; 
+            background: #2c251d; 
+            display: flex; flex-direction: column; border-right: 1px solid var(--gold); 
+        }
+.bookmark-btn { 
+    writing-mode: vertical-rl; /* 改用 rl 更符合中文直排習慣 */
+    text-orientation: upright; /* 確保中文字體保持正向 */
+    white-space: nowrap;       /* 強制文字不換行 */
+    padding: 25px 15px; 
+    color: var(--gold); 
+    cursor: pointer; 
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+    opacity: 0.7; 
+    letter-spacing: 3px; 
+    font-weight: bold; 
+    transition: 0.3s;
+}
+        .bookmark-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--gold); } 
+
+        .scroll-content { flex: 1; padding: 35px 25px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.6rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        /* --- 互動卡片樣式 --- */
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(212, 175, 55, 0.1);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        
+        /* --- 地理誌專用排版 --- */
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 3px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 0.95rem; line-height: 1.5; }
+        .gazetteer-box strong { color: #b0965b; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc {
+            font-size: 1rem; text-align: justify; margin-bottom: 25px;
+            padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('city')">鎮上簡介</div>
+            <div class="bookmark-btn" onclick="showTab('camp')">郊外營地</div>
+            <div class="bookmark-btn" onclick="showTab('inn')">旅館</div>
+            <div class="bookmark-btn" onclick="showTab('barracks')">軍營</div>
+            <div class="bookmark-btn" onclick="showTab('temple')">神廟</div>
+            <div class="bookmark-btn" onclick="showTab('other')">其他</div>
+        </div>
+
+        <div class="scroll-content">
+            <div id="city" class="section active">
+                <h2>奧札爾特</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 奧札爾特</p>
+                    <p><strong>統治者：</strong> 鎮長 伊爾希卡米納</p>
+                    <p><strong>政府：</strong> 世襲鎮長制。剛從父親手中繼承頭銜的年輕鎮長行事果斷，並由神廟薩滿從旁輔佐。</p>
+                    <p><strong>地點：</strong> 月火旅館、軍營、夸爾特神廟、木工坊、鍛工坊、學校。</p>
+                    <p><strong>資源：</strong> 基礎糧食、精良鍛造品、木材、各類探險與生活物資。</p>
+                    <p><strong>人口：</strong> 馬茲提卡人 75%、庫塔卡人 15%、帕伊特人 8%、其他 2%。</p>
+                    <p><strong>法律：</strong> 城內治安良好，但城牆外緣的營區地帶較為混亂。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>　　奧札爾特鎮是一座與自然及信仰和諧共存的繁榮聚落，其堅固的土石城牆守護著每一位辛勤工作的住民。這裡不僅是過往商旅橫跨佩澤拉克邊境的重要補給站，更是夸爾特信仰的傳承高地。城內設施完善，職人手藝精湛，是冒險者洗去疲憊、重新整備的最佳去處。</p>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('伊爾希卡米納', '鎮長', '作為這座城鎮的現任領袖，伊爾希卡米納以其公正無私且果敢的治理風格深得民心。她致力於維持奧札爾特在變動政局中的獨立與繁榮，是一位英姿颯爽且極具決斷力的領袖。', 'npc/ilhicamina.webp')">
+                    <strong>伊爾希卡米納</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。引導城鎮走向輝煌的年輕領袖。</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">城鎮職人與導師</h3>
+
+                <div class="interaction-card" onclick="setNpc('西帕克', '木匠', '西帕克經營著鎮上規模最大的木工坊，他對木材纹理的直覺幾乎等同於藝術。無論是修復損壞的車輛或是訂製堅固的冒險箱盒，他的手藝始終是品質的保證。', 'npc/xipac.webp')">
+                    <strong>西帕克</strong>
+                    <span style="font-size: 0.9rem;">專精建築維護與大型木器打造的資深工匠。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('卡爾馬克', '鍛匠', '在奧札爾特，卡爾馬克爐火中傳出的敲擊聲是平靜生活的象徵。他負責打造全鎮所需的農具與基礎衛戍兵器，是一位沈穩且手藝紮實的鐵匠。', 'npc/calmac.webp')">
+                    <strong>卡爾馬克</strong>
+                    <span style="font-size: 0.9rem;">負責維護生活器具與基礎武裝的鍛造權威。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('西特拉利', '教師', '西特拉利相信知識是守護馬茲提卡最強大的盾牌。他在鎮上的學校教導孩子們歷史、曆法與對神靈的敬畏心，是鎮上備受尊敬的知識傳播者。', 'npc/citlali.webp')">
+                    <strong>西特拉利</strong>
+                    <span style="font-size: 0.9rem;">負責啟蒙下一代並傳承大陸歷史的博學者。</span>
+                </div>
+            </div>
+
+            <div id="inn" class="section">
+                <h2>月火旅館</h2>
+                
+                <div class="lore-desc">
+                    <p>　　這間旅館坐落於城鎮最繁華的地段，由一對勤懇的母子共同經營。這裡是奧札爾特的心臟，來自各方的旅人在此交會。旅館內常年供應溫暖的濃湯與精緻的馬茲提卡料理，是疲憊旅途中最令人嚮往的安息所。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">旅宿經營者</h3>
+                
+                <div class="interaction-card" onclick="setNpc('阿薩亞卡特爾', '旅館老闆', '年輕而熱情的阿薩亞卡特爾是這座旅館的靈魂。他總能以誠摯的笑容迎接每一位客，並對城鎮的各類情報瞭若指掌，是許多旅行者進入奧札爾特後結交的第一位朋友。', 'npc/axayacatl.webp')">
+                    <strong>阿薩亞卡特爾</strong>
+                    <span style="font-size: 0.9rem;">庫塔卡人。熱情周到、精通地方軼聞的年輕店主。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('泰烏克', '經營協力者', '身為旅館的守護者，泰烏克豐富的烹飪經驗與細膩的打理能力，是旅館維持高品質服務的關鍵。她是一位慈祥且睿智的長者，深受住客與鄰里的喜愛。', 'npc/teiuci.webp')">
+                    <strong>泰烏克</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。負責管理廚房雜務與內部的溫柔長輩。</span>
+                </div>
+            </div>
+
+            <div id="camp" class="section">
+                <h2>郊外營地</h2>
+  
+                <div class="lore-desc">
+                    <p>　　位於奧札爾特城牆外緣的非正式居住區，這裡聚集了許多無法及時入城的旅商、流浪民族或尋求新生活的流民。營區雖然缺乏厚實城牆的庇護，卻有著一種獨特的自由與活力，也是各類非法貿易與地下情報流動的集散地。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">營地關鍵人物</h3>
+                
+                <div class="interaction-card" onclick="setNpc('西科翠', '營地管理者', '西科翠以其精明的生意頭腦與卓越的生存本能實質統治著這個營區。雖然遊走於法律邊緣，但她對屬下的照應與對秩序的獨特維持，使其成為邊境地區不可忽視的勢力人物。', 'npc/xicohcui.webp')">
+                    <strong>西科翠</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。擁有廣闊情報網與卓越手腕的地頭蛇。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('堤藏', '營地成員', '西科翠的親弟弟，是一位沈默寡言且工作勤懇的青年。他負責處理營地中各類瑣碎的行政與物流工作，是姊姊最得力的左右手。', 'npc/teizoh.webp')">
+                    <strong>堤藏</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。忠誠且可靠的營地事務管理者。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('亞雷利', '獵人長', '作為狗民一族的勇士，亞雷利帶著族人在營地落腳，並負責外圍的狩獵與警戒工作。他對荒野地形的熟悉程度無人能及，是一位極其出色的追蹤者。', 'npc/yareli.webp')">
+                    <strong>亞雷利</strong>
+                    <span style="font-size: 0.9rem;">狗民。經驗豐富且敏銳的荒野獵人長。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('亞雷諾', '斥候', '亞雷利的弟弟，雖然年輕但身手異常靈活。他負責營地與森林間的偵查任務，擁有天賦般的直覺與極快的移動速度。', 'npc/yareno.webp')">
+                    <strong>亞雷諾</strong>
+                    <span style="font-size: 0.9rem;">狗民。機警且動作迅捷的營地斥候。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('埃倫科', '營地衛士', '在獲得西科翠的救贖後，埃倫科將餘生奉獻給了這片營區。他高大的身軀與堅毅的性格是營地內最可靠的防禦力量之一。', 'npc/erencoh.webp')">
+                    <strong>埃倫科</strong>
+                    <span style="font-size: 0.9rem;">綠民。重獲自由後致力於守護弱小的堅定戰士。</span>
+                </div>
+            </div>
+
+            <div id="temple" class="section">
+                <h2>夸爾特神廟</h2>
+
+                <div class="lore-desc">
+                    <p>　　這座宏偉的神廟是奧札爾特最高的建築，象徵著對尊貴夸爾特神的崇敬。這裡是鎮民尋求心靈安定的聖地，也是大陸上鑽研「羽術流派」法術的權威機構之一。神廟不僅守護著古老的歷史紀錄，更引導著信眾在紛亂的世界中尋求平衡。</p>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">神廟守護者</h3>
+
+                <div class="interaction-card" onclick="setNpc('姚波波卡', '大薩滿', '作為這一代羽術流派的權威，姚波波卡代表了跨越數個世紀的智慧傳承。她不僅是強大的施法者，更是奧札爾特的精神支柱，常能透過古老的曆法預見潛在的危機。', 'npc/yaopopoca.webp')">
+                    <strong>姚波波卡</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。掌握強大羽術與古老智慧的睿智長者。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('庫茨帕索奇特爾', '見習薩滿', '姚波波卡的孫女，天賦異稟。她雖不喜言語，卻擁有一顆極為溫暖且正直的心，目前正全力投入於淨化儀式與古代法理的研究。', 'npc/cuetzpallxochitl.webp')">
+                    <strong>庫茨帕索奇特爾</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。沈穩且天賦極高的羽術流派繼承者。</span>
+                </div>
+            </div>
+
+            <div id="barracks" class="section">
+                <h2>軍營</h2>
+
+                <div class="lore-desc">
+                    <p>　　負責守衛奧札爾特和平的核心軍事機構。軍營內駐紮著訓練有素的正規軍隊，並負責維護城內外的法律秩序。這裡也是全鎮青年接受體能與紀律教育的重要場所，象徵著奧札爾特不容侵犯的威嚴。</p>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">軍方要員</h3>
+
+                <div class="interaction-card" onclick="setNpc('卡馬克斯特里', '軍營長', '卡馬克斯特里統領著奧札爾特的整套防衛系統。他是一位從實戰中成長起來的將領，嚴謹的紀律要求與對士兵的愛護，使其麾下的守衛隊成為佩澤拉克邊境最強悍的力量。', 'npc/camaxtli.webp')">
+                    <strong>卡馬克斯特里</strong>
+                    <span style="font-size: 0.9rem;">庫塔卡人。驍勇善戰且治軍嚴明的軍事統帥。</span>
+                </div>                
+
+                <div class="interaction-card" onclick="setNpc('查爾基烏諾利', '精英衛兵', '查爾基烏諾利代表了軍營中最新銳的一代力量。他正接受嚴格的軍官培訓，對守護家園有著無比的熱忱，是城防任務中經常能看見的熱血面孔。', 'npc/chalchiuinolli.webp')">
+                    <strong>查爾基烏諾利</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。勤勉訓練且極具責任感的現役衛兵。</span>
+                </div>  
+
+                <div class="interaction-card" onclick="setNpc('西瓦約特爾', '資深老兵', '西瓦約特爾曾擔任過長達三十年的軍營長，退休後仍閒居於此。他豐富的戰場經驗使其成為新兵們最敬重的導師，時不時會出面指引守衛隊的戰略佈署。', 'npc/siwayoter.webp')">
+                    <strong>西瓦約特爾</strong>
+                    <span style="font-size: 0.9rem;">馬茲提卡人。見證無數戰事、備受崇敬的退休將領。</span>
+                </div> 
+
+            </div>
+
+            <div id="other" class="section">
+                <h2>其他</h2>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">冒險者回報</h3>
+
+                <div class="interaction-card" onclick="setNpc('佐林', '獵人', '獨自居住在波波爾山山腳下的獵人，目的不明，據說已經失蹤。', 'npc/zolin.webp')">
+                    <strong>佐林</strong>
+                    <span style="font-size: 0.9rem;">獨自居住在波波爾山山腳下的獵人，目的不明。</span>
+                </div>                
+
+                <div class="interaction-card" onclick="setNpc('埃茲帕', '旅商', '在東南營地結識的旅商。', 'npc/ezpa.webp')">
+                    <strong>埃茲帕</strong>
+                    <span style="font-size: 0.9rem;">在東南營地結識的旅商。</span>
+                </div>  
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img;
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.8rem; color:#aaa;">| ${title}</span></strong>${story}`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>

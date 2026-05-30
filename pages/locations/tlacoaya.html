@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 特拉科亞 (Tlacoaya)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(12, 15, 13, 0.93); --text: #d0e0c8; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: transparent; }
+
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('tlacoaya.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.6);
+            z-index: -1;
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: flex-end; 
+            box-sizing: border-box; 
+        }
+
+        /* --- 1. 左側動態展示區 --- */
+        .character-display-zone { 
+            position: absolute; top: 0; left: 0; width: calc(100% - 480px); height: 100%; 
+            pointer-events: none; 
+        }
+
+        /* 預設：直式立繪樣式 (貼齊左下角) */
+        .character-sprite { 
+            position: absolute; 
+            left: 2%; 
+            bottom: 0; 
+            height: 95%; 
+            max-width: 50vw; 
+            object-fit: contain; 
+            object-position: bottom left; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1; 
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+
+        /* 橫式立繪 (全版場景) 樣式 - 完美貼齊底部 */
+        .character-sprite.wide {
+            max-width: 100%;
+            width: 95%; 
+            left: 2.5%;
+            object-position: bottom center; 
+        }
+        
+        .npc-story-overlay { 
+            position: absolute; 
+            right: 8%; 
+            bottom: 8%; 
+            width: 340px; 
+            background: rgba(8, 10, 9, 0.95); 
+            border: 1px solid var(--gold); padding: 20px 25px; 
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(212, 175, 55, 0.1); 
+            opacity: 0; transform: translateY(20px); transition: all 0.4s ease; 
+            text-align: justify; line-height: 1.6; font-size: 0.95rem;
+            pointer-events: auto; 
+            z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateY(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.2rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 1px;
+        }
+
+        /* --- 2. 右側：資訊面板 (480px 寬度) --- */
+        .info-panel { 
+            width: 480px; height: 100%; background: var(--bg-dark); 
+            border-left: 2px solid var(--gold); 
+            display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); 
+            flex-shrink: 0; z-index: 3;
+        }
+        
+        /* 書籤列：橫向文字 */
+        .bookmarks { 
+            width: 120px; height: 100%; 
+            background: #1d2520; 
+            display: flex; flex-direction: column; border-right: 1px solid var(--gold); 
+            overflow-y: auto; 
+        }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            padding: 20px 10px; 
+            color: var(--gold); text-align: center;
+            cursor: pointer; border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            opacity: 0.7; 
+            letter-spacing: 2px; font-weight: bold; transition: 0.3s; 
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--gold); }
+
+        .scroll-content { flex: 1; padding: 35px 25px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.6rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        /* 地理誌樣式 */
+        .gazetteer-box { 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 15px; margin-bottom: 20px; border-radius: 3px; 
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 0.95rem; line-height: 1.5; }
+        .gazetteer-box strong { color: #b0965b; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc {
+            font-size: 1rem; text-align: justify; margin-bottom: 25px;
+            padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        .interaction-card { 
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(212, 175, 55, 0.1); 
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s; 
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem; }
+        .interaction-card span { font-size: 0.9rem; display: block; color: #ccc;}
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 未解鎖：全黑剪影濾鏡 --- */
+        .character-sprite.locked { filter: brightness(0) drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)) !important; }
+        
+        /* --- 未解鎖：神祕巨大問號 --- */
+        .unknown-mark {
+            position: absolute; left: 20%; bottom: 35%; font-size: 15rem; color: rgba(212, 175, 55, 0.6); 
+            font-family: 'Cinzel', serif; text-shadow: 0 0 40px rgba(0,0,0,1), 0 0 15px rgba(212, 175, 55, 0.5); 
+            pointer-events: none; opacity: 0; transform: scale(0.5); transition: all 0.5s ease; z-index: 2; 
+        }
+        .unknown-mark.active { opacity: 1; transform: scale(1); }
+
+        /* 解鎖者標籤樣式 (翡翠玉石綠) */
+        .tt-tag.unlocked-by { 
+            background: rgba(20, 184, 166, 0.15); 
+            color: #5eead4; 
+            border-left: 3px solid #14b8a6; 
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: inline-block; 
+            width: fit-content;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="unknown-mark" class="unknown-mark">?</div>
+        <div id="story-box" class="shadow-box npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('info')">聚落概況</div>
+            <div class="bookmark-btn" onclick="showTab('layout')">村內設施</div>
+            <div class="bookmark-btn" onclick="showTab('residents')">當地居民</div>
+        </div>
+
+        <div class="scroll-content">
+            
+            <div id="info" class="section active">
+                <h2>特拉科亞</h2>
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 特拉科亞村</p>
+                    <p><strong>統治者：</strong> 村長 伊索爾．綠盞</p>
+                    <p><strong>政府：</strong> 村民自治。</p>
+                    <p><strong>資源：</strong> 農作物、漁獲、沼地生物。</p>
+                    <p><strong>人口：</strong> 半身人 100%。</p>
+                    <p><strong>盟友：</strong> 特佩拉卡、圖洛姆－伊齊。</p>
+                    <p><strong>敵人：</strong> 沼澤威脅、遠帕伊特威脅。</p>
+                </div>
+                <div class="lore-desc">
+                    <p>　　特拉科亞村座落於納拉巴頓叢林的北部邊緣，是一個極其隱蔽、被終年不散的濃霧與危機四伏的沼澤所環繞的半身人小村落。這裡與世隔絕，全村僅有約二十至三十名人口，居民們依賴村落外圍建立的獨特「浮田」進行農業耕作，過著完全自給自足的寧靜生活。</p>
+                    <p>　　然而，這片沼澤的黑夜並不安全。當夜幕降臨、濃霧加深時，半身人們會在精緻的木屋頂與窗沿掛滿密密麻麻的骨串與乾燥煙草護符。村落中央的篝火會燃燒整夜，劈啪作響的火光與特殊的煙草氣味瀰漫在空氣中，彷彿是這群嬌小的原住民在與迷霧深處某些看不見、摸不透的神祕存在進行一場漫長且無聲的對抗。</p>
+                </div>
+            </div>
+
+            <div id="layout" class="section">
+                <h2>村內設施</h2>
+                <div class="lore-desc">
+                    <p>　　村莊範圍不大，以中央的古老大樹與徹夜篝火為核心，外圍沼澤則是賴以為生的浮田防線。</p>
+                </div>
+
+                <div class="interaction-card">
+                    <strong>中央古樹與大火堆</strong>
+                    <span>位於特拉科亞正中央，生長著一棵見證了數代半身人歷史的參天古老巨樹。大樹底部的空地上設有一個巨大的亂石火堆。不論白天或黑夜，這裡永遠維持著熊熊烈火，是全村村民聚會、商議政務以及晚間共同抵抗沼澤陰影的核心活動精神支柱。</span>
+                </div>
+
+                <div class="interaction-card">
+                    <strong>外圍浮田</strong>
+                    <span>巧妙利用沼澤地形開發的浮田。半身人們用柳條編織成巨大的框架，填入泥炭與富含養分的沼澤淤泥，栽種著特有的耐濕作物。這些浮田不僅提供了全村自給自足的糧食，縱橫交錯的水道也成了阻擋大型野獸入侵的天然迷宮防線。</span>
+                </div>
+            </div>
+
+            <div id="residents" class="section">
+                <h2>當地村民</h2>
+                <div class="lore-desc">
+                    <p>　　儘管人口稀少，特拉科亞的每一位核心人物都各司其職，共同守護著迷霧中的半身人血脈。</p>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('伊索爾．綠盞', '村長', '一位年邁但眼神睿智的半身人長者。他對沼澤的潮汐變化與作物的種植瞭若指掌。身為村長，他以溫和且務實的手段治理著特拉科亞，帶領村民在強大外敵與惡劣環境的夾縫中，始終保持著與世無爭的隱蔽生存。', 'npc/isolde.webp')">
+                    <strong>村長 伊索爾．綠盞</strong>
+                    <span>沉穩睿智的村落領袖，精通沼澤務農與隱蔽生存之道。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('耶娜．輕雲', '村落獵人', '身手極其敏捷的女性半身人。她能踩著沼澤上的枯枝與浮草而行，不發出半點聲響。負責帶領少數獵人穿梭於迷霧中捕魚、狩獵，並在屋外佈置煙草護符。她對於沼澤內看不見的危險有著近乎野獸般的敏銳直覺。', 'npc/yena.webp')">
+                    <strong>獵人 耶娜．輕雲</strong>
+                    <span>踏水無痕的迷霧獵手，負責村落物資採集與護符佈置。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('塞馬克．石肩', '部落勇士', '在半身人中罕見擁有厚實體格與驚人怪力的戰士。塞馬克是特拉科亞最堅固的護盾，誓死守護中央古樹的火堆，隨時準備迎擊任何試圖渡過浮田水網的巨大泥沼怪獸。', 'npc/cemac.webp')">
+                    <strong>部落勇士 塞馬克．石肩</strong>
+                    <span>悍勇無畏的半身人戰士，守護中央火堆與水防線的堅盾。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('蘇雅·羽環', '部落薩滿', '神祕的半身人精神領袖。她的雙手與羽毛飾品上塗抹著沼澤植物調配的螢光染料。蘇雅能聆聽古樹與迷霧風聲的低語，負責主持每晚點燃驅邪篝火的儀式，並利用骨串與煙草與黑暗中的神祕存在進行溝通或制衡。', 'npc/suya.webp')">
+                    <strong>部落薩滿 蘇雅·羽環</strong>
+                    <span>神祕的半身人精神領袖。</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 切換分頁時，重置右側資訊區塊的捲動位置到最上方
+        document.querySelector('.scroll-content').scrollTop = 0;
+        
+        // 切換分頁時重置左側立繪狀態
+        const sprite = document.getElementById('npc-sprite');
+        sprite.classList.remove('active', 'wide');
+        document.getElementById('story-box').classList.remove('active');
+        document.getElementById('unknown-mark').classList.remove('active');
+    }
+
+    // 參數說明：名字, 職稱, 故事文本, 圖片路徑, 是否鎖定, 解鎖者名字, 是否橫式全版
+    function setNpc(name, title, story, img, isLocked = false, unlockedBy = "", isWide = false) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        const unknownMark = document.getElementById('unknown-mark');
+        
+        // 切換前先將所有元素淡出並重置寬度狀態
+        sprite.classList.remove('active', 'wide');
+        storyBox.classList.remove('active');
+        unknownMark.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img;
+            
+            // 處理橫式全版場景
+            if (isWide) {
+                sprite.classList.add('wide');
+            }
+            
+            if (isLocked) {
+                // 🔒 未解鎖狀態：套用全黑剪影、顯示金色問號、覆蓋文字
+                sprite.classList.add('locked');
+                unknownMark.classList.add('active');
+                storyBox.innerHTML = `<strong>未解鎖 <span style=\"font-size:0.8rem; color:#aaa;\">| 未知</span></strong><div style=\"margin-bottom: 12px;\">該地點的守護謎團尚未在古老石板中揭開......</div>`;
+            } else {
+                // 🔓 已解鎖狀態：正常顯示
+                sprite.classList.remove('locked');
+                
+                let contentHtml = `<strong>${name} <span style=\"font-size:0.8rem; color:#aaa;\">| ${title}</span></strong><div style=\"margin-bottom: 12px;\">${story}</div>`;
+                
+                // 如果有解鎖者資料，自動塞入翡翠綠標籤
+                if (unlockedBy && unlockedBy.trim() !== "") {
+                    contentHtml += `<div class="tt-tag unlocked-by">🗝️ 解鎖者：${unlockedBy}</div>`;
+                }
+                
+                storyBox.innerHTML = contentHtml;
+            }
+
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>

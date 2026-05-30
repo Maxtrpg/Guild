@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 特特奧坎 (Teteocan)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(15, 12, 10, 0.9); --text: #e0d0b0; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: transparent; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('teteocan.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.6);
+            z-index: -1;
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: flex-end; 
+            box-sizing: border-box; 
+        }
+
+        /* --- 1. 左側動態展示區 --- */
+        .character-display-zone { 
+            position: absolute; top: 0; left: 0; width: calc(100% - 480px); height: 100%; 
+            pointer-events: none; 
+        }
+
+        /* 預設：直式立繪樣式 (貼齊左下角) */
+        .character-sprite { 
+            position: absolute; 
+            left: 2%; 
+            bottom: 0; 
+            height: 95%; 
+            max-width: 50vw; 
+            object-fit: contain; 
+            object-position: bottom left; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1; 
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+
+        /* 橫式立繪 (全版場景) 樣式 - 完美貼齊底部 */
+        .character-sprite.wide {
+            max-width: 100%;
+            width: 95%; 
+            left: 2.5%;
+            object-position: bottom center; 
+        }
+        
+        .npc-story-overlay { 
+            position: absolute; 
+            right: 8%; 
+            bottom: 8%; 
+            width: 340px; 
+            background: rgba(10, 8, 6, 0.95); 
+            border: 1px solid var(--gold); padding: 20px 25px; 
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(212, 175, 55, 0.1); 
+            opacity: 0; transform: translateY(20px); transition: all 0.4s ease; 
+            text-align: justify; line-height: 1.6; font-size: 0.95rem;
+            pointer-events: auto; 
+            z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateY(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.2rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 1px;
+        }
+
+        /* --- 2. 右側：資訊面板 (480px 寬度) --- */
+        .info-panel { 
+            width: 480px; height: 100%; background: var(--bg-dark); 
+            border-left: 2px solid var(--gold); 
+            display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); 
+            flex-shrink: 0; z-index: 3;
+        }
+        
+        /* 書籤列：橫向文字、可上下滑動 */
+        .bookmarks { 
+            width: 120px; height: 100%; 
+            background: #2c251d; 
+            display: flex; flex-direction: column; border-right: 1px solid var(--gold); 
+            overflow-y: auto; 
+        }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            padding: 20px 10px; 
+            color: var(--gold); text-align: center;
+            cursor: pointer; border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            opacity: 0.7; 
+            letter-spacing: 2px; font-weight: bold; transition: 0.3s; 
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--gold); }
+
+        .scroll-content { flex: 1; padding: 35px 25px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.6rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        /* 地理誌樣式 */
+        .gazetteer-box { 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 15px; margin-bottom: 20px; border-radius: 3px; 
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 0.95rem; line-height: 1.5; }
+        .gazetteer-box strong { color: #b0965b; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc {
+            font-size: 1rem; text-align: justify; margin-bottom: 25px;
+            padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        .interaction-card { 
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(212, 175, 55, 0.1); 
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s; 
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem; }
+        .interaction-card span { font-size: 0.9rem; display: block; color: #ccc;}
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 未解鎖：全黑剪影濾鏡 --- */
+        .character-sprite.locked { filter: brightness(0) drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)) !important; }
+        
+        /* --- 未解鎖：神祕巨大問號 --- */
+        .unknown-mark {
+            position: absolute; left: 20%; bottom: 35%; font-size: 15rem; color: rgba(212, 175, 55, 0.6); 
+            font-family: 'Cinzel', serif; text-shadow: 0 0 40px rgba(0,0,0,1), 0 0 15px rgba(212, 175, 55, 0.5); 
+            pointer-events: none; opacity: 0; transform: scale(0.5); transition: all 0.5s ease; z-index: 2; 
+        }
+        .unknown-mark.active { opacity: 1; transform: scale(1); }
+
+        /* 解鎖者標籤樣式 (翡翠玉石綠) */
+        .tt-tag.unlocked-by { 
+            background: rgba(20, 184, 166, 0.15); 
+            color: #5eead4; 
+            border-left: 3px solid #14b8a6; 
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: inline-block; 
+            width: fit-content;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="unknown-mark" class="unknown-mark">?</div>
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('info')">村落概況</div>
+            <div class="bookmark-btn" onclick="showTab('tavern')">斷牙酒館</div>
+            <div class="bookmark-btn" onclick="showTab('shrine')">柯巴香祭壇</div>
+        </div>
+
+        <div class="scroll-content">
+            
+            <div id="info" class="section active">
+                <h2>特特奧坎</h2>
+                <div class="gazetteer-box">
+                    <p><strong>別名名字：</strong> 眾石之地</p>
+                    <p><strong>統治體系：</strong> 豹人部落自治</p>
+                    <p><strong>產業型態：</strong> 以採掘小礦山為主，輔以周邊林地的荒野狩獵維生。</p>
+                    <p><strong>環境特徵：</strong> 由粗糙巨石與巨大藤蔓構成的原始建築，河面上漂浮著運送原木與礦石的竹筏。</p>
+                </div>
+                <div class="lore-desc">
+                    <p>　　踏入被譽為「眾石之地」的特特奧坎，入眼皆是粗糙巨石建築。巨大的藤蔓攀附在斑駁的石牆上，呈現出獨特的原始力量感。村旁的河流上終日漂浮著運送原木與珍貴礦石的竹筏。這是一座靠著小礦山與狩獵生活的豹人村莊，民風剽悍而純樸，與佩澤拉克等繁華大城保持著若即若離的外交關係。</p>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">荒野獵手</h3>
+                <div class="interaction-card" onclick="setNpc('內利', '年輕豹人獵人', '活躍於特特奧坎周邊林地的年輕豹人。他擁有敏銳的狩獵直覺與矯健的身手，對附近的地理環境與野獸習性瞭若指掌，是村落中極具潛力的優秀獵手。', 'npc/neli.webp', false)">
+                    <strong>內利</strong>
+                    <span>年輕豹人獵人 | 熟稔附近林地環境的機警追蹤者。</span>
+                </div>
+            </div>
+
+            <div id="tavern" class="section">
+                <h2>「斷牙」酒館</h2>
+                <div class="lore-desc">
+                    <p>　　這是特特奧坎唯一的公眾集會場所。這棟古老的巨石建築一半作為小酌放鬆的酒館，另一半則堆滿了交易雜貨與礦石的外運倉庫。這裡的空氣中長年瀰漫著廉價發酵龍舌蘭酒、濕腐木頭與淡淡礦土的獨特氣味。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">酒館掌權者</h3>
+                <div class="interaction-card" onclick="setNpc('奧塞洛米茲', '店主', '耳朵缺角的年老豹人，身體依舊壯碩但行動有些遲緩。他雖然定居在偏遠的礦村，但透過各路行商，對佩澤拉克城裡的政局八卦略知一二。對待外來者抱持著「只要有錢就是客」的務實態度，但眼神深處對企圖深入未知森林的人，常帶著一種看熱鬧的冷漠。', 'npc/ocelomitl.webp', false, '', false)">
+                    <strong>奧塞洛米茲</strong>
+                    <span>耳朵缺角的年老豹人，消息靈通的市儈雜貨店主。</span>
+                </div>
+            </div>
+
+            <div id="shrine" class="section">
+                <h2>中央祭壇</h2>
+                <div class="lore-desc">
+                    <p>　　位於整個豹人聚落中央的露天巨石台。石台中央供奉著萬獸女神努拉與火神泰茲卡的粗糙石刻神像。這裡日夜不斷地燃燒著濃郁的柯巴香，泛起白色的神祕煙霧。村民們深信，這種神聖的香氣能有效驅散森林邊緣擴散而來的怪味與不祥的惡靈。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">神職守護者</h3>
+                <div class="interaction-card" onclick="setNpc('希洛內', '薩滿', '年輕的女性豹人薩滿，聲音輕柔但眼神無比堅定。虔誠、神祕、能精準感覺到周遭原始森林的靈性波動。她是特特奧坎村民們在遭遇林地危機時最核心的精神支柱。', 'npc/xilonen.webp', false, '', false)">
+                    <strong>希洛內</strong>
+                    <span>年輕女性豹人薩滿。</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 切換分頁時，重置右側資訊區塊的捲動位置到最上方
+        document.querySelector('.scroll-content').scrollTop = 0;
+        
+        // 切換分頁時重置圖片與標籤狀態
+        const sprite = document.getElementById('npc-sprite');
+        sprite.classList.remove('active', 'wide');
+        document.getElementById('story-box').classList.remove('active');
+        document.getElementById('unknown-mark').classList.remove('active');
+    }
+
+    // 參數說明：名字, 職稱, 故事文本, 圖片路徑, 是否鎖定, 解鎖者名字, 是否橫式全版
+    function setNpc(name, title, story, img, isLocked = false, unlockedBy = "", isWide = false) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        const unknownMark = document.getElementById('unknown-mark');
+        
+        // 切換前先將所有元素淡出並重置狀態
+        sprite.classList.remove('active', 'wide');
+        storyBox.classList.remove('active');
+        unknownMark.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img;
+            
+            // 處理橫式全版場景
+            if (isWide) {
+                sprite.classList.add('wide');
+            }
+            
+            if (isLocked) {
+                // 🔒 未解鎖狀態：套用全黑剪影、顯示金色問號、覆蓋文字
+                sprite.classList.add('locked');
+                unknownMark.classList.add('active');
+                storyBox.innerHTML = `<strong>未解鎖 <span style="font-size:0.8rem; color:#aaa;">| 未知</span></strong><div style="margin-bottom: 12px;">該地區的情報尚未在古老石板中揭露......</div>`;
+            } else {
+                // 🔓 已解鎖狀態：正常顯示
+                sprite.classList.remove('locked');
+                
+                // 利用 div 區塊強制換行，確保解鎖標籤與主文本分離
+                let contentHtml = `<strong>${name} <span style="font-size:0.8rem; color:#aaa;">| ${title}</span></strong><div style="margin-bottom: 12px;">${story}</div>`;
+                
+                // 如果有解鎖者資料，自動塞入翡翠綠標籤
+                if (unlockedBy && unlockedBy.trim() !== "") {
+                    contentHtml += `<div class="tt-tag unlocked-by">🗝️ 解鎖者：${unlockedBy}</div>`;
+                }
+                
+                storyBox.innerHTML = contentHtml;
+            }
+
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>

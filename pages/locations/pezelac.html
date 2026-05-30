@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 佩澤拉克 (Pezelac)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(15, 12, 10, 0.9); --text: #e0d0b0; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: transparent; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('pezelac.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.6);
+            z-index: -1;
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: flex-end; 
+            box-sizing: border-box; 
+        }
+
+        /* --- 1. 左側動態展示區 --- */
+        .character-display-zone { 
+            position: absolute; top: 0; left: 0; width: calc(100% - 480px); height: 100%; 
+            pointer-events: none; 
+        }
+
+        /* 預設：直式立繪樣式 (貼齊左下角) */
+        .character-sprite { 
+            position: absolute; 
+            left: 2%; 
+            bottom: 0; 
+            height: 95%; 
+            max-width: 50vw; 
+            object-fit: contain; 
+            object-position: bottom left; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1; 
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+
+        /* 🌟 修正：橫式立繪 (全版) 樣式，改為貼齊底部並置中 */
+        .character-sprite.wide {
+            max-width: 100%;
+            width: 95%; /* 填滿大部分展示區 */
+            left: 2.5%;
+            object-position: bottom center; /* 水平置中，但垂直絕對貼齊底部 */
+        }
+        
+        .npc-story-overlay { 
+            position: absolute; 
+            right: 8%; 
+            bottom: 8%; 
+            width: 340px; 
+            background: rgba(10, 8, 6, 0.95); 
+            border: 1px solid var(--gold); padding: 20px 25px; 
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(212, 175, 55, 0.1); 
+            opacity: 0; transform: translateY(20px); transition: all 0.4s ease; 
+            text-align: justify; line-height: 1.6; font-size: 0.95rem;
+            pointer-events: auto; 
+            z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateY(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.2rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 1px;
+        }
+
+        /* --- 2. 右側：資訊面板 --- */
+        .info-panel { 
+            width: 480px; height: 100%; background: var(--bg-dark); 
+            border-left: 2px solid var(--gold); 
+            display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); 
+            flex-shrink: 0; z-index: 3;
+        }
+        
+        /* 書籤列 */
+        .bookmarks { 
+            width: 120px; height: 100%; 
+            background: #2c251d; 
+            display: flex; flex-direction: column; border-right: 1px solid var(--gold); 
+            overflow-y: auto; 
+        }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            padding: 20px 10px; 
+            color: var(--gold); text-align: center;
+            cursor: pointer; border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            opacity: 0.7; 
+            letter-spacing: 2px; font-weight: bold; transition: 0.3s; 
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--gold); }
+
+        .scroll-content { flex: 1; padding: 35px 25px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.6rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        /* 地理誌樣式 */
+        .gazetteer-box { 
+            background: rgba(0, 0, 0, 0.4); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 15px; margin-bottom: 20px; border-radius: 3px; 
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 0.95rem; line-height: 1.5; }
+        .gazetteer-box strong { color: #b0965b; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc {
+            font-size: 1rem; text-align: justify; margin-bottom: 25px;
+            padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        .interaction-card { 
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(212, 175, 55, 0.1); 
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s; 
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem; }
+        .interaction-card span { font-size: 0.9rem; display: block; color: #ccc;}
+        
+        ul.styled-list { padding-left: 20px; margin-top: 5px; }
+        ul.styled-list li { margin-bottom: 8px; font-size: 0.95rem; }
+        ul.styled-list strong { color: var(--gold); display: inline; font-size: 1rem;}
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 未解鎖：全黑剪影濾鏡 --- */
+        .character-sprite.locked { filter: brightness(0) drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)) !important; }
+        
+        /* --- 未解鎖：神祕巨大問號 --- */
+        .unknown-mark {
+            position: absolute; left: 20%; bottom: 35%; font-size: 15rem; color: rgba(212, 175, 55, 0.6); 
+            font-family: 'Cinzel', serif; text-shadow: 0 0 40px rgba(0,0,0,1), 0 0 15px rgba(212, 175, 55, 0.5); 
+            pointer-events: none; opacity: 0; transform: scale(0.5); transition: all 0.5s ease; z-index: 2; 
+        }
+        .unknown-mark.active { opacity: 1; transform: scale(1); }
+
+        /* 解鎖者標籤樣式 (翡翠玉石綠) */
+        .tt-tag.unlocked-by { 
+            background: rgba(20, 184, 166, 0.15); 
+            color: #5eead4; 
+            border-left: 3px solid #14b8a6; 
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: inline-block; 
+            width: fit-content;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="unknown-mark" class="unknown-mark">?</div>
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('info')">政要概況</div>
+            <div class="bookmark-btn" onclick="showTab('general')">一般地點</div>
+            <div class="bookmark-btn" onclick="showTab('pantheon')">眾神殿</div>
+            <div class="bookmark-btn" onclick="showTab('eagle')">鷹騎士團</div>
+            <div class="bookmark-btn" onclick="showTab('taverns')">熱門酒館</div>
+            <div class="bookmark-btn" onclick="showTab('syndicate')">商會總部</div>
+            <div class="bookmark-btn" onclick="showTab('college')">三聖學院</div>
+            <div class="bookmark-btn" onclick="showTab('special')">特殊地點</div>
+        </div>
+
+        <div class="scroll-content">
+            
+            <div id="info" class="section active">
+                <h2>政要概況</h2>
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 佩澤拉克城邦聯合體</p>
+                    <p><strong>統治者：</strong> 首席顧問 托納津</p>
+                    <p><strong>政府：</strong> 城邦議會制。由商會、學院與神廟代表組成的聯合政府，強調貿易自由與知識平衡。</p>
+                    <p><strong>資源：</strong> 全類別貿易商品、馬車、黑曜石工藝、軍事工程學識、奢侈品。</p>
+                    <p><strong>人口：</strong> 人類 55%、半身人 13%、矮人 12%、蛙人 7%、豹人 5%、蜥蜴人 4%、鷹人 3%、精靈 1%。</p>
+                    <p><strong>盟友：</strong> 帕伊特、庫塔卡、圖坎、圖洛姆－伊齊、三聖學院。</p>
+                    <p><strong>敵人：</strong> 內克薩爾蝰手獸、遠帕伊特威脅。</p>
+                </div>
+                <div class="lore-desc">
+                    <p>　　佩澤拉克曾長期在列強環繞下掙扎尋求定位，雖土地貧瘠，卻憑藉近一世紀的貿易成長躍升為大陸核心。這裡不排斥外來民族，是各種文化的聯合體，其市場繁華程度足以媲美烏爾托斯 Suscani 與圖坎。無論是什麼族裔，都能在佩澤拉克的黃金大道上找到一席之地。</p>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('托納津', '首席顧問', '佩澤拉克歷史上首位擔任此頭銜的女性。她是一位極其睿智的老薩滿，正積極向鄰國庫塔卡與帕伊特尋求合作，以保護城邦免受外部怪物的侵擾。', 'npc/tonatzin.webp', true)">
+                    <strong>托納津</strong>
+                    <span>首席顧問</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('希皮爾', '財務總管', '三聖學院・數律學派學者。主動請纓來到被視為「應用分院」的佩澤拉克。當托納津為了安置內克薩爾難民而差點導致城邦破產時，是希皮爾憑藉驚人的數學天賦，重新制定了佩澤拉克的市場稅率、關稅與倉儲物流系統。他成功將難民轉化為廉價勞動力與生產力，讓城邦轉虧為盈。', 'npc/xipil.webp', true)">
+                    <strong>希皮爾</strong>
+                    <span>財務總管</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('阿莫克絲特莉', '信仰樞密官', '三聖學院・神律學派學者。托納津從比丘烏姆的聖院重金禮聘的神律學者。透過精確計算星象與幾何設計出壯麗的祭典，成功在佩澤拉克的富商與知識份子階層中重新點燃了對羽父夸爾特的敬意。', 'npc/amoxtli.webp', true)">
+                    <strong>阿莫克絲特莉</strong>
+                    <span>信仰樞密官</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('特拉索皮利', '軍事顧問', '庫塔卡雇傭軍軍團長。他曾為了保護平民而身受重傷，失去了手臂。在庫塔卡崇尚武力的社會中，殘疾戰士往往會被邊緣化。但托納津看中了他在對抗怪物方面的豐富經驗與威望，無視城邦貴族的反對，將他聘為佩澤拉克外籍聯軍的最高統帥。', 'npc/tlazopilli.webp', true)">
+                    <strong>特拉索皮利</strong>
+                    <span>軍事顧問</span>
+                </div>
+            </div>
+
+            <div id="general" class="section">
+                <h2>一般地點</h2>
+                <div class="lore-desc">
+                    <p>　　佩澤拉克的城區規劃極具實用性，工坊區日夜爐火不息，而市集與休閒區域則充滿了來自各地的異國風情。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">工坊區</h3>
+                <div class="interaction-card" onclick="setNpc('夸赫特利', '木工大師', '提供頂級木工服務。此處可訂製木製 or 骨製防具與簡易武器。此外還提供馬車改造服務，並可購買精良的坐騎。', 'npc/quahuitli.webp')">
+                    <strong>木工坊：夸赫特利</strong>
+                    <span>木藝與交通工具的權威。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('特索佐莫克', '石工大師', '專精於石造工程與黑曜石加工。冒險者可在此訂製昂貴的黑曜石武器與骨製鎧甲。', 'npc/tezozomoc.webp')">
+                    <strong>石工坊：特索佐莫克</strong>
+                    <span>將黑曜石化為致命藝術的職人。</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem; margin-top: 25px;">民生與休閒區</h3>
+                <div class="interaction-card">
+                    <strong>遊樂場</strong>
+                    <span>提供傳統蹴球活動與身體鍛鍊設施的大型廣場。</span>
+                </div>
+                <div class="interaction-card">
+                    <strong>大競技場</strong>
+                    <span>位於南門外山丘上，各路比武勇士的血性集結地。定期舉辦大型競技活動。</span>
+                </div>
+                <div class="interaction-card">
+                    <strong>浮田區</strong>
+                    <span>城邦北邊沿河建造的水上農田，供應了這座大城多數的糧食。</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem; margin-top: 25px;">碼頭區</h3>
+                <div class="lore-desc">
+                    <p>　　水運貨物的吞吐口，常能見到搬運工與水手忙碌穿梭。</p>
+                </div>
+                <div class="interaction-card" onclick="setNpc('莫格洛克', '蛙人船夫', '常年在碼頭接活的熱情船夫，對城邦周邊水路瞭如指掌。', 'npc/moglok.webp', false, '黑曜之律')">
+                    <strong>莫格洛克</strong>
+                    <span>蛙人船夫</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('納瓦妮', '人類女船夫', '常年在碼頭接活的熱情船夫，對城邦周邊水路瞭如指掌。', 'npc/navalny.webp', false, '夸爾特之羽')">
+                    <strong>納瓦妮</strong>
+                    <span>人類女船夫</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('克洛克-塔', '蜥蜴人船夫', '克洛克-塔身材高大，肌肉發達，總是背著一根由堅固紅木製成的粗大船槳，這根槳也同時是他的主要魚叉。他是一位沉默的守望者，默默地為部落尋找最佳捕魚點，並守護著家園的水路。', 'npc/krok-tah.webp', true)">
+                    <strong>克洛克-塔</strong>
+                    <span>蜥蜴人船夫</span>
+                </div>
+            </div>
+
+            <div id="pantheon" class="section">
+                <h2>眾神殿</h2>
+                <div class="lore-desc">
+                    <p>　　在佩澤拉克，信仰被具象化為一片宏偉的建築群——眾神殿。每位主神在此皆有專屬宮殿，由虔誠的神律學者與祭司們共同守護。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem;">✨ 火焰神殿－泰茲卡</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">崇尚光芒與火焰力量的祭祀中心。</p>
+                <div class="interaction-card" onclick="setNpc('雅科茨丁', '神律學者', '負責研讀太陽運行與火焰神理的資深學者。', 'npc/yaocotzin.webp', true)">
+                    <strong>雅科茨丁</strong>
+                    <span>神律學者</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('西烏科特爾', '源術薩滿', '專精於引導火元素與破壞力量的薩滿，脾氣如烈火般火爆。', 'npc/xiuhcoatl.webp', true)">
+                    <strong>西烏科特爾</strong>
+                    <span>源術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 羽蛇神殿－夸爾特</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">祈求生命、智慧與微風的和平聖所。</p>
+                <div class="interaction-card" onclick="setNpc('艾莉拉', '羽術薩滿', '神殿的引導者。', 'npc/alila.webp', false, '夸爾特之羽')">
+                    <strong>艾莉拉</strong>
+                    <span>羽術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 戰神殿－札爾特克</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">儘管邪神札爾特克的時代已經過去，此處仍留有祂稱為戰神另一面的祭祀之儀。</p>
+                <div class="interaction-card" onclick="setNpc('卡爾高', '神律學者', '神殿的引導者。', 'npc/kargao.webp', false, '三道獸跡')">
+                    <strong>卡爾高</strong>
+                    <span>神律學者</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('涅卡莉', '血術薩滿', '研究血術的專家。', 'npc/nekali.webp', false, '三道獸跡')">
+                    <strong>涅卡莉</strong>
+                    <span>血術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 冥界殿－米克特蘭</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">安撫亡魂與指引死者旅途的幽暗神廟。</p>
+                <div class="interaction-card" onclick="setNpc('托賓 & 米娜', '神律學者', '掌管生死邊界知識的學者。', 'npc/tobinmina.webp', false, '莫士．普勒拉蒂')">
+                    <strong>托賓 & 米娜</strong>
+                    <span>神律學者</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 豐收殿－瓦蒂爾</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">祈求玉米與農作物豐收的翠綠殿堂。</p>
+                <div class="interaction-card" onclick="setNpc('阿托利', '醫術薩滿', '神殿的引導者。', 'npc/atoli.webp', true)">
+                    <strong>阿托利</strong>
+                    <span>醫術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 祈雨殿－阿祖爾</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">掌控雨水與雷暴，農民敬畏的祭壇。</p>
+                <div class="interaction-card" onclick="setNpc('伊利安', '源術薩滿', '神殿的引導者。', 'npc/ilian.webp', true)">
+                    <strong>伊利安</strong>
+                    <span>源術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 風神殿－艾哈</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">風靈的居所，祈求旅途順遂的輕盈之塔。</p>
+                <div class="interaction-card" onclick="setNpc('席拉莉', '源術薩滿', '神殿的引導者。', 'npc/hilary.webp', true)">
+                    <strong>席拉莉</strong>
+                    <span>源術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 大地神殿－普魯托克</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">記錄大地歷史與岩石奧秘的知識金字塔。</p>
+                <div class="interaction-card" onclick="setNpc('坎拉克', '源術薩滿', '神殿的引導者。', 'npc/kanlac.webp', true)">
+                    <strong>坎拉克</strong>
+                    <span>源術薩慢</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 生命殿－馬茲提卡</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">向大地之母致敬，最為古老的圓形聖殿。</p>
+                <div class="interaction-card" onclick="setNpc('瑪雅烏爾', '神律學者', '神殿的引導者。', 'npc/mayaur.webp', true)">
+                    <strong>瑪雅烏爾</strong>
+                    <span>神律學者</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 萬獸殿－努拉</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">掌管自然萬獸與荒野力量的聖殿。</p>
+                <div class="interaction-card" onclick="setNpc('奇奇', '神律學者', '精通萬獸生態與自然神理的學者。', 'npc/qiqi.webp', true)">
+                    <strong>奇奇</strong>
+                    <span>神律學者</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('黑爪', '獸術薩滿', '能夠與荒野巨獸溝通並引導萬獸之力的薩滿。', 'npc/black_claw.webp', true)">
+                    <strong>黑爪</strong>
+                    <span>獸術薩滿</span>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.15rem; margin-top: 25px;">✨ 愛神殿－基爾茲</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">祈求愛、美麗與和諧關係的溫馨殿堂。</p>
+                <div class="interaction-card" onclick="setNpc('索蕾兒', '神律學者', '專研愛與和諧神理的年輕學者。', 'npc/sorel.webp', true)">
+                    <strong>索蕾兒</strong>
+                    <span>神律學者</span>
+                </div>
+            </div>
+
+            <div id="eagle" class="section">
+                <h2>鷹騎士團軍營</h2>
+                <div class="lore-desc">
+                    <p>　　鷹騎士團是城邦治安的磐石。這座軍營不僅是他們的駐紮地，也是嚴格軍事訓練與空中偵查任務的指揮中心。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">鷹騎士駐紮地</h3>
+                <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 12px;">來自帕伊特的精英部隊，戒備森嚴，時刻注視著天空與城牆。</p>
+
+                <div class="interaction-card" onclick="setNpc('伊考亞', '鷹騎士團軍團長', '部隊的指揮官。', 'npc/ikoia.webp', false, '三道獸跡')">
+                    <strong>伊考亞</strong>
+                    <span>鷹騎士團軍團長</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('齊切爾', '鷹騎士團軍師', '負責戰術。', 'npc/chichel.webp', false, '三道獸跡')">
+                    <strong>齊切爾</strong>
+                    <span>鷹騎士團軍師</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('特圖阿赫莫克', '左翼指揮官', '負責左翼。', 'npc/tetuahmoc.webp', true)">
+                    <strong>特圖阿赫莫克</strong>
+                    <span>左翼指揮官</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('特雅卡潘', '右翼指揮官', '負責右翼。', 'npc/teyacapan.webp', true)">
+                    <strong>特雅卡潘</strong>
+                    <span>右翼指揮官</span>
+                </div>
+            </div>
+
+            <div id="taverns" class="section">
+                <h2>熱門酒館</h2>
+                <div class="lore-desc">
+                    <p>　　無論是為了打聽情報、談妥一筆見不得光的生意，還是單純地洗去冒險的塵土，佩澤拉克的酒館永遠敞開大門。</p>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('拉席克 & 尼薩', '豹貓人夫妻', '經營【呼嚕利爪】酒館。丈夫夜瞳與妻子月紋以提供辛辣料理聞名，雖客人較少但極具特色。', 'npc/rashik_nisa.webp', false, '黑曜之律')">
+                    <strong>呼嚕利爪</strong>
+                    <span>香料與豹貓人風情的角落。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('古魯布 & 古蘭娜', '蛙人兄妹', '經營【鼓囊嚎歌】。位於碼頭附近，是蛙人聚會的首選。', 'npc/gurub_gulana.webp', false, '夸爾特之羽')">
+                    <strong>鼓囊嚎歌</strong>
+                    <span>充滿節奏感與水氣的碼頭酒館。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('查米特 & 克索皮特爾', '人類兄弟', '經營【黃金祭器】。最高檔的旅館，鄰近神廟與公會，非富即貴。', 'npc/chamit_ksoppetl.webp', false, '三道獸跡')">
+                    <strong>黃金祭器</strong>
+                    <span>佩澤拉克最奢華的權貴之所。</span>
+                </div>
+            </div>
+
+            <div id="syndicate" class="section">
+                <h2>佩澤拉克商會</h2>
+                
+                <div class="lore-desc">
+                    <p>在馬茲提卡，商人階級不僅是財富的象徵，更是各個城邦間的情報網與外交使節。佩澤拉克商會是近代崛起的一股強大勢力，他們遊走於古老神廟的祭司、強大的戰士與外來者之間。</p>
+                    
+                    <h3 style="color: #b0965b; margin-top: 20px;">組織章程</h3>
+                    <ul class="styled-list">
+                        <li><strong>可可與血的契約：</strong>商業承諾神聖不可侵犯。交易以飲用混有鮮血與香草的苦可可定案後，違約者將受刺客追殺。</li>
+                        <li><strong>無形之秤：</strong>商會保持絕對中立。在城邦或信仰鬥爭中只販售物資與情報，絕不公開選邊站。</li>
+                        <li><strong>迷霧守則：</strong>情報比黃金與玉石更昂貴。成員在外的所見所聞必須無條件匯報給商會的「記憶庫」。</li>
+                        <li><strong>財富歸於凡人：</strong>嚴禁將核心利益無償奉獻給任何神廟，商會利益永遠優先於狂熱的信仰。</li>
+                    </ul>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('伊茲特里', '商會會長', '年逾五旬，沉穩而睿智，行事冷靜且極具洞察力。他不僅建立了商會嚴謹的貿易制度，更利用其學識與強大的外交手腕，手持黑色木杖與鮮豔羽扇，在各部落間開闢出數條利潤豐厚的新商路，讓商會規模達到前所未有的高度。', 'npc/iztli.webp', true)">
+                    <strong>伊茲特里</strong>
+                    <span>商會的靈魂與大腦，沉穩而睿智，行事冷靜且極具洞察力。</span>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('特亞哈', '商會總管', '常年待在佩澤拉克市集商會總部裡的主要負責人。個性熱情好客，只要出得起價碼，能提供你想要的東西。', 'npc/teyaha.webp', false, '三道獸跡')">
+                    <strong>特亞哈</strong>
+                    <span>商會不可或缺的「大管家」，也是會長最信任的左膀右臂。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('休恩娜', '商會副理', '如果特亞哈是商會的「大管家」，休恩娜就是特亞哈的「行動派」和「現場監督」。她更年輕，但受過嚴格訓練，專注於具體的物流、庫存和人員安排，確保特亞哈的命令得到精確執行。她忠誠且高效。', 'npc/xuenna.webp', true)">
+                    <strong>休恩娜</strong>
+                    <span>總管特亞哈的副手。</span>
+                </div>
+            </div>
+
+            <div id="college" class="section">
+                <h2>三聖學院</h2>
+                <div class="gazetteer-box">
+                    <p><strong>佩澤拉克分院：</strong> 象徵「應用技術與軍事工程」。由神律、數律、天律導師共同維持大陸知識與秩序的平衡。</p>
+                </div>
+                <div class="lore-desc">
+                    <p>　　三聖學院在佩澤拉克扮演著知識轉化為力量的關鍵角色。這裡的學者們不尚空談，而是致力於將數學、星象與神理應用於城防建設、稅收計算與市場管理之中。</p>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('學院理事', '理性祭司', '三聖學院理事會負責制訂曆法與監督祭期。佩澤拉克的學者專注於如何將古老的學識應用於城邦建設與防禦。', 'npc/college_council.webp', true)">
+                    <strong>三聖學院理事會</strong>
+                    <span>理性與科技的知識殿堂，引領城邦的發展方向。</span>
+                </div>
+            </div>
+
+            <div id="special" class="section">
+                <h2>特殊地點 & 人物</h2>
+                <div class="lore-desc">
+                    <p>　　除了常規的商業與信仰區域，佩澤拉克還隱藏著一些特殊的機構，為那些不甘於平凡的靈魂提供棲身之所。</p>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('斑波斯', '城內嚮導', '蛙人小男孩，只需要花一點錢就能讓他帶你暢逛佩澤拉克。', 'npc/zebras.webp')">
+                    <strong>蛙人嚮導</strong>
+                    <span>常常守在城門附近，為第一次來到佩澤拉克的人們帶路。</span>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('烏曼會長 & 伊托蒂亞', '公會負責人', '冒險者公會的重要人物。', 'npc/guild.webp')">
+                    <strong>冒險者公會</strong>
+                    <span>城邦內傭兵、尋寶者與冒險者的集散地，提供各類任務委託與邊境情報。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('布魯吉克·滾石', '矮人工匠', '鍛工坊的矮人工匠，只有得到他認可的人才有機會得到他的幫助。', 'npc/brujik.webp', false, '黑曜之律')">
+                    <strong>矮人群聚地</strong>
+                    <span>佩澤拉克裡矮人主要的群聚地點。只有得到矮人認可的人才有機會得到他們的幫助。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('長老卡維 & 薩滿阿瑪', '豹人氏族', '只有得到豹人認可的人才有機會得到他們的幫助。', 'npc/jaguar.webp', false, '三道獸跡')">
+                    <strong>豹人群聚地</strong>
+                    <span>佩澤拉克裡豹人主要的群聚地點。只有得到豹人認可的人才有機會得到他們的幫助。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('黑市三巨頭', '地下黑市負責人', '佩澤拉克的地下黑市。只有知道門路和擁有足夠錢財的人才有資格踏入。', 'npc/blackmarket.webp', false, '三道獸跡', true)">
+                    <strong>地下黑市</strong>
+                    <span>佩澤拉克的地下黑市。只有知道門路和擁有足夠錢財的人才有資格踏入。</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 切換分頁時，重置右側資訊區塊的捲動位置到最上方
+        document.querySelector('.scroll-content').scrollTop = 0;
+        
+        // 切換分頁時重置圖片狀態
+        const sprite = document.getElementById('npc-sprite');
+        sprite.classList.remove('active', 'wide');
+        document.getElementById('story-box').classList.remove('active');
+        document.getElementById('unknown-mark').classList.remove('active');
+    }
+
+    // 在最後面加上 isWide 參數，預設為 false (直式)
+    function setNpc(name, title, story, img, isLocked = false, unlockedBy = "", isWide = false) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        const unknownMark = document.getElementById('unknown-mark');
+        
+        // 切換前先將所有元素淡出並重置寬度狀態
+        sprite.classList.remove('active', 'wide');
+        storyBox.classList.remove('active');
+        unknownMark.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img;
+            
+            // 如果是橫式圖片，加上 wide 類別
+            if (isWide) {
+                sprite.classList.add('wide');
+            }
+            
+            if (isLocked) {
+                // 🔒 未解鎖狀態：套用全黑剪影、顯示問號、覆蓋文字
+                sprite.classList.add('locked');
+                unknownMark.classList.add('active');
+                storyBox.innerHTML = `<strong>未解鎖 <span style="font-size:0.8rem; color:#aaa;">| 未知</span></strong><div style="margin-bottom: 12px;">該NPC的情報尚未揭露......</div>`;
+            } else {
+                // 🔓 已解鎖狀態：移除濾鏡
+                sprite.classList.remove('locked');
+                
+                // 利用 div 區塊強制換行，避免標籤黏在故事文字後方
+                let contentHtml = `<strong>${name} <span style="font-size:0.8rem; color:#aaa;">| ${title}</span></strong><div style="margin-bottom: 12px;">${story}</div>`;
+                
+                // 動態判定：如果有填寫解鎖者，就自動在底部塞入翡翠綠標籤
+                if (unlockedBy && unlockedBy.trim() !== "") {
+                    contentHtml += `<div class="tt-tag unlocked-by">解鎖者：${unlockedBy}</div>`;
+                }
+                
+                storyBox.innerHTML = contentHtml;
+            }
+
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>

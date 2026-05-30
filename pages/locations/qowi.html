@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 科維小村</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(15, 12, 10, 0.9); --text: #e0d0b0; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: transparent; }
+
+        .scene-background {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('qowi.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.6); 
+            z-index: -1;
+        }
+
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: flex-end; 
+            box-sizing: border-box;
+        }
+
+        .character-display-zone {
+            position: absolute; top: 0; left: 0; width: calc(100% - 420px); height: 100%;
+            pointer-events: none; 
+        }
+
+        .character-sprite { 
+            position: absolute;
+            left: 2%; 
+            bottom: 0; 
+            height: 95%; 
+            max-width: 50vw; 
+            object-fit: contain; 
+            object-position: bottom left; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute;
+            right: 8%;
+            bottom: 8%; 
+            width: 340px; 
+            background: rgba(10, 8, 6, 0.95); 
+            border: 1px solid var(--gold); padding: 20px 25px;
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(212, 175, 55, 0.1);
+            opacity: 0; transform: translateY(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.6; font-size: 0.95rem;
+            pointer-events: auto; 
+            z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateY(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.2rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 8px; margin-bottom: 12px; letter-spacing: 1px;
+        }
+
+        .info-panel { 
+            width: 420px; height: 100%; background: var(--bg-dark); 
+            border-left: 2px solid var(--gold); 
+            display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); 
+            flex-shrink: 0; z-index: 3;
+        }
+        
+        .bookmarks { 
+            width: 60px; height: 100%; 
+            background: #2c251d; 
+            display: flex; flex-direction: column; border-right: 1px solid var(--gold); 
+        }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 25px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(212, 175, 55, 0.2); 
+            opacity: 0.7; 
+            letter-spacing: 3px; font-weight: bold; transition: 0.3s;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(212, 175, 55, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(212, 175, 55, 0.2); border-left: 4px solid var(--gold); } 
+
+        .scroll-content { flex: 1; padding: 35px 25px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.6rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(212, 175, 55, 0.1);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 3px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 0.95rem; line-height: 1.5; }
+        .gazetteer-box strong { color: #b0965b; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc {
+            font-size: 1rem; text-align: justify; margin-bottom: 25px;
+            padding-top: 15px; border-top: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('intro')">科維小村</div>
+            <div class="bookmark-btn" onclick="showTab('toll')">關卡</div>
+        </div>
+
+        <div class="scroll-content">
+            <div id="intro" class="section active">
+                <h2>科維小村</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 科維</p>
+                    <p><strong>統治者：</strong> 無特定領主，實質上由村中長老與舊火旅館老闆古達爾共同維持秩序。</p>
+                    <p><strong>政府：</strong> 偏遠村落自治。名義上從屬於佩澤拉克，但因地處偏遠，多半依賴村民自我管理。</p>
+                    <p><strong>地點：</strong> 科維 (村落級別)、舊火旅館、收費橋路</p>
+                    <p><strong>資源：</strong> 木材、農產品、簡易工藝品、旅宿服務。</p>
+                    <p><strong>人口：</strong> 馬茲提卡人 75%、帕伊特人 5%、庫塔卡人 5%、半身人 10%、矮人 5%。</p>
+                    <p><strong>法律：</strong> 簡單村規。</p>
+                    <p><strong>盟友：</strong> 佩澤拉克、奧札爾特、帕倫奎。</p>
+                    <p><strong>敵人：</strong> 偶爾出沒的強盜。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>　　科維小村位於普魯托克山的山腳附近，是一個由辛勤的伐木工與當地農民所組成的小村落。無論是往北邊的庫塔卡地區，或是向南邊的佩澤拉克前進，這裡是主幹道上不可或缺的歇腳處，為長途跋涉的旅人提供著溫暖的庇護與補給。</p>
+                    <p>　　村莊裡最重要的「舊火旅館」就位於主幹道旁，那是一棟堅固的石造建築，周圍環繞著小農田與馬廄，雖然陳設簡單，但總能讓疲憊的旅人洗去一身塵土。這裡的村民純樸且熱情，在他們粗糙的雙手與爽朗的笑聲背後，或許也隱藏著通往未知廢墟的指引。</p>
+                </div>
+                
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">當地居民</h3>
+                
+                <div class="interaction-card" onclick="setNpc('古達爾．舊火', '旅館老闆', '身為經驗豐富的旅館經營者，古達爾以高效卻不過分熱情的方式打理著一切。十分樂意為喜歡冒險的旅行者指引方向。', 'npc/gudar.webp')">
+                    <strong>古達爾．舊火</strong>
+                    <span style="font-size: 0.9rem;">舊火旅館的矮人老闆，總是用矮人的烈酒灌醉旅人。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('奇科梅南', '大廚', '這位帕伊特人大廚在廚房裡有著令人驚嘆的閃電速度。除了能端出熱騰騰的飯菜，必要時他也能俐落地使用黑曜石小刀，完美處理各種突發狀況。', 'npc/chicomenan.webp')">
+                    <strong>奇科梅南</strong>
+                    <span style="font-size: 0.9rem;">身手敏捷的帕伊特人大廚，刀工極為精湛。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('瑪洛亞', '服務生', '總是在客房與餐桌間穿梭的馬茲提卡少女，性格友好且工作高效。雖然她不具備什麼特別的戰鬥技巧，卻是這間旅店不可或缺的溫暖存在。', 'npc/manauia.webp')">
+                    <strong>瑪洛亞</strong>
+                    <span style="font-size: 0.9rem;">勤懇的少女，負責打理旅館的日常雜務。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('約洛齊', '木匠', '約洛齊和他修理的手推車一樣，總是發出破舊的吱吱作響聲。他經營著一間附屬於小屋的低矮棚屋，儘管木工是主業，但也提供一些簡易的冒險物資。', 'npc/yolotzi.webp')">
+                    <strong>約洛齊</strong>
+                    <span style="font-size: 0.9rem;">經營工匠坊的馬茲提卡人，擅長木工與簡單的鍛造修復。</span>
+                </div>
+            </div>
+
+            <div id="toll" class="section">
+                <h2>橋樑關卡</h2>
+                
+                <div class="lore-desc">
+                    <p>　　離開科維小村後，沿著村莊裡的道路前行，會來到一處橫跨湍急河段的重要關卡。這條道路維護得相當平整，兩側是綿延的田野與孤立的農舍，偶爾還能見到牛群悠閒地吃草。</p>
+                    <p>　　關卡的核心是一座低矮而堅固的石橋，守護著通往未知深處的必經之路，石橋旁佇立著一棟紅磚小房，作為收費員與守衛的居所。無論是尋找古老廢墟的尋寶者，還是單純路過的商隊，都必須在此繳納微薄的過橋費，偶爾還會有一隻頑固的老山羊悄悄跟隨旅人的腳步，為路途增添幾分意外的趣味。</p>
+                </div>
+
+                <h3 style="color: #b0965b; border-bottom: 1px dashed #b0965b; padding-bottom: 5px; font-size: 1.2rem;">關卡駐守者</h3>
+
+                <div class="interaction-card" onclick="setNpc('納馬奎', '收費員', '一位身材瘦長的馬茲提卡年輕人，態度簡單卻十分友善。儘管他是當地社區見過最年輕的收費員，但因其樂於助人的性格而深受大家喜愛，他的窗戶下總是隨時備著一把戰弓以防萬一。', 'npc/namacui.webp')">
+                    <strong>納馬奎</strong>
+                    <span style="font-size: 0.9rem;">年輕友善的收費員，負責向過橋的旅人收取費用。</span>
+                </div>
+                <div class="interaction-card" onclick="setNpc('莫莫茲特莉', '關卡守衛', '精通射擊技巧的庫塔卡人守衛，時刻保持著敏銳的觀察力。她與納馬奎共同駐守在石橋旁，確保這條通往其他聚落的道路不被危險的野獸或強盜侵擾。', 'npc/momoztli.webp')">
+                    <strong>莫莫茲特莉</strong>
+                    <span style="font-size: 0.9rem;">沉穩的庫塔卡人守衛，是一位技術精湛的弓箭手。</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img;
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.8rem; color:#aaa;">| ${title}</span></strong>${story}`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>

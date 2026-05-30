@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 帕倫奎 (Palenque) [待探索]</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(15, 12, 10, 0.9); --text: #e0d0b0; --fog: #9a9385; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        /* --- 背景場景 (微弱的灰階與迷霧感) --- */
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('palenque.webp'); /* 替換為帕倫奎的叢林背景圖 */
+            background-size: cover; background-position: center; 
+            filter: brightness(0.35) sepia(0.3) grayscale(0.4); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        /* --- 左側動態展示區 --- */
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        /* 立繪：純黑剪影營造未知感 */
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)) brightness(0); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 0.7; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(15, 12, 10, 0.95); border: 1px solid var(--fog); padding: 25px 30px;
+            color: var(--fog); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(154, 147, 133, 0.1);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: #c4b595; font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px dashed rgba(196, 181, 149, 0.4); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        /* --- 右側：資訊面板 --- */
+        .info-panel { width: 500px; height: 85vh; background: rgba(15, 12, 10, 0.95); border: 2px solid var(--fog); display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #1a1815; display: flex; flex-direction: column; border-right: 1px solid var(--fog); }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 25px 15px; color: var(--fog); 
+            cursor: pointer; border-bottom: 1px solid rgba(154, 147, 133, 0.2); 
+            opacity: 0.6; letter-spacing: 3px; font-weight: bold; transition: 0.3s;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(154, 147, 133, 0.1); }
+        .bookmark-btn.active { opacity: 1; background: rgba(154, 147, 133, 0.15); border-left: 4px solid #c4b595; color: #c4b595;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--fog); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(154, 147, 133, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: #c4b595; border-bottom: 1px solid var(--fog); margin: 0 0 20px 0; font-size: 1.8rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(154, 147, 133, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 3px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #bbb;}
+        .gazetteer-box strong { color: #c4b595; font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(154, 147, 133, 0.3); color: #aaa;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.02); padding: 15px; border: 1px solid rgba(154, 147, 133, 0.2);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: #c4b595; background: rgba(196, 181, 149, 0.05); box-shadow: 0 0 15px rgba(196, 181, 149, 0.2);}
+        .interaction-card strong { color: #c4b595; display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        
+        .exit-btn {
+            position: absolute; top: 20px; right: 25px; color: var(--text); text-decoration: none;
+            border: 1px solid var(--fog); padding: 8px 20px; font-family: 'Cinzel', serif; font-size: 1rem; letter-spacing: 2px;
+            z-index: 100; transition: 0.3s; background: rgba(0,0,0,0.6);
+        }
+        .exit-btn:hover { background: var(--fog); color: #000; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<a href="#" class="exit-btn" onclick="window.history.back(); return false;">返回地圖</a>
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('intel')">初步情報</div>
+            <div class="bookmark-btn" onclick="showTab('explore')">待探索項目</div>
+        </div>
+
+        <div class="scroll-content">
+            <div id="intel" class="section active">
+                <h2>帕倫奎 (Palenque)</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 帕倫奎</p>
+                    <p><strong>所屬區域：</strong> 帕伊特 (Payit) 深境</p>
+                    <p><strong>檔案狀態：</strong> 📜 缺乏近期探索紀錄</p>
+                    <p><strong>公會備註：</strong> 急需冒險者前往更新當地情報。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>　　這是一座隱沒在帕伊特叢林深處的偏遠城鎮。雖然在古老的地圖上標有它的位置，但因為距離主要貿易路線過於遙遠，公會的檔案庫中已經很久沒有收到關於帕倫奎的最新回報了。</p>
+                    <p>　　根據偶爾路過該地邊緣的流浪商隊所述，那裡仍然有居民活動，並且隱藏著未知的古老遺跡與獨特的叢林信仰。對於渴望開拓未知領域、將自己的名字留在公會卷宗上的冒險者來說，這是一個絕佳的起點。</p>
+                </div>
+
+                <h3 style="color: #9a9385; border-bottom: 1px dashed #555; padding-bottom: 5px;">冒險者徵求</h3>
+
+                <div class="interaction-card" onclick="setUnexplored('公會懸賞', '更新地圖檔案', '「公會誠摯邀請任何有意前往帕倫奎的隊伍，為我們帶回當地的政治局勢、市集物價以及潛在危險的最新報告。完成測繪將可獲得豐厚報酬。」', 'npc/unknown.webp')">
+                    <strong>📌 勘察任務發布中</strong>
+                    <span>點擊查看公會委託細節</span>
+                </div>
+            </div>
+
+            <div id="explore" class="section">
+                <h2>待探索項目</h2>
+                
+                <div class="lore-desc">
+                    <p>以下是公會目前急需確認的情報。當有冒險者小隊抵達帕倫奎並將資料帶回後，此頁面將會進行詳細的檔案解鎖與更新。</p>
+                </div>
+
+                <div class="interaction-card" onclick="setUnexplored('當地統治者', '情報待確認', '【公會備註：尚無冒險者回報】目前無人確切知曉帕倫奎的實際統治者是誰，需要有人親自拜訪以建立公會的聯繫。', 'npc/unknown.webp')">
+                    <strong>❓ 當地領袖與政治局勢</strong>
+                    <span>狀態：亟待探明</span>
+                </div>
+                
+                <div class="interaction-card" onclick="setUnexplored('傳聞中的神廟', '情報待確認', '【公會備註：尚無冒險者回報】據行商所言此處有一座古老神廟，但供奉的神明與現任薩滿的資訊皆已過時，等待冒險者前往確認。', 'npc/unknown.webp')">
+                    <strong>❓ 古老神廟的現況</strong>
+                    <span>狀態：亟待探明</span>
+                </div>
+
+                <div class="interaction-card" onclick="setUnexplored('特產與設施', '情報待確認', '【公會備註：尚無冒險者回報】傳聞當地出產特殊的叢林物資與草藥，公會正徵求自告奮勇的隊伍前往建立貿易與情報網。', 'npc/unknown.webp')">
+                    <strong>❓ 叢林市集與當地工坊</strong>
+                    <span>狀態：亟待探明</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setUnexplored(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            // 你可以準備一張黑影或帶問號的圖片 unknown.webp
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>❓ ${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#c4b595;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
