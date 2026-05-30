@@ -2,388 +2,54 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>佩澤拉克冒險者公會 - V31 (內頁紋理版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公會書庫 | 佩澤拉克</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
-        
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        
-        #hover-label {
-            position: absolute; display: none; padding: 8px 16px;
-            background: rgba(0, 0, 0, 0.8); border: 1px solid #d4af37;
-            color: #d4af37; font-family: "Times New Roman", serif; font-size: 16px;
-            pointer-events: none; transform: translate(-50%, -130%);
-            white-space: nowrap; letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-            z-index: 20;
-            transition: opacity 0.3s;
+        :root {
+            --font-title: 'Cinzel', serif;
+            --font-body: 'Inter', sans-serif;
+            --highlight: #d4af37;
         }
-
-        #instruction {
-            position: absolute; bottom: 50px; width: 100%; text-align: center;
-            color: #aaa; font-family: sans-serif; font-size: 14px;
-            text-shadow: 0 2px 4px #000; letter-spacing: 2px; opacity: 0.8;
-            transition: opacity 0.5s;
+        body {
+            margin: 0;
+            padding: 40px;
+            min-height: 100vh;
+            /* Match the aesthetic of your parchment cards */
+            background-color: #f7f1e3;
+            background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
+            color: #3e2723;
+            font-family: 'Crimson Pro', serif;
+            line-height: 1.8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-
-        #loading-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center;
-            color: #d4af37; font-size: 24px; font-family: serif; z-index: 999;
-            transition: opacity 1.5s; 
-            pointer-events: none;
+        h1 {
+            font-family: var(--font-title);
+            color: #b71c1c;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #5d4037;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        p {
+            font-size: 1.3rem;
+            margin-bottom: 0;
+            color: #3e2723;
+            font-style: italic;
         }
     </style>
-    
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
 </head>
 <body>
-    <div id="loading-screen" style="opacity: 1;">正在佈置公會書房...</div>
-    
-    <div id="ui-layer">
-        <div id="hover-label"></div>
-        <div id="instruction">點擊書籍以進入詳細檔案</div>
-    </div>
-
-    <script type="module">
-        import * as THREE from 'three';
-
-        // 1. 資源管理
-        const manager = new THREE.LoadingManager();
-        const loader = new THREE.TextureLoader(manager);
-        
-        manager.onLoad = function () {
-            const loadingScreen = document.getElementById('loading-screen');
-            loadingScreen.style.opacity = 0;
-            setTimeout(() => {
-                loadingScreen.style.display = 'none'; 
-            }, 1500);
-        };
-
-        function loadTex(path) {
-            return loader.load(path, (tex) => { tex.colorSpace = THREE.SRGBColorSpace; });
-        }
-        function loadEnvTex(path) {
-            return loader.load(path, (tex) => {
-                tex.colorSpace = THREE.SRGBColorSpace;
-                tex.minFilter = THREE.LinearFilter;
-                tex.magFilter = THREE.LinearFilter;
-            });
-        }
-
-        const texCoverMap = loadTex('assets/cover_map.webp');
-        const texCoverFactions = loadTex('assets/cover_factions.webp');
-        const texCoverBestiary = loadTex('assets/cover_bestiary.webp');
-        const texCoverHistory = loadTex('assets/cover_history.webp');
-        const texTable = loadTex('assets/table.webp'); 
-        const texEnv = loadEnvTex('assets/env.webp');
-        
-        // 新增：內頁紋理
-        const texPage = loadTex('assets/page_bg.webp');
-
-        // 2. 場景初始化
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505); 
-        scene.fog = new THREE.FogExp2(0x110b05, 0.02); 
-
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
-        camera.position.set(0, 16, 12); 
-        camera.lookAt(0, 0, 0);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping; 
-        renderer.toneMappingExposure = 1.8; 
-        document.body.appendChild(renderer.domElement);
-
-        // 環境背景
-        const roomGeo = new THREE.SphereGeometry(60, 60, 40);
-        roomGeo.scale(-1, 1, 1); 
-        const roomMat = new THREE.MeshBasicMaterial({ map: texEnv });
-        const room = new THREE.Mesh(roomGeo, roomMat);
-        scene.add(room);
-
-        // 燈光
-        const ambientLight = new THREE.AmbientLight(0xffaa55, 3.0); 
-        scene.add(ambientLight);
-        
-        const spotLight = new THREE.SpotLight(0xffaa33, 300); 
-        spotLight.position.set(0, 25, 5);
-        spotLight.angle = Math.PI / 5;
-        spotLight.penumbra = 0.5;
-        spotLight.castShadow = true;
-        spotLight.shadow.bias = -0.0001;
-        scene.add(spotLight);
-
-        const fillLight = new THREE.PointLight(0x445566, 30); 
-        fillLight.position.set(-10, 10, -10);
-        scene.add(fillLight);
-
-        // 3. 書本工廠 (材質升級)
-        const matCoverBase = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7 }); 
-        
-        // --- 內頁材質升級 ---
-        // 1. 紙張側面 (Side): 維持素色，像是一疊紙
-        const matPaperSide = new THREE.MeshStandardMaterial({ color: 0xdbbfa0, roughness: 0.9 });
-        // 2. 紙張表面 (Top): 貼上您的樹皮紙紋理
-        const matPaperTop = new THREE.MeshStandardMaterial({ 
-            map: texPage, 
-            roughness: 0.5,
-            color: 0xffffff
-        });
-
-        const books = []; 
-
-        function createBook(linkUrl, title, coverTexture, xPosition, zPosition, yRotation) {
-            const group = new THREE.Group();
-            group.position.set(xPosition, 0, zPosition);
-            group.rotation.y = yRotation; 
-            
-            const matCoverImage = new THREE.MeshStandardMaterial({ map: coverTexture, roughness: 0.3 });
-
-            const backCover = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.1, 4.8), matCoverBase);
-            backCover.position.y = 0.05; backCover.castShadow = true;
-            group.add(backCover);
-
-            // B. 內頁 (使用材質陣列)
-            // BoxGeometry 材質順序: right, left, top, bottom, front, back
-            // 我們只把 Top (索引2) 換成紋理，其他保持側面顏色
-            const pageBlock = new THREE.Mesh(
-                new THREE.BoxGeometry(3.3, 0.4, 4.6), 
-                [matPaperSide, matPaperSide, matPaperTop, matPaperSide, matPaperSide, matPaperSide]
-            );
-            pageBlock.position.y = 0.3; 
-            group.add(pageBlock);
-
-            const coverGroup = new THREE.Group();
-            coverGroup.position.set(-1.75, 0.5, 0); 
-            group.add(coverGroup);
-
-            // 封面內側 (也要貼上樹皮紋理，這樣打開時才好看)
-            const frontCoverBase = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.1, 4.8), matCoverBase);
-            frontCoverBase.position.set(1.75, 0.05, 0);
-            coverGroup.add(frontCoverBase);
-            
-            // 封面圖片
-            const frontCoverImage = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 4.8), matCoverImage);
-            frontCoverImage.position.set(1.75, 0.101, 0);
-            frontCoverImage.rotation.x = -Math.PI / 2;
-            coverGroup.add(frontCoverImage);
-
-            scene.add(group);
-
-            const bookData = {
-                link: linkUrl,
-                title: title,
-                group: group,
-                coverGroup: coverGroup,
-                hovered: false
-            };
-            
-            group.traverse((obj) => { obj.userData.book = bookData; });
-            books.push(bookData);
-        }
-        
-        // 書本佈局
-        const bookRadius = 5.5; 
-        const angleStep = Math.PI / 2; 
-
-        createBook('pages/map.html', '地理區域', texCoverMap, 
-            bookRadius * Math.cos(0 * angleStep), bookRadius * Math.sin(0 * angleStep), -Math.PI / 2); 
-        
-        createBook('pages/factions.html', '組織勢力', texCoverFactions, 
-            bookRadius * Math.cos(1 * angleStep), bookRadius * Math.sin(1 * angleStep), 0); 
-
-        createBook('pages/bestiary.html', '生物圖鑑', texCoverBestiary, 
-            bookRadius * Math.cos(2 * angleStep), bookRadius * Math.sin(2 * angleStep), Math.PI / 2); 
-
-        createBook('pages/history.html', '歷史傳聞', texCoverHistory, 
-            bookRadius * Math.cos(3 * angleStep), bookRadius * Math.sin(3 * angleStep), Math.PI); 
-
-        // 4. 圓桌
-        const tableRadiusTop = 10;
-        const tableHeight = 1.0; 
-        
-        texTable.center.set(0.5, 0.5);
-        texTable.rotation = -Math.PI / 2; 
-        texTable.wrapS = THREE.ClampToEdgeWrapping;
-        texTable.wrapT = THREE.ClampToEdgeWrapping;
-        texTable.repeat.set(1, 1);
-
-        const tableGeo = new THREE.CylinderGeometry(tableRadiusTop, tableRadiusTop, tableHeight, 64);
-        const matTableTop = new THREE.MeshStandardMaterial({ 
-            map: texTable, roughness: 0.4, metalness: 0.1, color: 0xffffff 
-        });
-        const matTableBody = new THREE.MeshStandardMaterial({ 
-            color: 0x1a1a1a, roughness: 0.8 
-        });
-
-        const table = new THREE.Mesh(tableGeo, [matTableBody, matTableTop, matTableBody]);
-        table.position.y = -tableHeight / 2; 
-        table.receiveShadow = true;
-        scene.add(table);
-
-        const centerLeg = new THREE.Mesh(
-            new THREE.CylinderGeometry(2.0, 2.0, 4.0, 32),
-            new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 })
-        );
-        centerLeg.position.set(0, -tableHeight - 2.0, 0); 
-        centerLeg.castShadow = true;
-        scene.add(centerLeg);
-
-
-        // 5. 互動與動畫邏輯
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        const hoverLabel = document.getElementById('hover-label');
-        const instruction = document.getElementById('instruction');
-
-        let selectedBook = null;
-        let isFocusing = false;
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mousedown', onMouseDown);
-
-        function onMouseMove(event) {
-            if (isFocusing) return;
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            
-            let foundBook = null;
-            for (let i = 0; i < intersects.length; i++) {
-                let obj = intersects[i].object;
-                while(obj) {
-                    if (obj.userData && obj.userData.book) {
-                        foundBook = obj.userData.book;
-                        break;
-                    }
-                    obj = obj.parent;
-                }
-                if (foundBook) break;
-            }
-
-            books.forEach(b => {
-                b.hovered = (b === foundBook);
-            });
-
-            if (foundBook) {
-                hoverLabel.style.display = 'block';
-                hoverLabel.style.left = event.clientX + 'px';
-                hoverLabel.style.top = event.clientY + 'px';
-
-                // 🌟 手動權限過濾判定
-                if (foundBook.title.includes('地理區域')) {
-                    document.body.style.cursor = 'pointer';
-                    hoverLabel.innerText = foundBook.title;
-                    hoverLabel.style.borderColor = '#d4af37'; 
-                    hoverLabel.style.color = '#d4af37';
-                } else {
-                    document.body.style.cursor = 'not-allowed';
-                    hoverLabel.innerText = "🔒 權限不足，尚未開放";
-                    hoverLabel.style.borderColor = '#ff4444'; 
-                    hoverLabel.style.color = '#ff4444';
-                }
-            } else {
-                document.body.style.cursor = 'default';
-                hoverLabel.style.display = 'none';
-            }
-        }
-
-        function onMouseDown(event) {
-            if (isFocusing) return;
-
-            const targetBook = books.find(b => b.hovered);
-            // 🌟 只有當 hovered 的書是地理區域時，才允許激活 isFocusing 狀態
-            if (targetBook && targetBook.title.includes('地理區域')) {
-                selectedBook = targetBook;
-                isFocusing = true;
-                
-                hoverLabel.style.opacity = 0;
-                instruction.style.opacity = 0;
-                document.body.style.cursor = 'default';
-            }
-        }
-
-        const targetPos = new THREE.Vector3(0, 9, 6); 
-        const targetRotX = Math.PI / 6; 
-        
-        function animate() {
-            requestAnimationFrame(animate);
-
-            if (!isFocusing) {
-                const time = Date.now() * 0.0005;
-                camera.position.y = 16 + Math.sin(time) * 0.2;
-                camera.position.x = Math.sin(time * 0.5) * 0.5;
-                camera.lookAt(0, 0, 0);
-                
-                books.forEach(book => {
-                    // 🌟 只有開放的地理區域書本才能在 Hover 時產生浮起（0.3）和傾斜（0.15）動畫
-                    const canHover = book.hovered && book.title.includes('地理區域');
-                    
-                    const targetY = canHover ? 0.3 : 0; 
-                    const targetRot = canHover ? 0.15 : 0; 
-                    book.group.position.y += (targetY - book.group.position.y) * 0.1;
-                    book.coverGroup.rotation.z += (targetRot - book.coverGroup.rotation.z) * 0.1;
-                });
-            } else {
-                if (selectedBook) {
-                    selectedBook.group.position.lerp(targetPos, 0.05);
-                    
-                    const targetQuaternion = new THREE.Quaternion();
-                    targetQuaternion.setFromEuler(new THREE.Euler(targetRotX, 0, 0));
-                    selectedBook.group.quaternion.slerp(targetQuaternion, 0.05);
-
-                    const openAngle = Math.PI * 0.95; 
-                    selectedBook.coverGroup.rotation.z += (openAngle - selectedBook.coverGroup.rotation.z) * 0.05;
-
-                    const dist = selectedBook.group.position.distanceTo(targetPos);
-                    if (dist < 0.5) {
-                        camera.position.lerp(new THREE.Vector3(0, 16, 11), 0.02);
-                        
-                        const loader = document.getElementById('loading-screen');
-                        loader.style.display = 'flex';
-                        loader.style.opacity = parseFloat(loader.style.opacity || 0) + 0.02;
-                        
-                        // 🌟 降低加載閾值並在跳轉前徹底釋放 isFocusing 3D 鎖定狀態
-                        if (parseFloat(loader.style.opacity) >= 0.95) { 
-                            if(selectedBook && selectedBook.title.includes('地理區域')) {
-                                isFocusing = false;  // 1. 強制解鎖 3D 監聽，防止快取崩潰
-                                const targetLink = selectedBook.link;
-                                selectedBook = null; // 2. 徹底清空物件
-                                
-                                // 3. 確保打破內嵌 iframe 限制，呼叫全螢幕
-                                window.top.location.href = targetLink; 
-                            } else {
-                                window.location.href = selectedBook.link;
-                            }
-                        }
-                    }
-                }
-            }
-
-            renderer.render(scene, camera);
-        } // 🌟 括號完美閉合，修復語法崩潰！
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+    <h1>公會書庫</h1>
+    <p>
+        公會書庫建立中，尚未開放。<br>
+        傳說中，只有最優秀的抄寫員才能記錄馬茲提卡的古老知識。
+    </p>
 </body>
 </html>
