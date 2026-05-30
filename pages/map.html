@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 互動圖集</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 全局設定 --- */
+        :root { --gold: #d4af37; --text: #e0d0b0; }
+        body {
+            margin: 0; padding: 0;
+            background-color: #050505;
+            background-image: url('../assets/env.webp'); 
+            background-size: cover; background-position: center; background-attachment: fixed;
+            font-family: 'Noto Serif TC', serif; color: #2c1b18;
+            overflow: hidden; user-select: none;
+        }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: -1; }
+
+        #book-container {
+            position: relative; width: 90vw; height: 90vh; margin: 5vh auto;
+            background-image: url('../assets/page_bg.webp');
+            background-size: cover; background-position: center;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8); border-radius: 5px;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        
+        #book-container::before {
+            content: ""; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 2px solid rgba(139, 69, 19, 0.3); pointer-events: none; z-index: 10;
+        }
+
+        .page-section { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; opacity: 1; z-index: 1; }
+
+        .book-header {
+            height: 60px; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.2); background: rgba(227, 210, 180, 0.85); z-index: 20;
+        }
+        .book-title { font-family: 'Cinzel', 'Noto Serif TC', serif; font-size: 1.5rem; color: #5d4037; font-weight: bold; }
+        .nav-btn {
+            padding: 8px 20px; border: 1px solid #8b4513; background: rgba(255,255,255,0.3); color: #5d4037;
+            cursor: pointer; font-family: 'Cinzel', 'Noto Serif TC', serif; transition: all 0.2s; font-weight: bold;
+        }
+        .nav-btn:hover { background: #5d4037; color: #e3d2b4; }
+
+        .map-viewport { flex: 1; position: relative; overflow: hidden; background: #dccbb0; cursor: grab; }
+        .map-viewport:active { cursor: grabbing; }
+        .map-image-container { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+        .map-img { display: block; pointer-events: auto; user-select: none; -webkit-user-drag: none; width: 1500px; }
+        .hotspot-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 0.5s; }
+
+        /* --- 不規則 SVG 區域 CSS --- */
+        .map-region-polygon {
+            cursor: pointer; pointer-events: auto;
+            transition: all 0.3s ease;
+            stroke-width: 2.5;
+            stroke-linejoin: round; 
+            stroke-linecap: round;
+            vector-effect: non-scaling-stroke; 
+        }
+        .map-region-polygon:hover {
+            stroke-width: 4.5;
+            filter: drop-shadow(0 0 15px currentColor) brightness(1.2);
+            z-index: 10;
+        }
+        .map-region-polygon.locked { fill: rgba(30, 30, 30, 0.5) !important; stroke: #555 !important; }
+        .map-region-polygon.locked:hover { filter: drop-shadow(0 0 10px rgba(255,0,0,0.8)); fill: rgba(50, 0, 0, 0.6) !important; }
+
+        /* 海域專屬 CSS (無邊線) */
+        .map-region-polygon.ocean {
+            stroke-width: 0 !important; 
+            pointer-events: auto; 
+        }
+        .map-region-polygon.ocean:hover {
+            stroke-width: 0 !important;
+            fill: rgba(68, 136, 255, 0.35) !important;
+            filter: drop-shadow(0 0 15px rgba(68, 136, 255, 0.6));
+        }
+
+        /* 群島專屬 CSS (藍綠色) */
+        .map-region-polygon.archipelago {
+            fill: rgba(32, 178, 170, 0.4) !important; 
+            stroke: #20b2aa !important; 
+            color: #20b2aa !important;
+            cursor: help; 
+            pointer-events: auto; 
+        }
+        .map-region-polygon.archipelago:hover {
+            stroke-width: 3.5;
+            filter: drop-shadow(0 0 15px currentColor) brightness(1.3);
+            z-index: 5;
+        }
+
+        .region-svg-text {
+            font-family: 'Cinzel', 'Noto Serif TC', serif;
+            font-size: 24px; font-weight: bold;
+            text-anchor: middle; dominant-baseline: middle;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px currentColor;
+        }
+        .locked-text { fill: #888 !important; text-shadow: 0 2px 2px #000; }
+
+        /* --- 內部小地標圖釘 --- */
+        .map-pin { 
+            position: absolute; width: 32px; height: 40px; background-color: transparent; 
+            cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
+            pointer-events: auto; transform-origin: bottom center; transform: translate(-50%, -100%);
+            animation: pin-idle 2.5s infinite ease-in-out;
+        }
+        .map-pin::before {
+            content: ''; position: absolute; bottom: -4px; left: 50%; width: 25px; height: 8px; 
+            background: rgba(0, 0, 0, 0.4); border-radius: 50%; transform: translateX(-50%);
+            z-index: -1; animation: radar-pulse 2s infinite ease-out; pointer-events: none;
+        }
+        @keyframes pin-idle { 0%, 100% { margin-top: 0; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); } 50% { margin-top: -12px; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.4)); } }
+        @keyframes radar-pulse { 0% { transform: translateX(-50%) scale(0.5); opacity: 1; } 100% { transform: translateX(-50%) scale(3.5); opacity: 0; } }
+        .map-pin:hover { animation: none; margin-top: 0; transform: translate(-50%, -100%) scale(1.2); filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8)); z-index: 100; }
+        .map-pin:hover::before { display: none; }
+        .map-pin.locked { filter: grayscale(100%) brightness(0.7); animation: none; }
+        .map-pin.locked:hover { filter: grayscale(100%) brightness(1) drop-shadow(0 0 10px rgba(255,0,0,0.8)); transform: translate(-50%, -100%) scale(1.1); }
+        .map-pin.locked::before { display: none; }
+
+        /* --- 浮動簡介視窗 (Tooltip) --- */
+        #hover-tooltip {
+            position: fixed; background: rgba(15, 10, 5, 0.95);
+            border: 2px solid var(--gold); border-radius: 6px; padding: 15px; width: 280px;
+            pointer-events: none; opacity: 0; z-index: 9999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9); transform: translateY(10px);
+            transition: opacity 0.2s, transform 0.2s; color: var(--text);
+            overflow: hidden; 
+        }
+        #hover-tooltip.show { opacity: 1; transform: translateY(0); }
+
+        /* 半透明地點縮圖背景 */
+        .tt-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            opacity: 0.35; 
+            z-index: 0;
+            transition: background-image 0.3s ease;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0.05) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0.05) 100%);
+        }
+
+        .tt-content { position: relative; z-index: 1; }
+
+        .tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(212,175,55,0.4); padding-bottom: 8px; margin-bottom: 10px; }
+        .tt-title { font-size: 1.2rem; color: var(--gold); font-weight: bold; font-family: 'Cinzel', 'Noto Serif TC', serif; text-shadow: 0 2px 4px #000; }
+        .tt-status { font-size: 0.85rem; font-weight: bold; text-shadow: 0 2px 4px #000; }
+        .tt-brief { font-size: 0.95rem; line-height: 1.5; color: #ddd; text-align: justify; text-shadow: 0 1px 3px #000; }
+        .tt-tags { display: flex; flex-direction: column; gap: 6px; margin-top: 15px; }
+        .tt-tag { padding: 6px 10px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; line-height: 1.5; }
+        .tt-tag.scenario { background: rgba(212,175,55,0.15); color: #e3d2b4; border-left: 3px solid var(--gold); }
+        .tt-tag.team { background: rgba(139, 0, 0, 0.2); color: #ff9999; border-left: 3px solid #8b0000; }
+
+        /* --- 地點詳情彈窗 (Modal) --- */
+        #location-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+            z-index: 10000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #location-modal.show {
+            opacity: 1; pointer-events: auto;
+        }
+        .modal-box {
+            width: 85vw; height: 85vh; background: #14100d;
+            border: 2px solid var(--gold); border-radius: 6px;
+            box-shadow: 0 10px 60px rgba(0,0,0,1); display: flex; flex-direction: column;
+            transform: scale(0.95); transition: transform 0.3s ease;
+            position: relative; overflow: hidden;
+            background-image: url('../assets/page_bg.webp');
+            background-size: cover; background-blend-mode: multiply;
+        }
+        #location-modal.show .modal-box { transform: scale(1); }
+        .modal-header {
+            height: 50px; background: rgba(15, 12, 10, 0.95); border-bottom: 2px solid var(--gold);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 25px;
+        }
+        .modal-title-text { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; font-size: 1.3rem; font-weight: bold; letter-spacing: 2px; }
+        .modal-close-btn {
+            background: none; border: none; color: #ff5555; font-size: 2rem; cursor: pointer;
+            transition: 0.2s; padding: 0; line-height: 1; margin-top: -5px;
+        }
+        .modal-close-btn:hover { color: #ff0000; transform: scale(1.1); }
+        .modal-body { flex: 1; position: relative; width: 100%; height: 100%; }
+        .modal-iframe { width: 100%; height: 100%; border: none; background: transparent; display: none; }
+        .modal-simple-content { display: none; padding: 50px; color: var(--text); overflow-y: auto; height: 100%; box-sizing: border-box; }
+        .modal-simple-content h2 { font-family: 'Cinzel', serif; font-size: 2.5rem; color: #8b0000; border-bottom: 2px solid #5d4037; padding-bottom: 10px; margin-top: 0; }
+        .modal-simple-content p { font-size: 1.25rem; line-height: 1.8; text-align: justify; color: #dccbb0; }
+
+        /* --- 區域專專屬自然景點標籤 --- */
+        .local-spot-tag {
+            position: absolute;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            pointer-events: none; 
+            z-index: 5;
+            transform: translate(-50%, -50%); 
+        }
+
+        /* 各種景點地貌顏色 */
+        .spot-forest { color: #4ade80; } /* 自然綠字 */
+        .spot-river  { color: #38bdf8; } /* 河流藍字 */
+        .spot-lake   { color: #7dd3fc; } /* 湖泊淺藍 */
+        .spot-sea   { color: #0080FF; } /* 海洋 */
+        .spot-plain  { color: #eab308; } /* 其他自然地貌 */
+        .spot-mountain { color: #a3a3a3; } /* 山脈灰字 */
+        .spot-volcano  { color: #ff5722; } /* 火山橘紅字 */
+        .spot-swamp    { color: #A5A552; } /* 沼澤墨綠字 */
+        .spot-island    { color: #20b2aa; } /* 島嶼藍綠 */
+
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <div id="location-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title-text" id="modal-title">地點檔案</div>
+                <button class="modal-close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="modal-iframe" class="modal-iframe"></iframe>
+                <div id="modal-simple-content" class="modal-simple-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="hover-tooltip">
+        <div id="tt-bg" class="tt-bg"></div>
+        
+        <div class="tt-content">
+            <div class="tt-header">
+                <span class="tt-title" id="tt-title">地點名稱</span>
+                <span class="tt-status" id="tt-status">狀態</span>
+            </div>
+            <div class="tt-brief" id="tt-brief">簡介內容...</div>
+            <div class="tt-tags" id="tt-tags-container">
+                <div class="tt-tag scenario" id="tt-scenario">📜 關聯劇本: 無</div>
+                <div class="tt-tag team" id="tt-team">🚩 首勘隊伍: 未知</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="book-container">
+        <div id="page-map" class="page-section active">
+            <header class="book-header">
+                <div class="book-title" id="header-title">馬茲提卡大陸全圖</div>
+                <button class="nav-btn" id="header-btn" onclick="handleHeaderNavClick()">← 返回公會書房</button>
+            </header>
+            
+            <div class="map-viewport" id="viewport">
+                <div class="map-image-container" id="map-container">
+                    <img src="../assets/map.webp" class="map-img" id="main-map-img">
+                    <div id="layer-world" class="hotspot-layer"></div>
+                    <div id="layer-region" class="hotspot-layer" style="opacity: 0; pointer-events: none;"></div>
+                </div>
+
+                <div style="position:absolute; bottom:20px; width:100%; text-align:center; pointer-events:none; color:rgba(255,255,255,0.7); text-shadow: 0 2px 4px #000;">
+                    滾輪縮放 • 拖曳移動 • 點擊探索
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('location-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        function closeModal() {
+            const modal = document.getElementById('location-modal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('modal-iframe').src = "";
+            }, 300);
+        }
+
+        // ==========================================
+        // 1. 資料庫 (Database)
+        // ==========================================
+        const worldData = {
+            "azul_sea": {
+                name: "阿祖爾海",
+                polygon: "761,1372 778,1376 795,1365 808,1369 790,1390 773,1424 789,1443 817,1435 836,1415 851,1413 881,1416 871,1449 868,1479 851,1496 846,1511 822,1538 802,1585 798,1639 803,1674 813,1712 841,1715 847,1687 860,1663 865,1638 867,1599 883,1597 896,1590 919,1604 913,1633 914,1657 887,1692 866,1732 847,1762 827,1788 805,1821 811,1854 811,1877 816,1913 821,1938 827,1974 854,1982 892,1995 917,2017 878,2043 841,2048 802,2057 772,2022 731,2013 730,1971 702,1933 688,1897 663,1872 651,1847 649,1813 632,1780 623,1745 595,1719 594,1688 587,1662 607,1627 619,1598 646,1588 656,1561 670,1532 698,1499 719,1461 730,1441 751,1429 764,1409 762,1387",
+                labelPos: { x: 711, y: 1607 },
+                color: "#4488ff", bgColor: "rgba(68, 136, 255, 0.15)",
+                focus: { x: 50.0, y: 35.0, zoom: 1.25 },
+                brief: "位於馬茲提卡西側的蔚藍海域，時常有猛烈的颶風與巨大的海獸出沒。",
+                isLocked: false, locations: []
+            },
+            "kuarte_bay": {
+                name: "夸爾特海灣",
+                polygon: "478,1938 495,1941 503,1970 523,1990 541,2001 577,1990 605,2003 653,2009 691,2028 731,2022 762,2028 781,2048 815,2059 866,2051 902,2034 924,2022 946,2042 947,2082 947,2082 952,2117 973,2156 978,2176 992,2229 1017,2272 1025,2320 1042,2420 867,2424 855,2346 833,2329 804,2347 776,2302 756,2311 744,2330 727,2285 699,2262 691,2244 651,2229 624,2233 623,2246 590,2271 557,2256 559,2245 599,2220 610,2196 617,2163 641,2120 640,2080 626,2051 602,2043 569,2074 557,2105 557,2137 532,2179 501,2205 480,2221 473,2250 452,2283 436,2278 405,2239 410,2213 444,2184 477,2156 485,2110 497,2096 518,2062 511,2041 491,2010 483,1982 476,1948", 
+                labelPos: { x: 692, y: 2137 },
+                color: "#4488ff", bgColor: "rgba(68, 136, 255, 0.15)",
+                focus: { x: 50.0, y: 50.0, zoom: 1.0 },
+                brief: "被群島與暗礁環繞的寧靜海灣，是商船與海盜的必經之路。",
+                isLocked: false, locations: []
+            },
+            "kultaka_bay": {
+                name: "庫塔卡海灣",
+                polygon: "669,384 698,389 713,418 734,426 756,401 780,390 803,373 837,359 847,341 875,325 898,309 913,297 926,325 927,350 949,379 957,412 973,417 991,458 1015,496 989,510 908,522 849,532 811,558 795,608 787,638 784,696 773,696 756,655 757,635 754,608 752,591 753,564 729,534 708,534 679,537 657,536 637,540 633,512 638,502 666,488 679,456 676,432 659,416 669,401",
+                labelPos: { x: 787, y: 477 },
+                color: "#4488ff", bgColor: "rgba(68, 136, 255, 0.15)",
+                focus: { x: 50.0, y: 50.0, zoom: 1.0 },
+                brief: "以強悍的庫塔卡部族命名的海域，海流湍急而危險。",
+                isLocked: false, locations: []
+            },
+            "kodel_bay": {
+                name: "科德爾灣",
+                polygon: "901,291 924,246 940,212 963,170 999,142 1041,118 1055,103 1057,80 1425,81 1427,276 1471,280 1467,484 1467,531 1467,572 1432,573 1402,565 1383,505 1360,463 1314,446 1289,474 1204,510 1169,538 1019,504 982,410 966,403 937,335 928,303 919,293",
+                labelPos: { x: 1177, y: 214 },
+                color: "#4488ff", bgColor: "rgba(68, 136, 255, 0.15)",
+                focus: { x: 50.0, y: 50.0, zoom: 1.0 },
+                brief: "以偉大的黃金艦隊指揮官命名，海面下埋藏著無數沉船的遺骸。",
+                isLocked: false, locations: []
+            },
+
+            "coxamult": {
+                name: "考克薩多島",
+                polygon: "1339,97 1360,91 1372,107 1381,123 1390,138 1408,134 1426,144 1437,160 1430,191 1414,208 1409,231 1398,249 1377,253 1367,267 1364,292 1351,308 1359,323 1345,336 1326,324 1312,306 1316,290 1331,283 1352,268 1348,245 1351,219 1369,212 1390,192 1377,171 1388,155 1374,143 1351,134 1341,119",
+                labelPos: { x: 1372, y: 200 },
+                color: "#20b2aa", bgColor: "rgba(32, 178, 170, 0.4)",
+                focus: { x: 91.5, y: 8.8, zoom: 3.5 }, 
+                brief: "位於東北海域的叢林島嶼，相傳有古老的祭祀遺跡。",
+                isLocked: false, locations: [], isArchipelago: true
+            },
+            "greensisters": {
+                name: "綠姊妹群島",
+                polygon: "683,1681 701,1672 704,1695 713,1719 696,1729 690,1765 702,1785 714,1813 721,1837 734,1856 729,1875 746,1886 749,1906 760,1920 762,1945 745,1957 727,1920 731,1903 715,1891 698,1882 703,1867 677,1851 672,1833 678,1819 676,1796 666,1783 672,1743 667,1725 679,1714 695,1702",
+                labelPos: { x: 711, y: 1777 },
+                color: "#20b2aa", bgColor: "rgba(32, 178, 170, 0.4)",
+                focus: { x: 47.4, y: 74.0, zoom: 3.0 },
+                brief: "阿祖爾海中部的一串無人島礁，是海鳥與海龜的家園。",
+                isLocked: false, locations: [], isArchipelago: true
+            },
+            "maztapan": {
+                name: "馬茲塔潘島",
+                polygon: "1020,170 1036,180 1039,205 1038,225 1036,245 1016,253 1006,283 987,296 987,333 997,355 988,382 977,403 950,412 948,385 937,364 925,340 927,307 942,286 958,271 958,251 971,242 982,227 995,217 1007,198 1012,179",
+                labelPos: { x: 973, y: 292 },
+                color: "#20b2aa", bgColor: "rgba(32, 178, 170, 0.4)",
+                focus: { x: 64.9, y: 12.2, zoom: 3.5 }, 
+                brief: "馬茲提卡東側的神祕孤島，相傳由無數巨大的火山岩組成。",
+                isLocked: false, locations: [], isArchipelago: true
+            },
+            "huetle": {
+                name: "於特爾島",
+                polygon: "78,314 96,308 109,332 130,343 138,375 126,386 131,403 129,423 142,433 142,451 153,469 172,482 216,494 225,519 259,543 284,547 298,564 281,573 263,564 213,565 209,581 225,597 233,636 244,652 229,659 221,645 198,649 192,623 166,611 140,591 118,592 115,569 102,550 102,525 79,507 86,483 85,463 91,449 74,431 77,410 77,394 84,378 65,347 73,331",
+                labelPos: { x: 148, y: 512 },
+                color: "#20b2aa", bgColor: "rgba(32, 178, 170, 0.4)",
+                focus: { x: 9.3, y: 20.2, zoom: 2.5 }, 
+                brief: "瓦克里境內的大島。",
+                isLocked: false, locations: [], isArchipelago: true
+            },
+            "brownsisters": {
+                name: "棕姊妹群島",
+                polygon: "729,2036 750,2033 767,2022 776,2039 795,2054 799,2075 816,2080 834,2086 847,2104 841,2127 855,2160 877,2173 848,2185 838,2137 820,2137 809,2122 794,2111 804,2094 782,2086 749,2075 743,2057 726,2049",
+                labelPos: { x: 823, y: 2102 },
+                color: "#20b2aa", bgColor: "rgba(32, 178, 170, 0.4)",
+                focus: { x: 54.9, y: 87.6, zoom: 3.5 },
+                brief: "點綴在南方的崎嶇礁石，水流十分危險。",
+                isLocked: false, locations: [], isArchipelago: true
+            },
+
+            // ⛰️ 陸地區塊 
+            "nexal": {
+                name: "內克薩爾山谷",
+                polygon: "609,746 641,736 663,733 693,727 716,743 758,760 772,780 773,802 742,843 737,916 713,950 721,985 719,1006 681,1008 636,995 604,993 570,990 544,969 521,961 487,959 463,943 444,915 455,884 472,863 495,841 522,819 524,792 545,763 594,747", 
+                labelPos: { x: 611, y: 862 }, 
+                color: "#ff4444", bgColor: "rgba(255, 68, 68, 0.15)",
+                focus: { x: 42.4, y: 33.9, zoom: 2.0 },
+                brief: "昔日輝煌的帝國，如今被致命的毒霧與蝰手獸盤據的禁忌山谷。",
+                isLocked: false,
+                locations: [
+                    { name: "內克薩爾(舊都)", x: "38.7%", y: "36.9%", brief: "充滿腐敗與蝰手獸的古老帝都廢墟。", desc: "這座城市曾經輝煌，現在卻被致命的綠色毒霧所籠罩。已經淪為蝰手獸的地盤，至今無人能深入。", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#884400" },
+                    { name: "伊克塔卡廢墟", x: "32.1%", y: "36.5%", brief: "火山灰覆蓋的死寂之地。", desc: "位於活火山腳下的古代遺址，空氣中瀰漫著硫磺味。此處經常能發現珍規的古代儀式器具，但也棲息著危險的火元素生物。", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#8b0000" }
+                   ],
+                spots: [
+                    { name: "波波爾山",     x: "47.6%", y: "35.4%", type: "mountain" },
+                    { name: "札塔爾山", x: "44.9%", y: "38.8%", type: "volcano" },  
+                    { name: "內克薩爾裏海",       x: "42.3%", y: "33.4%", type: "lake" },  
+                    { name: "泰茲卡之柱", x: "28.3%", y: "41.2%", type: "volcano" }   
+                ]
+            },
+            "Pezelac": {
+                name: "佩澤拉克",
+                polygon: "882,773 944,783 979,801 992,812 1034,822 1061,822 1093,808 1124,804 1161,810 1178,811 1217,805 1241,793 1279,785 1331,792 1358,803 1368,832 1381,850 1395,871 1401,895 1421,926 1414,953 1404,962 1391,975 1369,980 1365,992 1335,1000 1310,993 1273,1013 1263,1029 1243,1027 1237,1036 1214,1053 1190,1067 1168,1076 1148,1086 1127,1093 1089,1106 1049,1105 1012,1117 960,1113 931,1108 901,1089 875,1080 815,1071 766,1057 748,1022 719,1006 721,985 713,950 737,916 742,843 773,802 807,788 832,783 865,778",
+                labelPos: { x: 973, y: 907 },
+                color: "#44ff44", bgColor: "rgba(68, 255, 68, 0.15)",
+                focus: { x: 63.3, y: 35.6, zoom: 1.5 },
+                brief: "富饒的農業之邦，匯集了大陸上許多資源。",
+                isLocked: false,
+                locations: [
+                    { name: "佩澤拉克(首都)", x: "59.9%", y: "39.1%", brief: "新興的大城邦。", desc: "主城", url: "pezelac.html", isLocked: false, scenario: ["共通區域"], firstTeam: "黑曜之律", color: "#d4af37", gem: "#005500" },
+                    { name: "奧札爾特", x: "53.3%", y: "35.1%", brief: "佩澤拉克北邊的寧靜小鎮。", desc: "小鎮資訊", url: "ozalte.html", isLocked: false, scenario: ["主線－王墓之謎"], firstTeam: "黑曜之律", color: "#d4af37", gem: "#005500" }, 
+                    { name: "科維小村", x: "58.6%", y: "32.4%", brief: "主幹道旁的補給站。", desc: "村落資訊", url: "qowi.html", isLocked: false, scenario: ["主線－異光", "支線－未知之洞"], firstTeam: "黑曜之律", color: "#d4af37", gem: "#005500" },
+                    { name: "瑪居", x: "83.0%", y: "36.8%", brief: "河邊小村落。", desc: "村落資訊", url: "mazi.html", isLocked: false, scenario: ["主線－失潮之夜"], firstTeam: "黑曜之律", color: "#d4af37", gem: "#005500" },
+                    { name: "特特奧坎", x: "65.3%", y: "33.5%", brief: "隱蔽的豹人村莊。", desc: "村落資訊", url: "teteocan.html", isLocked: false, scenario: ["唯一－熾痕歸途"], firstTeam: "三道獸跡", color: "#d4af37", gem: "#005500" },
+                    { name: "哈基", x: "75.1%", y: "35.4%", brief: "離河岸不遠的小鎮。", desc: "村落資訊", url: "haki.html", isLocked: true, scenario: ["未知"], firstTeam: "三道獸跡", color: "#d4af37", gem: "#005500" },
+                    { name: "歐克斯特卡", x: "77.1%", y: "42.8%", brief: "疏林平原上的寧靜小鎮。", desc: "村落資訊", url: "oxtetca.html", isLocked: true, scenario: ["主線－無光絕壁"], firstTeam: "布萊梅酉仁", color: "#d4af37", gem: "#005500" },
+                    { name: "科西村", x: "88.6%", y: "39.0%", brief: "濱海三角洲旁的小漁村。", desc: "村落資訊", url: "koshi.html", isLocked: false, scenario: ["主線－失潮之夜"], firstTeam: "黑曜之律", color: "#d4af37", gem: "#005500" }
+                   ],
+                spots: [
+                    { name: "佩茲米克斯森林", x: "66.3%", y: "36.9%", type: "forest" }, 
+                    { name: "齊爾尼河",       x: "70.9%", y: "40.8%", type: "river" }, 
+                    { name: "齊爾茲湖",       x: "64.7%", y: "40%", type: "lake" },    
+                    { name: "佩澤爾湖",       x: "79.5%", y: "36.2%", type: "lake" }, 
+                    { name: "普魯托克山",     x: "56.5%", y: "29.9%", type: "mountain" },
+                    { name: "波波爾山",     x: "47.6%", y: "35.4%", type: "mountain" },
+                    { name: "札塔爾山", x: "44.9%", y: "38.8%", type: "volcano" }   
+                ]
+            },
+            "payit": {
+                name: "帕伊特",
+                polygon: "817,557 843,547 864,549 880,527 914,528 942,529 959,519 980,521 999,516 1048,516 1070,520 1108,527 1128,528 1148,537 1168,546 1212,534 1227,505 1250,490 1263,480 1296,483 1306,462 1317,453 1333,468 1347,457 1357,477 1364,501 1375,504 1379,532 1382,564 1362,585 1348,611 1342,633 1346,653 1339,686 1310,714 1309,732 1318,763 1344,772 1358,799 1358,803 1331,792 1279,785 1241,793 1217,805 1178,811 1161,810 1124,804 1093,808 1061,822 1034,822 992,812 979,801 944,783 909,782 882,773 862,754 841,733 827,722 801,710 794,679 795,650 809,632 801,610 812,582 815,568",
+                labelPos: { x: 1094, y: 644 },
+                color: "#44ff44", bgColor: "rgba(68, 255, 68, 0.15)",
+                focus: { x: 80.7, y: 24.7, zoom: 2.0 },
+                brief: "帕伊特是一個偉大的國家，外大陸的入侵幾乎使其失去了身份，但經過考驗後又恢復得更加強大。如今，人們的民族自豪感非常強烈，最初的入侵者大多已經融入或消亡。",
+                isLocked: false,
+                locations: [
+                    { name: "烏爾托斯(首都)", x: "86.5%", y: "22.6%", brief: "全大陸文明與科技最發達的主城。", desc: "主城", url: "payit.html", isLocked: true, scenario: ["共通區域"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "帕倫奎", x: "61.7%", y: "25.4%", brief: "東邊平原上的寧靜小鎮。", desc: "村落資訊", url: "palenqui.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "瑪茲蒂", x: "77.0%", y: "22.3%", brief: "叢林北邊的寧靜小鎮。", desc: "村落資訊", url: "mazti.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "帕蒂爾", x: "81.0%", y: "29.9%", brief: "帕伊特南方的小鎮。", desc: "村落資訊", url: "patil.html", isLocked: true, scenario: ["唯一－熾痕歸途"], firstTeam: "三道獸跡", color: "#d4af37", gem: "#005500" },
+                    { name: "荷姆斯港", x: "82.5%", y: "21.0%", brief: "當外來帝國入侵後所建立的港口城邦。", desc: "主城", url: "helmsport.html", isLocked: true, scenario: ["共通區域"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" }
+                   ],
+                spots: [
+                    { name: "博馬克叢林", x: "73.3%", y: "24.8%", type: "forest" }, 
+                    { name: "烏爾托斯森林", x: "87.7%", y: "25.3%", type: "forest" },  
+                    { name: "普魯托克山",     x: "56.5%", y: "29.9%", type: "mountain" },
+                    { name: "雙生面像", x: "89.9%", y: "18.8%", type: "mountain" }   
+                ]
+            },
+            "Huacli": {
+                name: "瓦克里",
+                polygon: "81,68 286,71 300,92 361,119 387,159 561,200 648,298 676,376 662,391 652,416 668,432 669,457 652,483 626,500 570,481 518,509 497,546 512,571 518,597 537,620 567,665 566,711 577,755 545,769 524,797 519,822 486,857 456,884 448,870 459,855 446,839 437,816 422,809 416,785 392,780 381,768 349,753 344,738 314,725 307,705 282,686 267,667 250,657 257,634 249,620 245,597 228,582 240,570 260,578 278,576 292,598 325,608 341,622 345,643 376,670 396,683 411,692 428,681 426,658 411,641 416,617 401,610 391,590 370,577 324,550 317,525 302,505 287,499 283,476 260,471 253,456 233,451 229,427 210,416 204,395 196,369 193,342 192,315 186,285 169,257 156,234 158,201 148,179 148,160 132,156 106,138 92,117 82,87",
+                labelPos: { x: 386, y: 422 },
+                color: "#999999", bgColor: "rgba(153, 153, 153, 0.15)", 
+                focus: { x: 25.1, y: 20.2, zoom: 1.5 },
+                brief: "烈日炎炎的乾燥之地，擁有獨特的沙漠文化與耐旱巨獸。",
+                isLocked: false, 
+                locations: [
+                    { name: "奧托米(首都)", x: "16.9%", y: "15.8%", brief: "西海岸的最大主城。", desc: "西海岸的最大主城，隱藏在風沙之後。", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#884400" },
+                    { name: "奧比", x: "26.6%", y: "14.1%", brief: "鄰近沙漠的邊境小村。", desc: "村落", url: "olbi.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "伊克特", x: "27.5%", y: "23.2%", brief: "西海岸的臨海小鎮。", desc: "村落資訊", url: "ixit.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "瑪茲蒂", x: "77.0%", y: "22.3%", brief: "叢林北邊的寧靜小鎮。", desc: "村落資訊", url: "mazti.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "普爾科", x: "34.1%", y: "26.6%", brief: "山道上的關隘軍鎮。", desc: "村落資訊", url: "pulco.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "阿茲卡特", x: "25.7%", y: "28.4%", brief: "瓦克里南邊的重要大鎮。", desc: "村落資訊", url: "azcat.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "霍納爾", x: "18.3%", y: "26.2%", brief: "鄰近於特爾島的小漁村。", desc: "村落資訊", url: "horner.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" }
+                   ],
+                spots: [
+                    { name: "科亞阿魯卡山",     x: "17.1%", y: "12.6%", type: "mountain" }, 
+                    { name: "於特爾島",     x: "9.9%", y: "20.4%", type: "island" }, 
+                    { name: "庫托泰克山",     x: "17.4%", y: "4.4%", type: "mountain" },  
+                    { name: "查爾科潘山",     x: "24.5%", y: "5.6%", type: "mountain" },
+                    { name: "阿克薩波茲特蘭山脈",     x: "35.8%", y: "15.2%", type: "mountain" }
+                ]
+            },
+            "farpayit": {
+                name: "遠帕伊特",
+                polygon: "940,1115 930,1143 929,1169 938,1197 934,1233 907,1265 881,1302 851,1336 817,1354 808,1383 794,1403 788,1415 788,1435 802,1436 827,1409 839,1397 865,1408 898,1411 888,1427 880,1457 883,1482 860,1509 828,1546 814,1575 808,1610 800,1641 810,1661 811,1701 826,1708 845,1705 838,1685 851,1673 856,1648 861,1622 856,1592 897,1572 927,1610 922,1648 908,1671 887,1709 865,1738 850,1777 821,1807 807,1842 821,1863 819,1886 830,1907 825,1942 836,1969 867,1980 890,1977 910,1993 932,2003 942,2031 958,2058 953,2079 951,2100 964,2119 978,2141 986,2150 982,2170 980,2197 998,2210 1005,2233 1020,2255 1031,2271 1030,2295 1032,2313 1046,2335 1041,2354 1058,2381 1058,2409 1055,2429 1088,2432 1104,2422 1103,2406 1120,2394 1140,2379 1157,2375 1190,2367 1213,2369 1239,2379 1270,2401 1295,2394 1321,2352 1340,2302 1354,2250 1342,2232 1355,2202 1356,2169 1360,2133 1373,2108 1363,2083 1362,2062 1375,2025 1373,1991 1355,1973 1355,1952 1333,1949 1311,1950 1301,1915 1296,1891 1304,1887 1322,1901 1339,1911 1336,1893 1341,1858 1324,1845 1312,1827 1313,1814 1318,1806 1307,1792 1318,1773 1296,1755 1293,1739 1286,1725 1280,1709 1296,1683 1309,1650 1335,1635 1337,1597 1360,1561 1350,1549 1368,1532 1365,1519 1368,1501 1370,1453 1368,1422 1358,1391 1351,1341 1353,1323 1355,1292 1352,1272 1341,1251 1351,1224 1348,1187 1352,1164 1365,1142 1372,1111 1368,1091 1358,1075 1357,1043 1342,1038 1326,1048 1309,1055 1302,1069 1280,1081 1278,1096 1257,1113 1257,1121 1251,1142 1252,1160 1246,1194 1238,1213 1222,1226 1191,1237 1161,1236 1151,1216 1151,1213 1138,1190 1143,1172 1136,1158 1151,1144 1163,1119 1167,1097 1171,1082 1168,1076 1148,1086 1127,1093 1089,1106 1049,1105 1012,1117 960,1113 931,1108",
+                labelPos: { x: 1140, y: 1473 },
+                color: "#ff4444", bgColor: "rgba(255, 68, 68, 0.15)", 
+                focus: { x: 73.6, y: 70.6, zoom: 1.5 },
+                brief: "危機四伏的化外之地，充斥著原始巨獸，少有冒險者敢於深入。",
+                isLocked: false, 
+                locations: [
+                    { name: "圖洛姆-伊齊(首都)", x: "64.0%", y: "70.0%", brief: "遠帕伊特密林中的最大主城。", desc: "西海岸的最大主城，隱藏在風沙之後。", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#884400" },
+                    { name: "馬蒂爾", x: "77.3%", y: "88.8%", brief: "叢林中的河岸小村。", desc: "村落", url: "matil.html", isLocked: true, scenario: ["共通區域"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "特拉科亞", x: "74.1%", y: "49.7%", brief: "靠近沼原的半身人部落。", desc: "村落", url: "tlacoaya.html", isLocked: false, scenario: ["活動－血影幽堡"], firstTeam: "公開", color: "#d4af37", gem: "#005500" },
+                    { name: "特佩拉卡", x: "62.4%", y: "50.2%", brief: "商道上的小村落，是進入遠帕伊特叢林的最後休憩站。", desc: "村落", url: "tepelaca.html", isLocked: false, scenario: ["未知"], firstTeam: "布萊梅酉仁", color: "#d4af37", gem: "#005500" },
+                    { name: "馬克薩爾", x: "81.5%", y: "93.6%", brief: "遠帕伊特南境的臨海城鎮。", desc: "村落資訊", url: "maxal.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" }
+                   ],
+                spots: [
+                    { name: "納拉巴頓山脈",     x: "65.2%", y: "56.2%", type: "mountain" }, 
+                    { name: "納拉巴頓叢林",     x: "76.7%", y: "56.6%", type: "forest" },
+                    { name: "奧科斯頓叢林",     x: "75.7%", y: "92.8%", type: "forest" }, 
+                    { name: "伊克斯泰山",     x: "71.7%", y: "73.0%", type: "mountain" },  
+                    { name: "烏斯塔克山",     x: "71.3%", y: "75.9%", type: "mountain" },
+                    { name: "普蘭卡爾山脈",     x: "72.7%", y: "80.9%", type: "mountain" },
+                    { name: "特拉卡沼原",     x: "77.7%", y: "51.2%", type: "swamp" },
+                    { name: "特科拉河",         x: "80.7%", y: "86.8%", type: "river" },
+                    { name: "伊克斯泰河",         x: "80.9%", y: "72.1%", type: "river" }
+                ]
+            },
+            "Kolan": {
+                name: "科蘭",
+                polygon: "428,937 409,944 395,959 390,983 375,1009 381,1021 362,1031 336,1056 326,1078 306,1088 300,1110 283,1132 272,1152 251,1163 241,1178 221,1197 214,1208 196,1221 188,1243 206,1237 169,1275 174,1287 181,1305 201,1316 215,1304 230,1304 239,1323 214,1344 231,1353 254,1367 242,1386 234,1402 221,1413 194,1406 186,1382 180,1352 163,1362 150,1362 148,1393 139,1405 138,1430 142,1464 144,1503 153,1545 165,1588 169,1616 162,1644 165,1664 177,1687 168,1702 181,1712 195,1730 204,1766 225,1769 247,1802 253,1821 274,1842 257,1860 247,1875 256,1901 234,1910 221,1932 231,1946 225,1962 221,1986 231,2128 253,2130 277,2134 324,2132 327,2118 359,2131 392,2114 417,2110 447,2120 473,2115 490,2093 512,2061 501,2041 491,2024 481,2012 472,1982 470,1954 472,1939 492,1921 518,1898 524,1870 537,1870 533,1898 517,1916 505,1934 500,1954 511,1979 534,1995 547,1991 561,1986 584,1977 599,1989 622,1996 657,1999 670,2013 687,2008 702,2026 724,2016 729,1993 717,1973 709,1959 691,1926 675,1894 653,1887 639,1856 640,1807 622,1785 621,1770 609,1753 583,1729 579,1681 575,1658 598,1642 603,1599 625,1587 641,1565 652,1538 683,1493 704,1462 719,1441 731,1428 751,1409 753,1371 755,1358 782,1358 805,1354 835,1342 851,1336 881,1302 907,1265 934,1233 938,1197 929,1169 930,1143 940,1115 931,1108 901,1089 875,1080 815,1071 766,1057 748,1022 719,1006 681,1008 636,995 604,993 570,990 544,969 521,961 487,959 463,943 444,915",
+                labelPos: { x: 443, y: 1834 },
+                color: "#999999", bgColor: "rgba(153, 153, 153, 0.15)", 
+                focus: { x: 27.7, y: 68.2, zoom: 1.2 },
+                brief: "被群山與絕壁層層隔絕的神祕高原，外人難以一窺全貌。",
+                isLocked: false, 
+                locations: [
+                    { name: "圖坎(首都)", x: "26.5%", y: "68.0%", brief: "最大的綠洲城邦，旅商的起源地。", desc: "主城", url: "tuakn.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#884400" },
+                    { name: "特瓦查", x: "32.7%", y: "64.8%", brief: "山道上的關隘軍鎮。", desc: "村落", url: "tewahca.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "瓜特爾", x: "11.2%", y: "60.0%", brief: "臨海峭壁上的小鎮。", desc: "村落", url: "guatl.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "科拉特爾", x: "15.4%", y: "50.8%", brief: "臨海峭壁上的小鎮。", desc: "村落", url: "kolatl.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "巴亞", x: "16.9%", y: "55.8%", brief: "臨海峭壁上的小鎮。", desc: "村落", url: "baya.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" },
+                    { name: "卡貝茲", x: "26.9%", y: "44.4%", brief: "臨海峭壁上的小鎮。", desc: "村落", url: "cabez.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" }
+                   ],
+                spots: [
+                    { name: "奇馬特佩克群山",     x: "17.1%", y: "60.7%", type: "mountain" }, 
+                    { name: "納赫塔爾群山",     x: "33.3%", y: "62.6%", type: "mountain" },
+                    { name: "特拉克薩坎森林",     x: "40.7%", y: "78.4%", type: "forest" }, 
+                    { name: "嘎拉塔群山",     x: "40.3%", y: "74.2%", type: "mountain" },  
+                    { name: "圖爾卡巴群山",     x: "26.5%", y: "74.5%", type: "mountain" },
+                    { name: "米丘肯山",     x: "19.7%", y: "81.8%", type: "mountain" },
+                    { name: "大綠洲",         x: "27.5%", y: "70.6%", type: "lake" },
+                    { name: "科蘭灣",         x: "9.7%", y: "53.2%", type: "sea" },
+                    { name: "泰茲卡之柱", x: "28.3%", y: "41.2%", type: "volcano" } 
+                ]
+            },
+            "thehouseoftezca": {
+                name: "泰茲卡之家沙漠",
+                polygon: "751,1054 799,1076 870,1087 918,1117 920,1196 913,1234 861,1308 816,1351 788,1352 775,1366 761,1362 755,1372 758,1399 754,1422 733,1431 709,1447 709,1464 696,1488 677,1512 648,1549 643,1577 620,1589 603,1565 570,1524 535,1493 511,1463 471,1455 416,1479 386,1461 386,1349 340,1277 331,1237 402,1176 441,1150 458,1114 515,1056 564,1051 625,1066 682,1074 737,1073",
+                labelPos: { x: 574, y: 1237 },
+                color: "#e69900", bgColor: "rgba(230, 153, 0, 0.15)", 
+                focus: { x: 35.5, y: 50.7, zoom: 1.5 },
+                brief: "廣袤無垠且酷熱難耐的大沙漠，相傳隱藏著古老太陽神的輝煌遺跡。沙漠矮人的地盤。",
+                isLocked: false, 
+                locations: [],
+                spots: [
+                    { name: "奇卡群丘",     x: "44.1%", y: "47.8%", type: "mountain" }, 
+                    { name: "波赫特卡綠洲",         x: "33.3%", y: "56.5%", type: "lake" },
+                    { name: "太陽石", x: "42.7%", y: "51.2%", type: "volcano" },
+                    { name: "泰茲卡之柱", x: "28.3%", y: "41.2%", type: "volcano" } 
+                ]
+            },
+            "itzcala": {
+                name: "伊茲卡拉沙漠",
+                polygon: "285,69 969,75 1051,76 1043,107 1026,113 1009,130 987,134 967,154 949,170 942,195 924,213 911,236 907,268 892,291 883,298 870,315 848,330 829,343 821,358 808,366 789,366 769,381 747,393 740,415 724,417 715,402 709,388 682,371 670,364 647,298 611,257 564,201 453,175 386,157 359,116 301,88",
+                labelPos: { x: 729, y: 166 },
+                color: "#e69900", bgColor: "rgba(230, 153, 0, 0.15)", 
+                focus: { x: 44.6, y: 5.5, zoom: 1.5 },
+                brief: "風沙遮蔽天日的死亡荒漠，只有最堅韌的生物與部族才能在此地生存。",
+                isLocked: false, 
+                locations: [
+                    { name: "崔弗斯灘堡", x: "66.6%", y: "3.7%", brief: "大陸最北邊的邊境要塞。", desc: "要塞資訊", url: "trythosford.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" }                   
+             ],
+                spots: [
+                    { name: "科亞阿魯卡山",     x: "17.1%", y: "12.6%", type: "mountain" },  
+                    { name: "庫托泰克山",     x: "17.4%", y: "4.4%", type: "mountain" },  
+                    { name: "查爾科潘山",     x: "24.5%", y: "5.6%", type: "mountain" },
+                    { name: "阿克薩波茲特蘭山脈",     x: "35.8%", y: "15.2%", type: "mountain" },
+                    { name: "無盡沙海",         x: "43.9%", y: "4.6%", type: "plain" },
+                    { name: "馬茲塔荒原",         x: "51.7%", y: "11.2%", type: "plain" }
+                ]
+            },
+            "south": {
+                name: "邊南之境",
+                polygon: "193,2357 197,2381 231,2397 247,2381 259,2372 293,2357 310,2334 326,2307 340,2297 341,2323 345,2330 358,2352 367,2376 370,2412 362,2422 348,2406 328,2391 311,2394 304,2412 308,2428 669,2427 669,2361 682,2354 702,2333 729,2355 744,2348 733,2323 729,2295 710,2283 698,2270 689,2262 692,2252 673,2238 656,2236 631,2230 633,2250 619,2250 607,2259 591,2277 572,2265 549,2254 548,2233 566,2231 584,2221 604,2210 600,2181 612,2156 625,2135 628,2114 634,2094 627,2060 617,2049 595,2061 580,2072 576,2099 561,2127 565,2137 552,2163 538,2184 538,2190 521,2206 496,2215 484,2234 487,2254 468,2271 465,2291 450,2304 437,2285 418,2276 399,2260 399,2230 399,2201 427,2186 435,2182 466,2159 465,2138 473,2115 447,2120 417,2110 392,2114 359,2131 327,2118 324,2132 277,2134 253,2130 231,2128 228,2135 215,2146 208,2159 221,2181 208,2189 194,2214 187,2236 180,2250 181,2278 173,2298 181,2319 176,2350",
+                labelPos: { x: 445, y: 2328 },
+                color: "#ff4444", bgColor: "rgba(255, 68, 68, 0.15)", 
+                focus: { x: 29.6, y: 93.0, zoom: 2.0 },
+                brief: "馬茲提卡大陸最南境，充滿了壯麗的奇觀與仍處於蠻荒的原始部落。",
+                isLocked: false, 
+                locations: [
+                    { name: "聖城比丘烏姆", x: "40.9%", y: "92.8%", brief: "大陸最南邊的山巔聖城，三聖學院神律學的聖地。", desc: "要塞資訊", url: "pichu-umu.html", isLocked: true, scenario: ["未知"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#005500" }                   
+             ],
+                spots: [
+                    { name: "索奇帕斯山",     x: "17.5%", y: "87.8%", type: "mountain" },  
+                    { name: "特佩約利奧特爾群山",     x: "35.6%", y: "95.2%", type: "mountain" },
+                    { name: "查普萊勒叢林",     x: "21.7%", y: "91.0%", type: "forest" },
+                    { name: "奎特拉瓦克叢林",     x: "37.7%", y: "87.7%", type: "forest" },
+                    { name: "米丘肯山",     x: "19.7%", y: "81.8%", type: "mountain" },
+                    { name: "阿托亞潘沼澤",         x: "27.5%", y: "85.9%", type: "swamp" }
+                ]
+            },
+            "kultaka": {
+                name: "庫塔卡",
+                /* 🌟 已縫合修正的邊界範圍 */
+                polygon: "518,509 570,480 628,501 621,527 633,545 643,563 657,543 682,550 699,539 718,547 733,550 755,584 740,599 759,621 747,640 754,654 760,670 758,692 766,707 779,715 799,699 809,716 832,729 880,774 834,787 772,802 775,782 761,761 715,744 691,729 636,741 577,755 566,711 567,665 537,620 518,597 512,571 497,546",
+                labelPos: { x: 654, y: 633 },
+                color: "#ff4444", bgColor: "rgba(255, 68, 68, 0.15)", 
+                focus: { x: 43.6, y: 25.3, zoom: 2.0 },
+                brief: "戰士國度。這片土地本身是一片肥沃的沿海平原，被一片廣闊的鹽沼與水域隔開，鹽沼裡棲息著蜥蜴人、蛙人在更糟糕的生物。",
+                isLocked: false, 
+                locations: [
+                    { name: "庫塔卡(首都)", x: "47.7%", y: "27.5%", brief: "最強大的軍事要塞，盛盛產黑曜石。", desc: "主城", isLocked: true, scenario: ["共通區域"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#8b0000" },
+                    { name: "佐帕爾", x: "36.9%", y: "21.1%", brief: "山腳下的堅固城鎮。", desc: "城鎮", isLocked: true, scenario: ["共通區域"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#8b0000" },
+                    { name: "索科阿特爾", x: "40.7%", y: "24.1%", brief: "鹽沼邊界的艱苦小村。", url: "xoc_atl.html", desc: "村落", isLocked: false, scenario: ["活動－鹽沼之淚"], firstTeam: "公開", color: "#d4af37", gem: "#8b0000" },
+                    { name: "奧克塔卡", x: "48.6%", y: "30.0%", brief: "守護內克薩爾邊境的前哨站。", desc: "前哨站資訊...", isLocked: true, scenario: ["主線－黑曜黎明"], firstTeam: "尚未踏足", color: "#d4af37", gem: "#8b0000" }
+                   ],
+                spots: [
+                    { name: "阿佐庫特拉鹽沼",  x: "44.6%", y: "23.4%", type: "swamp" }, 
+                    { name: "普魯托克山",     x: "56.5%", y: "29.9%", type: "mountain" },  
+                    { name: "阿克薩波茲特蘭山脈",     x: "35.8%", y: "15.2%", type: "mountain" } 
+                ]
+            },
+        };
+
+        // ==========================================
+        // 2. 圖釘與 Tooltip 邏輯
+        // ==========================================
+        function getAztecPinSVG(mainColor, gemColor) {
+            return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' style="width:100%; height:100%; pointer-events:none;">
+                <polygon points='50,115 10,50 50,10 90,50' fill='#1a1511' stroke='${mainColor}' stroke-width='6'/>
+                <polygon points='50,25 60,35 75,35 75,50 60,65 50,75 40,65 25,50 25,35 40,35' fill='${gemColor}'/>
+                <rect x='42' y='42' width='16' height='16' fill='${mainColor}' transform='rotate(45 50 50)'/>
+            </svg>`;
+        }
+
+        let globalLayerElement = null;
+        let ALL_LOCATIONS = [];
+        let ALL_SPOTS = [];
+
+        function compileGlobalData() {
+            ALL_LOCATIONS = [];
+            ALL_SPOTS = [];
+            for (let regionKey in worldData) {
+                const region = worldData[regionKey];
+                
+                if (region.locations) {
+                    region.locations.forEach(loc => {
+                        ALL_LOCATIONS.push({
+                            ...loc,
+                            regionKey: regionKey,
+                            regionName: region.name
+                        });
+                    });
+                }
+                
+                if (region.spots) {
+                    region.spots.forEach(spot => {
+                        ALL_SPOTS.push({
+                            ...spot,
+                            regionKey: regionKey,
+                            regionName: region.name
+                        });
+                    });
+                }
+            }
+        }
+
+        function attachTooltipEvents(element, data, type = 'location') {
+            const tooltip = document.getElementById('hover-tooltip');
+            const tagsContainer = document.getElementById('tt-tags-container');
+            const statusEl = document.getElementById('tt-status');
+            const bgEl = document.getElementById('tt-bg'); 
+
+            element.addEventListener('mouseenter', (e) => {
+                document.getElementById('tt-title').innerText = data.name;
+                document.getElementById('tt-brief').innerText = data.brief || '此區域尚無詳細情報，等待冒險者探索。';
+                
+                if (type === 'location' && !data.isLocked && data.url) {
+                    const imgSrc = data.url.replace('.html', '.webp');
+                    bgEl.style.backgroundImage = `url('locations/${imgSrc}')`;
+                } else {
+                    bgEl.style.backgroundImage = 'none'; 
+                }
+
+                if (type === 'region' || type === 'ocean' || type === 'archipelago' || type === 'spot') {
+                    tagsContainer.style.display = 'none';
+                    statusEl.style.display = 'none';
+                } else {
+                    tagsContainer.style.display = 'flex';
+                    statusEl.style.display = 'inline';
+                    if(data.isLocked) {
+                        statusEl.innerHTML = '<span style="color:#ff5555;">🔒 尚未解鎖</span>';
+                    } else {
+                        statusEl.innerHTML = '<span style="color:#55ff55;">🔓 已解鎖</span>';
+                    }
+                    
+                    let scenarioHtml = '📜 關聯劇本：<br>';
+                    if (Array.isArray(data.scenario) && data.scenario.length > 0) {
+                        scenarioHtml += data.scenario.map(s => `．${s}`).join('<br>');
+                    } else if (data.scenario) {
+                        scenarioHtml += `．${data.scenario}`;
+                    } else {
+                        scenarioHtml = '📜 關聯劇本：未指定';
+                    }
+                    document.getElementById('tt-scenario').innerHTML = scenarioHtml;
+                    
+                    document.getElementById('tt-team').innerText = `🚩 首勘隊伍：${data.firstTeam || '尚未有人踏足'}`;
+                }
+
+                tooltip.classList.add('show');
+                updateTooltipPosition(e);
+            });
+
+            element.addEventListener('mousemove', updateTooltipPosition);
+            element.addEventListener('mouseleave', () => { tooltip.classList.remove('show'); });
+        }
+
+        function updateTooltipPosition(e) {
+            const tt = document.getElementById('hover-tooltip');
+            let x = e.clientX + 20; let y = e.clientY + 20;
+            if (x + 300 > window.innerWidth) x = e.clientX - 320;
+            if (y + 180 > window.innerHeight) y = e.clientY - 180;
+            tt.style.left = x + 'px'; tt.style.top = y + 'px';
+        }
+
+        // ==========================================
+        // 3. 自動磁吸縫合引擎 
+        // ==========================================
+        function autoSnapPolygons(worldData) {
+            let points = [];
+            
+            for (let key in worldData) {
+                if(worldData[key].polygon) {
+                    const polygonParts = worldData[key].polygon.split(';');
+                    worldData[key].pointsGroup = polygonParts.map(part => {
+                        return part.trim().split(/\s+/).map((p, idx) => {
+                            let [x, y] = p.split(',').map(Number);
+                            return { key, idx, x, y, isArchipelago: worldData[key].isArchipelago };
+                        });
+                    });
+                    worldData[key].pointsGroup.flat().forEach(pt => points.push(pt));
+                }
+            }
+
+            for (let i = 0; i < points.length; i++) {
+                if (points[i].snapped) continue;
+                
+                let cluster = [points[i]];
+                for (let j = i + 1; j < points.length; j++) {
+                    if (points[j].snapped) continue;
+                    if (points[i].key === points[j].key && Math.abs(points[i].idx - points[j].idx) <= 2) continue;
+
+                    if (Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) <= 12) {
+                        cluster.push(points[j]);
+                    }
+                }
+
+                if (cluster.length > 1) {
+                    let avgX = Math.round(cluster.reduce((sum, p) => sum + p.x, 0) / cluster.length);
+                    let avgY = Math.round(cluster.reduce((sum, p) => sum + p.y, 0) / cluster.length);
+                    cluster.forEach(p => { p.x = avgX; p.y = avgY; p.snapped = true; });
+                }
+                points[i].snapped = true;
+            }
+
+            for (let key in worldData) {
+                if(worldData[key].pointsGroup) {
+                    worldData[key].polygon = worldData[key].pointsGroup.map(group => {
+                        return group.map(p => `${p.x},${p.y}`).join(' ');
+                    }).join('; ');
+                }
+            }
+        }
+
+        function initWorldHotspots() {
+            autoSnapPolygons(worldData);
+            compileGlobalData(); 
+
+            const layer = document.getElementById('layer-world');
+            layer.innerHTML = ''; 
+
+            const img = document.getElementById('main-map-img');
+            const mapHeight = img.offsetHeight || 900; 
+
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            
+            svg.setAttribute("viewBox", `0 0 1500 ${mapHeight}`);
+            svg.setAttribute("preserveAspectRatio", "none");
+            svg.style.width = "100%";
+            svg.style.height = "100%";
+            svg.style.position = "absolute";
+            svg.style.pointerEvents = "none";
+
+            const sortedKeys = Object.keys(worldData).sort((a, b) => {
+                const isA_Water = ['azul_sea', 'kuarte_bay', 'kultaka_bay', 'kodel_bay', 'maztapan', 'greensisters', 'coxamult', 'brownsisters'].includes(a);
+                const isB_Water = ['azul_sea', 'kuarte_bay', 'kultaka_bay', 'kodel_bay', 'maztapan', 'greensisters', 'coxamult', 'brownsisters'].includes(b);
+                return isA_Water ? -1 : (isB_Water ? 1 : 0);
+            });
+
+            for (const key of sortedKeys) {
+                const data = worldData[key];
+                if (!data.polygon) continue;
+
+                const polygonParts = data.polygon.split(';');
+
+                polygonParts.forEach(part => {
+                    const poly = document.createElementNS(svgNS, "polygon");
+                    poly.setAttribute("points", part.trim());
+                    
+                    const isWater = ['azul_sea', 'kuarte_bay', 'kultaka_bay', 'kodel_bay'].includes(key);
+                    const isArch = data.isArchipelago;
+
+                    poly.setAttribute("class", `map-region-polygon ${data.isLocked ? 'locked' : ''} ${isWater ? 'ocean' : ''} ${isArch ? 'archipelago' : ''}`);
+                    
+                    poly.style.fill = data.bgColor || 'rgba(212, 175, 55, 0.2)';
+                    poly.style.stroke = data.color || '#d4af37';
+                    poly.style.color = data.color || '#d4af37'; 
+
+                    const regionType = isWater ? 'ocean' : (isArch ? 'archipelago' : 'region');
+                    attachTooltipEvents(poly, data, regionType);
+                    poly.onclick = () => { 
+                        if(!data.isLocked && regionType === 'region') focusRegion(key); 
+                    };
+                    
+                    svg.appendChild(poly);
+                });
+
+                if (data.labelPos) {
+                    const text = document.createElementNS(svgNS, "text");
+                    text.setAttribute("x", data.labelPos.x);
+                    text.setAttribute("y", data.labelPos.y);
+                    text.setAttribute("fill", data.color || '#d4af37');
+                    text.setAttribute("class", `region-svg-text region-label-nodes ${data.isLocked ? 'locked-text' : ''}`);
+                    text.textContent = data.name;
+                    svg.appendChild(text);
+                }
+            }
+            
+            layer.appendChild(svg);
+            
+            globalLayerElement = document.getElementById('layer-region');
+            renderSeamlessGlobalLandmarks(); 
+        }
+
+        function renderSeamlessGlobalLandmarks() {
+            if (!globalLayerElement) return;
+            globalLayerElement.innerHTML = '';
+
+            // 1. 自然景點
+            ALL_SPOTS.forEach(spot => {
+                const spotTag = document.createElement('div');
+                spotTag.className = `local-spot-tag spot-${spot.type}`;
+                spotTag.style.left = spot.x;
+                spotTag.style.top = spot.y;
+                spotTag.innerText = spot.name;
+                attachTooltipEvents(spotTag, spot, 'spot');
+                globalLayerElement.appendChild(spotTag);
+            });
+
+            // 2. 城鎮圖釘
+            ALL_LOCATIONS.forEach(loc => {
+                const pin = document.createElement('div');
+                pin.className = 'map-pin';
+                if (loc.isLocked) pin.classList.add('locked');
+
+                pin.style.left = loc.x;
+                pin.style.top = loc.y;
+                pin.innerHTML = getAztecPinSVG(loc.color || '#d4af37', loc.gem || '#1a1511');
+                
+                attachTooltipEvents(pin, loc, 'location');
+
+                pin.onclick = (e) => {
+                    e.stopPropagation(); 
+                    if (!loc.isLocked) showDetail(loc);
+                };
+                globalLayerElement.appendChild(pin);
+            });
+        }
+
+        // ==========================================
+        // 4. 彈窗控制 (Modal)
+        // ==========================================
+        function showDetail(locData) {
+            document.getElementById('hover-tooltip').classList.remove('show');
+            const modal = document.getElementById('location-modal');
+            document.getElementById('modal-title').innerText = locData.name;
+            const iframe = document.getElementById('modal-iframe');
+            const simple = document.getElementById('modal-simple-content');
+            
+            if (locData.url) {
+                simple.style.display = 'none';
+                iframe.style.display = 'block';
+                iframe.src = "locations/" + locData.url;
+            } else {
+                iframe.style.display = 'none';
+                iframe.src = ""; 
+                simple.style.display = 'block';
+                simple.innerHTML = `
+                    <h2 style="font-family:'Cinzel', 'Noto Serif TC', serif; color:var(--gold); border-bottom:1px solid #555; padding-bottom:10px;">${locData.name}</h2>
+                    <p style="font-size: 1.25rem; line-height: 1.8; color: #ccc;">${locData.desc || locData.brief || '這片區域尚待勇敢的冒險者前來探索。'}</p>
+                `;
+            }
+            // 🌟 核心修正：徹底移除會阻斷整個 JS 腳本並造成網頁卡死崩潰的無效方法 modal.add('show')；
+            modal.classList.add('show');
+        }
+
+        // ==========================================
+        // 5. 地圖控制器
+        // ==========================================
+        const MapController = {
+            scale: 1, pointX: 0, pointY: 0,
+            container: document.getElementById('map-container'),
+            viewport: document.getElementById('viewport'),
+            img: document.getElementById('main-map-img'),
+            isAnimating: false,
+
+            init() {
+                let isDragging = false;
+                let startX = 0, startY = 0;
+
+                this.viewport.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if(this.isAnimating) return;
+                    
+                    const delta = -e.deltaY;
+                    (delta > 0) ? (this.scale *= 1.1) : (this.scale /= 1.1);
+                    this.scale = Math.min(Math.max(1, this.scale), 6);
+                    this.updateTransform();
+                }, { passive: false });
+
+                this.viewport.addEventListener('mousedown', (e) => {
+                    if(this.isAnimating) return;
+                    e.preventDefault();
+                    isDragging = true;
+                    startX = e.clientX - this.pointX;
+                    startY = e.clientY - this.pointY;
+                    this.viewport.style.cursor = 'grabbing';
+                    this.container.style.transition = 'none';
+                    window.focus(); 
+                });
+
+                this.viewport.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    this.pointX = e.clientX - startX;
+                    this.pointY = e.clientY - startY;
+                    this.updateTransform();
+                });
+
+                this.viewport.addEventListener('mouseup', () => { isDragging = false; this.viewport.style.cursor = 'grab'; });
+                this.viewport.addEventListener('mouseleave', () => { isDragging = false; this.viewport.style.cursor = 'grab'; });
+
+                if (this.img.complete) {
+                    this.resetView(); initWorldHotspots();
+                } else {
+                    this.img.onload = () => { this.resetView(); initWorldHotspots(); };
+                }
+            },
+
+            updateTransform() {
+                const vw = this.viewport.clientWidth; const vh = this.viewport.clientHeight;
+                const iw = this.img.width || 1500; const ih = this.img.height || (iw * 0.6); 
+
+                const minScale = Math.max(vw / iw, vh / ih);
+                const safeMinScale = isFinite(minScale) ? minScale : 1;
+                if (this.scale < safeMinScale) this.scale = safeMinScale;
+
+                const curW = iw * this.scale; const curH = ih * this.scale;
+                const minX = vw - curW, maxX = 0; const minY = vh - curH, maxY = 0;
+
+                if (this.pointX > maxX) this.pointX = maxX;
+                if (this.pointX < minX) this.pointX = minX;
+                if (this.pointY > maxY) this.pointY = maxY;
+                if (this.pointY < minY) this.pointY = minY;
+
+                this.container.style.transform = `translate(${this.pointX}px, ${this.pointY}px) scale(${this.scale})`;
+
+                const regionLayer = document.getElementById('layer-region');
+                const regionLabels = document.querySelectorAll('.region-label-nodes');
+
+                if (this.scale >= 1.75 || currentRegionKey !== null) {
+                    if (regionLayer) {
+                        regionLayer.style.opacity = 1;
+                        regionLayer.style.pointerEvents = 'auto';
+                    }
+                    regionLabels.forEach(lbl => lbl.style.opacity = 0);
+                } else {
+                    if (regionLayer) {
+                        regionLayer.style.opacity = 0;
+                        regionLayer.style.pointerEvents = 'none';
+                    }
+                    regionLabels.forEach(lbl => lbl.style.opacity = 1);
+                }
+            },
+
+            flyTo(xPercent, yPercent, targetZoom) {
+                this.isAnimating = true;
+                this.container.style.transition = 'transform 1.5s cubic-bezier(0.25, 1, 0.5, 1)';
+                
+                const iw = this.img.width || 1500; const ih = this.img.height || (iw * 0.6);
+                const targetX = (xPercent / 100) * iw; const targetY = (yPercent / 100) * ih;
+                
+                this.scale = targetZoom;
+                const vw = this.viewport.clientWidth; const vh = this.viewport.clientHeight;
+                
+                this.pointX = (vw / 2) - (targetX * this.scale);
+                this.pointY = (vh / 2) - (targetY * this.scale);
+                
+                this.updateTransform();
+                setTimeout(() => { this.isAnimating = false; this.container.style.transition = 'none'; }, 1500);
+            },
+
+            resetView() {
+                this.isAnimating = true;
+                this.container.style.transition = 'transform 1.2s ease';
+                
+                const vw = this.viewport.clientWidth; 
+                const vh = this.viewport.clientHeight;
+                const iw = this.img.width || 1500; 
+                const ih = this.img.height || (iw * 0.6);
+                
+                const scaleModifier = 1.0; 
+                const minScale = Math.max(vw / iw, vh / ih);
+                this.scale = isFinite(minScale) ? minScale * scaleModifier : scaleModifier; 
+                
+                const curW = iw * this.scale;
+                this.pointX = (vw - curW) / 2; 
+                
+                const yOffset = -400; 
+                this.pointY = yOffset; 
+                
+                this.updateTransform();
+                setTimeout(() => { this.isAnimating = false; this.container.style.transition = 'none'; }, 1200);
+            }
+        };
+        MapController.init();
+
+        // ==========================================
+        // 6. 邏輯控制與區域聚焦
+        // ==========================================
+        let currentRegionKey = null;
+
+        function focusRegion(regionKey) {
+            const data = worldData[regionKey];
+            if (!data) return;
+            currentRegionKey = regionKey;
+
+            document.getElementById('hover-tooltip').classList.remove('show');
+            const targetedZoom = Math.max(data.focus.zoom, 2.2);
+            MapController.flyTo(data.focus.x, data.focus.y, targetedZoom);
+
+            document.getElementById('header-title').innerText = `巡航模式：${data.name}`;
+            document.getElementById('header-btn').innerText = "↑ 返回世界地圖";
+
+            // 🌟 核心修正：降低透明度的同時，必須「釋放」滑鼠穿透（pointer-events: none），否則這層隱形的 SVG 區塊會擋在最前面，把所有小圖釘的點擊事件全部吃掉！
+            const layerWorld = document.getElementById('layer-world');
+            layerWorld.style.opacity = 0.25;
+            layerWorld.style.pointerEvents = 'none';
+            
+            MapController.updateTransform();
+        }
+
+        // 🌟 獨立入口控制函數：杜絕所有與 data focus 互相覆蓋的 JavaScript 死循環
+        function handleHeaderNavClick() {
+            closeModal(); 
+            document.getElementById('hover-tooltip').classList.remove('show');
+
+            if (currentRegionKey !== null) {
+                // 如果目前在區域拉近狀態，先縮回世界圖視角
+                currentRegionKey = null;
+                MapController.resetView();
+                
+                document.getElementById('header-title').innerText = "馬茲提卡大陸全圖";
+                document.getElementById('header-btn').innerText = "← 返回公會書房";
+                
+                // 🌟 還原：世界不規則 SVG 區塊重現並回復點擊捕獲能力
+                const layerWorld = document.getElementById('layer-world');
+                layerWorld.style.opacity = 1;
+                layerWorld.style.pointerEvents = 'auto';
+                
+                MapController.updateTransform();
+            } else {
+                // 如果已經在世界全景，安全且不卡快取地打破 iframe 限制跳轉
+                window.top.location.href = '../index.html';
+            }
+        }
+    </script>
+</body>
+</html>
