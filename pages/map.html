@@ -762,12 +762,21 @@
             layer.innerHTML = ''; 
 
             const img = document.getElementById('main-map-img');
-            const mapHeight = img.offsetHeight || 900; 
+const designWidth = 1500;
+let mapHeight = 2432; // 依據你的南境與遠帕伊特 Y 軸座標推算的標準設計高度
 
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            
-            svg.setAttribute("viewBox", `0 0 1500 ${mapHeight}`);
+// 如果圖片已載入，透過原始比例算出精確的 Y 軸畫布高度
+if (img.naturalWidth && img.naturalHeight) {
+    mapHeight = Math.round(designWidth * (img.naturalHeight / img.naturalWidth));
+} else if (img.offsetHeight && img.offsetHeight > 0) {
+    mapHeight = img.offsetHeight;
+}
+
+const svgNS = "http://www.w3.org/2000/svg";
+const svg = document.createElementNS(svgNS, "svg");
+
+// 確保 viewBox 永遠是完美的設計比例畫布
+svg.setAttribute("viewBox", `0 0 ${designWidth} ${mapHeight}`);
             svg.setAttribute("preserveAspectRatio", "none");
             svg.style.width = "100%";
             svg.style.height = "100%";
@@ -934,16 +943,32 @@
                 this.viewport.addEventListener('mouseup', () => { isDragging = false; this.viewport.style.cursor = 'grab'; });
                 this.viewport.addEventListener('mouseleave', () => { isDragging = false; this.viewport.style.cursor = 'grab'; });
 
-                if (this.img.complete) {
-                    this.resetView(); initWorldHotspots();
-                } else {
-                    this.img.onload = () => { this.resetView(); initWorldHotspots(); };
-                }
+                const safeInit = () => {
+    // 延遲 50 毫秒，確保瀏覽器排版引擎（Reflow）已完全定型
+    setTimeout(() => {
+        this.resetView(); 
+        initWorldHotspots();
+    }, 50);
+};
+
+if (this.img.complete) {
+    safeInit();
+} else {
+    this.img.onload = safeInit;
+}
             },
 
             updateTransform() {
                 const vw = this.viewport.clientWidth; const vh = this.viewport.clientHeight;
-                const iw = this.img.width || 1500; const ih = this.img.height || (iw * 0.6); 
+
+// 強固化地圖邊界計算
+const iw = 1500; 
+let ih = 2432; 
+if (this.img.naturalWidth && this.img.naturalHeight) {
+    ih = Math.round(iw * (this.img.naturalHeight / this.img.naturalWidth));
+} else if (this.img.height && this.img.height > 0) {
+    ih = this.img.height;
+} 
 
                 const minScale = Math.max(vw / iw, vh / ih);
                 const safeMinScale = isFinite(minScale) ? minScale : 1;
