@@ -1154,7 +1154,7 @@
                 const { count: c3 } = await db.from('market').select('*', { count: 'exact', head: true }); mC = c3 || 0; 
             } catch(e) { console.warn("NPC Intro data fetch failed", e); }
             
-            const text = `歡迎回來，${u.name}。今天公會也很熱鬧呢。\n目前有 ${nC} 則重要公告，${qC} 個懸賞正在招募勇者，市集裡也有 ${mC} 件交易請求。\n祝您武運昌隆！`;
+            const text = `歡迎回來，${u.name}。今天公會也很熱鬧呢。\n目前有 ${nC} 則重要公告，市集裡也有 ${mC} 件交易請求。\n祝您武運昌隆！`;
             overlay.classList.add('active'); typeWriter(text, textBox, 0);
         }
         function typeWriter(text, element, i) { if (i < text.length) { element.innerHTML += text.charAt(i); setTimeout(() => typeWriter(text, element, i + 1), 30); } }
