@@ -13,8 +13,15 @@
             --font-title: 'Cinzel', serif;
             --font-body: 'Inter', sans-serif;
             --font-hand: 'Crimson Pro', serif;
-            --private-bg-image: url('https://raw.githubusercontent.com/Maxtrpg/maztica/refs/heads/main/images/bg_guild_hall.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8));
+            --private-bg-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/01.webp'), radial-gradient(circle at 50% 10%, rgba(255, 160, 80, 0.15), rgba(0,0,0,0.8));
             --private-bg-color: #2c1e14;
+            
+            /* Maztica Colors */
+            --maz-obsidian: #1a1a1a;
+            --maz-gold: #d4af37;
+            --maz-jade: #00a86b;
+            --maz-blood: #8a0303;
+            --maz-stone: #2c2c2c;
         }
 
         body { 
@@ -37,7 +44,7 @@
 
         /* Modes */
         body.mode-guild {
-            background-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/bg_guild_hall.webp');
+            background-image: url('https://nlhqslyecdmwqdrtluki.supabase.co/storage/v1/object/public/BG/bg-guild02.webp');
             color: #e0e0e0;
             --panel-bg: rgba(20, 20, 20, 0.95);
             --border-color: #444;
@@ -244,6 +251,9 @@
         .market-desc { color: #5d4037; font-size: 1rem; font-style: italic; }
         .market-footer { background: rgba(62, 39, 35, 0.1); padding: 8px; text-align: center; color: #3e2723; font-weight: bold; border-top: 1px dashed #8d6e63; font-family: var(--font-title); }
         
+        .card-notice { background-color: #fff8e1; background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png'); border: 4px double #5d4037; padding: 25px; position: relative; color: #3e2723; }
+        .card-notice::before { content:'♔'; position:absolute; top:5px; right:15px; font-size:4rem; color:#8a0303; opacity:0.1; }
+        .card-notice h3 { color: #b71c1c; font-family: var(--font-title); margin-bottom: 15px; border-bottom: 1px solid #5d4037; padding-bottom: 10px; font-size: 1.4rem; }
         .card-notice .desc { color: #3e2723; font-size: 1.2rem; line-height: 1.6; }
 
         .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
@@ -283,12 +293,39 @@
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; color: #888; cursor: pointer; }
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--highlight); color: var(--highlight); padding: 8px 20px; display: none; z-index: 4000; border-radius: 20px; }
 
-        /* V82.0 Hall of Heroes CSS */
-        .dead-card { background: linear-gradient(135deg, #1a1a1a, #000); border: 1px solid #444; border-radius: 8px; padding: 20px; text-align: center; filter: grayscale(100%); opacity: 0.8; transition: 0.3s; position: relative; }
-        .dead-card:hover { filter: grayscale(0%); opacity: 1; transform: translateY(-5px); border-color: #d4af37; }
-        .dead-icon-img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 2px solid #555; margin-bottom: 10px; }
-        .dead-ribbon { position: absolute; top: 10px; right: -30px; background: #000; color: #fff; padding: 5px 30px; transform: rotate(45deg); font-size: 0.7rem; border: 1px solid #333; }
-        /* End Hall of Heroes CSS */
+        /* V84.0 Hall of Heroes CSS - Obsidian Style */
+        .dead-card { 
+            background: linear-gradient(145deg, #1f1f1f, #0d0d0d); /* Obsidian Dark */
+            border: 2px solid #555;
+            border-image: linear-gradient(to bottom, var(--maz-gold), var(--maz-jade)) 1; /* Gold to Jade */
+            border-radius: 4px; /* Slightly sharper for stone feel */
+            padding: 25px; 
+            text-align: center; 
+            filter: grayscale(100%) contrast(1.2); 
+            opacity: 0.9; 
+            transition: all 0.4s ease; 
+            position: relative; 
+            clip-path: polygon(10% 0, 90% 0, 100% 10%, 100% 90%, 90% 100%, 10% 100%, 0 90%, 0 10%); /* Stone Slab Shape */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .dead-card:hover { 
+            filter: grayscale(0%) contrast(1); 
+            opacity: 1; 
+            transform: scale(1.02); 
+            box-shadow: 0 0 15px var(--maz-gold);
+        }
+        .dead-icon-img { 
+            width: 110px; height: 110px; object-fit: cover; border-radius: 50%; 
+            border: 3px solid var(--maz-stone); box-shadow: 0 0 10px rgba(0,0,0,0.5); margin-bottom: 15px; 
+        }
+        .dead-ribbon { 
+            position: absolute; top: 10px; right: 10px; 
+            background: transparent; color: var(--maz-jade); 
+            font-family: var(--font-title); font-size: 0.9rem; font-weight: bold;
+            border: 1px solid var(--maz-jade); padding: 2px 8px; border-radius: 4px;
+            text-shadow: 0 0 5px var(--maz-jade);
+        }
+        /* End V84.0 CSS */
     </style>
 </head>
 <body class="mode-guild">
@@ -370,7 +407,7 @@
             <button class="nav-btn" onclick="showSection('market','guild')"><span>市集</span></button>
             <button class="nav-btn" onclick="showSection('roster','guild')"><span>名冊</span></button>
             <button class="nav-btn" onclick="showSection('library','guild')"><span>書庫</span></button>
-            <button class="nav-btn" onclick="showSection('graveyard','guild')" style="color:#aaa;"><span>回音之壁</span></button>
+            <button class="nav-btn" onclick="showSection('graveyard','guild')" style="color:#aaa;"><span>🪦 英靈殿</span></button>
         </nav>
         <main>
             <div id="notices" class="section active">
@@ -378,13 +415,17 @@
                 <div class="notice-stack" id="notice-list"></div>
             </div>
             
-            <div id="quests" class="section">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>懸賞委託</h2>
-                    <button class="btn-action" style="width:auto; margin:0;" onclick="openQuestModal()">+ 發布</button>
-                </div>
-                <div class="card-grid" id="quest-list"></div>
-            </div>
+<div id="quests" class="section">
+    <div id="quests-iframe-wrapper" style="max-width: 1000px; margin: 20px auto; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+        <iframe 
+            id="quests-iframe" 
+            src="quests.html" 
+            title="任務委託" 
+            onload="this.style.height=this.contentWindow.document.body.scrollHeight + 50 + 'px';" 
+            style="width: 100%; border: none; min-height: 80vh; display: block;">
+        </iframe>
+    </div>
+</div>
             <div id="market" class="section"><h2>交易圓桌</h2><div style="text-align:right; margin-bottom:10px;"><button class="btn-action" style="width:auto;" onclick="openListingModal()">+ 上架</button></div><div class="card-grid" id="market-list"></div></div>
             <div id="roster" class="section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -407,8 +448,11 @@
             </div>
 
             <div id="graveyard" class="section">
+                <div style="text-align:center; margin-bottom:30px; color:var(--maz-gold); font-family:var(--font-title); font-size:1.5rem; text-shadow:0 0 10px rgba(212,175,55,0.3);">
+                    ☥ 回音之壁 ☥
+                </div>
                 <div style="text-align:center; margin-bottom:20px; color:#888; font-family:var(--font-hand); font-style:italic;">
-                    "英雄不朽，只是凋零。在此安息的是佩澤拉克的守護者們。"
+                    "英雄不朽，只是回歸太陽。在此安息的是佩澤拉克的守護者們。"
                 </div>
                 <div class="roster-grid" id="graveyard-list"></div>
             </div>
@@ -661,7 +705,7 @@
     </div>
 
     <div id="party-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content" style="max-width:800px;">
+        <div class="modal-content" style="max-width:500px;">
             <span class="close-btn" onclick="closeModal(event)">×</span>
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
                  <img id="party-modal-icon" src="" style="width:200px; height:200px; object-fit:cover; border-radius:50%; border:2px solid var(--highlight); display:none;">
@@ -944,9 +988,9 @@
         function renderBox(id, list, type) {
             document.getElementById(id).innerHTML = list.map((item, idx) => {
                 const qty = item.system.quantity || 1;
-                // V69.0: Only show quantity for equipment
+                // V80.0: Only show quantity for equipment
                 const showQty = ['weapons', 'armors', 'gear'].includes(type);
-                // V69.0: Only show value/rank for skills (hide for features/spells)
+                // V80.0: Only show value/rank for skills (hide for features/spells)
                 const showVal = ['coreSkills', 'weaponSkills', 'secondarySkills'].includes(type);
                 
                 let extraInput = '';
@@ -999,7 +1043,7 @@
                 const filePath = `${u.adventurer_id}/${fileName}`; 
 
                 const { data, error: uploadError } = await db.storage
-                    .from('images') // Unified bucket name V69.0
+                    .from('images') // Unified bucket name V80.0
                     .upload(filePath, file, { 
                         cacheControl: '3600',
                         upsert: true,
@@ -1103,7 +1147,7 @@
             const overlay = document.getElementById('npc-intro-layer'); const textBox = document.getElementById('intro-text'); const u = JSON.parse(localStorage.getItem('maztica_user'));
             let nC = 0, qC = 0, mC = 0;
             
-            // V69.0 Fix: Wrap in try-catch to prevent crash if data unavailable
+            // V80.0 Fix: Wrap in try-catch to prevent crash if data unavailable
             try { 
                 const { count: c1 } = await db.from('notices').select('*', { count: 'exact', head: true }); nC = c1 || 0; 
                 const { count: c2 } = await db.from('quests').select('*', { count: 'exact', head: true }); qC = c2 || 0; 
@@ -1117,7 +1161,10 @@
         function dismissIntro() { const overlay = document.getElementById('npc-intro-layer'); overlay.style.opacity = '0'; setTimeout(() => { overlay.classList.remove('active'); overlay.style.opacity = ''; document.getElementById('intro-text').innerHTML = ''; }, 500); }
 
         async function fetchData() {
-            let registeredParties = []; try { let { data } = await db.from('parties').select('*'); registeredParties = data || []; } catch(e) {}
+            // V80.0 Fix: Robust data fetching with try-catch for each part
+            let registeredParties = []; 
+            try { let { data } = await db.from('parties').select('*'); registeredParties = data || []; } catch(e) { console.error("Parties fetch error", e); }
+            
             const partyMap = {}; registeredParties.forEach(p => { partyMap[p.name] = p; });
             
             let allChars = [];
@@ -1151,6 +1198,7 @@
             window.currentParties = parties; 
             window.partyMap = partyMap;
 
+            // Render Roster List
             document.getElementById('roster-list').innerHTML = Object.keys(parties).map(pName => {
                 const members = parties[pName]; 
                 // Skip rendering empty parties if desired, but keeping logic simple for now
@@ -1173,14 +1221,14 @@
                         </div>`;
             }).join('');
             
-            // V82.0: Render Graveyard List
+            // V84.0: Render Graveyard List (Obsidian Style)
             const graveyardHtml = deadChars.length > 0 ? deadChars.map(c => {
                  return `<div class="dead-card">
-                    <div class="dead-ribbon">歸於羽蛇</div>
+                    <div class="dead-ribbon"><i class="fas fa-skull"></i> 歸於煙火</div>
                     <img src="${c.avatar_url || DEFAULT_AVATAR}" class="dead-icon-img">
                     <div style="font-family:var(--font-title); font-size:1.2rem; color:#ccc;">${c.name}</div>
                     <div style="font-size:0.9rem; color:#666;">${c.race} ${c.class}</div>
-                    <div style="margin-top:10px; font-size:0.8rem; color:#888;">
+                    <div style="margin-top:10px; font-size:0.8rem; color:var(--maz-jade);">
                         <i class="fas fa-cross"></i> 冒險結束於 ${c.death_date || '未知日期'}
                     </div>
                 </div>`;
@@ -1532,13 +1580,16 @@
                 document.getElementById('j-adv-container').innerHTML = '';
             });
         };
+
+// 讓任務 iframe 可以隨內容自動調整高度
+window.addEventListener('message', function(e) {
+    if (e.data === 'resize-quests') {
+        const iframe = document.getElementById('quests-iframe');
+        if (iframe) {
+            iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 50 + 'px';
+        }
+    }
+});
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
