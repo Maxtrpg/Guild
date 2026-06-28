@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>任務日誌 | MAZTICA AVG System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --font-title: 'Cinzel', 'Noto Sans TC', serif;
+            --font-body: 'Inter', 'Noto Sans TC', sans-serif;
+            
+            /* Maztica AVG Palette */
+            --avg-bg: rgba(10, 8, 6, 0.85);
+            --avg-gold: #d4af37;
+            --avg-jade: #00a86b;
+            --avg-blood: #a30000;
+            --avg-dark: #121212;
+            --avg-glow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        body { 
+            margin: 0; padding: 20px; 
+            font-family: var(--font-body); 
+            background: transparent;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+        
+        * { box-sizing: border-box; }
+
+        /* AVG 系統分頁標籤 */
+        .avg-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .avg-tab-btn {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #444;
+            color: #888;
+            padding: 10px 25px;
+            font-family: var(--font-title);
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+            transition: all 0.3s ease;
+        }
+        .avg-tab-btn:hover {
+            color: #fff;
+            border-color: var(--avg-gold);
+            box-shadow: var(--avg-glow);
+        }
+        .avg-tab-btn.active {
+            background: linear-gradient(135deg, #1a1510 0%, #2c1e14 100%);
+            border: 1px solid var(--avg-gold);
+            color: var(--avg-gold);
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+            box-shadow: var(--avg-glow);
+        }
+
+        /* 標題與簡介區塊 */
+        .category-header {
+            margin-bottom: 25px;
+            padding: 20px 25px;
+            background: linear-gradient(90deg, rgba(20, 16, 12, 0.8) 0%, transparent 100%);
+            border-left: 4px solid var(--avg-gold);
+            animation: slideInLeft 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .category-title {
+            font-family: var(--font-title);
+            font-size: 1.8rem;
+            color: #fff;
+            margin: 0 0 10px 0;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+        .category-desc {
+            font-size: 0.95rem;
+            color: #bbb;
+            line-height: 1.7;
+            margin: 0;
+            max-width: 850px;
+        }
+
+        /* 高亮備註欄樣式 */
+        .highlight-note {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 3px solid var(--avg-gold);
+            padding: 10px 15px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #ffda75;
+            border-radius: 0 4px 4px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .highlight-note i { margin-top: 3px; color: var(--avg-gold); }
+
+        /* 輪轉控制區塊 */
+        .slider-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .slider-btn {
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #444;
+            color: var(--avg-gold);
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .slider-btn:hover {
+            background: var(--avg-gold);
+            color: #000;
+            border-color: #fff;
+            box-shadow: var(--avg-glow);
+            transform: scale(1.1);
+        }
+
+        /* 橫向輪轉滑動容器 */
+        .quest-slider-container {
+            width: 100%;
+            overflow-x: hidden; /* 隱藏原生卷軸改用按鈕 */
+            display: flex;
+            gap: 20px;
+            padding: 15px 5px 30px 5px;
+            scroll-behavior: smooth;
+        }
+
+        /* AVG 長條狀任務卡片 (精準計算：一次顯示三張) */
+        .avg-quest-card {
+            flex: 0 0 calc((100% - 40px) / 3);
+            height: 420px;
+            background: var(--avg-dark);
+            border: 1px solid #333;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            animation: fadeInCard 0.5s ease backwards;
+        }
+        @media (max-width: 900px) { .avg-quest-card { flex: 0 0 calc((100% - 20px) / 2); } }
+        @media (max-width: 650px) { .avg-quest-card { flex: 0 0 100%; } }
+        
+        .avg-quest-card:nth-child(1) { animation-delay: 0.1s; }
+        .avg-quest-card:nth-child(2) { animation-delay: 0.2s; }
+        .avg-quest-card:nth-child(3) { animation-delay: 0.3s; }
+        .avg-quest-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* 背景圖片與AVG漸層遮罩 */
+        .card-bg-img {
+            width: 100%; height: 60%;
+            background-size: cover; background-position: center;
+            transition: transform 0.5s ease;
+            filter: grayscale(20%) brightness(0.8);
+        }
+        .avg-quest-card::after {
+            content: '';
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent 30%, rgba(18,18,18,0.95) 60%, var(--avg-dark) 100%);
+            z-index: 1;
+        }
+
+        .avg-quest-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--avg-gold);
+            box-shadow: 0 15px 30px rgba(212,175,55,0.2), var(--avg-glow);
+        }
+        .avg-quest-card:hover .card-bg-img {
+            transform: scale(1.05);
+            filter: grayscale(0%) brightness(1);
+        }
+
+        /* 卡片文字內容 */
+        .card-info {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 20px; z-index: 2;
+        }
+        .quest-meta {
+            font-size: 0.85rem; font-family: var(--font-title); letter-spacing: 1px; margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        /* 標籤配色 */
+        .type-main { color: var(--avg-gold); text-shadow: 0 0 5px rgba(212,175,55,0.5); }
+        .type-side { color: #b0bec5; }
+        .type-event { color: #b388ff; text-shadow: 0 0 5px rgba(179,136,255,0.5); }
+        
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .camp-one { color: var(--avg-jade); } /* 單次 */
+        .camp-short { color: #4fc3f7; } /* 短團 */
+        .camp-long { color: var(--avg-blood); } /* 長團 */
+        .camp-one .status-dot { background: var(--avg-jade); box-shadow: 0 0 5px var(--avg-jade); }
+        .camp-short .status-dot { background: #4fc3f7; box-shadow: 0 0 5px #4fc3f7; }
+        .camp-long .status-dot { background: var(--avg-blood); box-shadow: 0 0 5px var(--avg-blood); }
+
+        .quest-title {
+            font-family: var(--font-title); font-size: 1.4rem; font-weight: 700; margin: 0 0 8px 0;
+            color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
+        }
+        .quest-intro {
+            font-size: 0.88rem; color: #aaa; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            margin-bottom: 12px; height: 2.64em;
+        }
+        .click-prompt {
+            font-size: 0.75rem; color: var(--avg-gold); font-family: var(--font-title);
+            text-align: right; opacity: 0.6; transition: opacity 0.3s;
+        }
+        .avg-quest-card:hover .click-prompt { opacity: 1; animation: flash 1.5s infinite; }
+
+        /* AVG 事件對話盒 (詳細介紹彈窗) */
+        .avg-dialogue-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none; justify-content: center; align-items: center;
+            z-index: 9999; padding: 40px;
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.3s forwards;
+        }
+        .avg-dialogue-overlay.open { display: flex; }
+        
+        .avg-dialogue-box {
+            width: 100%; max-width: 900px;
+            background: rgba(20, 16, 12, 0.95);
+            border: 2px solid var(--avg-gold);
+            box-shadow: var(--avg-glow), inset 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 4px;
+            position: relative;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+            animation: slideUp 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        }
+        @media (max-width: 760px) {
+            .avg-dialogue-box { grid-template-columns: 1fr; padding: 20px; }
+            .dialogue-illustration { display: none; }
+        }
+
+        .dialogue-illustration {
+            width: 100%; height: 100%; min-height: 250px;
+            border: 1px solid #444; background-size: cover; background-position: center;
+            border-radius: 2px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .dialogue-content { display: flex; flex-direction: column; justify-content: space-between; }
+        .dialogue-header {
+            border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .dialogue-title { font-family: var(--font-title); font-size: 1.8rem; color: #fff; margin: 0; }
+        .dialogue-tag {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color); padding: 4px 12px; font-size: 0.9rem;
+            font-family: var(--font-title); border-radius: 4px;
+            white-space: nowrap; margin-left: 15px; font-weight: bold;
+        }
+
+        .dialogue-text {
+            font-size: 1.05rem; line-height: 1.7; color: #ddd;
+            white-space: pre-wrap; margin-bottom: 20px;
+            max-height: 250px; overflow-y: auto; padding-right: 5px;
+        }
+        .dialogue-text::-webkit-scrollbar { width: 4px; }
+        .dialogue-text::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+
+        .dialogue-footer {
+            border-top: 1px dashed #444; padding-top: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .dialogue-reward { font-family: var(--font-title); font-size: 1.1rem; color: #ffb74d; }
+        .dialogue-close-btn {
+            background: transparent; border: 1px solid #666; color: #aaa;
+            padding: 8px 20px; cursor: pointer; font-family: var(--font-title);
+            transition: all 0.2s; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+        }
+        .dialogue-close-btn:hover { background: #fff; color: #000; border-color: #fff; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeInCard { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes flash { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="avg-tabs">
+        <button class="avg-tab-btn active" onclick="switchCategory('reenactment')">
+            <i class="fas fa-history" style="margin-right:8px;"></i>紀錄重現
+        </button>
+        <button class="avg-tab-btn" onclick="switchCategory('permanent')">
+            <i class="fas fa-scroll" style="margin-right:8px;"></i>常駐任務
+        </button>
+    </div>
+
+    <div class="category-header" id="cat-header">
+        <h2 class="category-title" id="cat-title">紀錄重現</h2>
+        <div class="category-desc" id="cat-desc">
+            冒險者們回報的所有任務紀錄都被保存在公會書庫中。透過公會特殊的魔法物品，冒險者可以將意識投射至根據紀錄所模擬的幻境之中，體驗那些已封存的冒險故事。
+            <div class="highlight-note"><i class="fas fa-exclamation-triangle"></i> 透過魔法重現，幻境結束後無法獲得任何實際戰利品，然而從中學習的經驗才最可貴。</div>
+            <div class="highlight-note"><i class="fas fa-brain"></i> 在幻境中死亡不會影響現實，但會對精神造成無法抹滅的影響；相對而言，每次完成幻境也是一種對精神力的磨練。</div>
+        </div>
+    </div>
+    
+    <!-- 橫向滑動區塊含左右按鈕 -->
+    <div class="slider-wrapper">
+        <button class="slider-btn" onclick="slideQuests(-1)"><i class="fas fa-chevron-left"></i></button>
+        <div class="quest-slider-container" id="quest-slider">
+            <!-- 任務卡片會經由 JS 自動生成 -->
+        </div>
+        <button class="slider-btn" onclick="slideQuests(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <!-- AVG 劇本型詳細介紹對話盒 -->
+    <div id="avg-dialogue" class="avg-dialogue-overlay" onclick="closeDialogue(event)">
+        <div class="avg-dialogue-box">
+            <div class="dialogue-illustration" id="dlg-img"></div>
+            <div class="dialogue-content">
+                <div>
+                    <div class="dialogue-header">
+                        <h2 class="dialogue-title" id="dlg-title">任務標題</h2>
+                        <span class="dialogue-tag" id="dlg-status">狀態</span>
+                    </div>
+                    <div class="dialogue-text" id="dlg-text">詳細任務敘述...</div>
+                </div>
+                <div class="dialogue-footer">
+                    <div class="dialogue-reward"><i class="fas fa-trophy" style="margin-right:8px;"></i>報酬：<span id="dlg-reward">-</span></div>
+                    <button class="dialogue-close-btn" onclick="document.getElementById('avg-dialogue').classList.remove('open')">返回</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CATEGORY_INFO = {
+            reenactment: {
+                title: "紀錄重現",
+                desc: `冒險者們回報的所有任務紀錄都被保存在公會書庫中。透過公會特殊的魔法物品，冒險者可以將意識投射至根據紀錄所模擬的幻境之中，體驗那些已封存的冒險故事。
+                       <div class="highlight-note"><i class="fas fa-exclamation-triangle"></i> 透過魔法重現，幻境結束後無法獲得任何實際戰利品，然而從中學習的經驗才最可貴。</div>
+                       <div class="highlight-note"><i class="fas fa-brain"></i> 在幻境中死亡不會影響現實，但會對精神造成無法抹滅的影響；相對而言，每次完成幻境也是一種對精神力的磨練。</div>`
+            },
+            permanent: {
+                title: "常駐任務",
+                desc: ``
+            }
+        };
+
+        const QUEST_DATABASE = {
+            reenactment: [
+                {
+                    type: "主線",
+                    campaignType: "短團",
+                    title: "前導之一：異光",
+                    image: "scenario/01.webp",
+                    intro: "商道旁的一處寧靜村落，似乎有些事情悄然發生。(1-2次團務)",
+                    desc: "\n在普魯托克山山腳附近，位於商道旁的一處寧靜村落科維，是許多來往庫塔卡和佩澤拉克旅人的短暫落腳之處。然而，一個看似平凡不過的日子，卻有什麼事情正在暗處流動。",
+                    reward: "技能成長機會/WP成長機會"
+                },
+                {
+                    type: "主線",
+                    campaignType: "短團",
+                    title: "前導之二：王墓之謎",
+                    image: "scenario/02.webp",
+                    intro: "在奧札爾特鎮城門處聽到了不尋常的動靜。(2-4次團務)",
+                    desc: "\n作為南下前往佩澤拉克途中的小鎮，也是許多來往的旅人的休憩之地。當你們接近時，卻無意間捲入一場危險之中。",
+                    reward: "技能成長機會/WP成長機會"
+                },
+                {
+                    type: "主線",
+                    campaignType: "短團",
+                    title: "失潮之夜",
+                    image: "scenario/03.webp",
+                    intro: "「潮水未來，石像低語。舊神未醒，新災已起。」(4-6次團務)",
+                    desc: "\n在齊爾尼河下游，河口三角洲科西灣的一處漁村，公會派遣在該村的成員卻並未按時回報情況，公會要求冒險者前往該村調查詳細情況，並尋找公會成員。",
+                    reward: "技能成長機會/WP成長機會"
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "古樹之危",
+                    image: "scenario/04.webp",
+                    intro: "卓普利森林的動物驚慌失措，尋求幫助。",
+                    desc: "\n森林的動物表現的十分異常，竟主動向冒險者尋求協助。究竟在森林深處發生了什麼事呢？",
+                    reward: "技能成長機會/WP成長機會"
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "林怪疑雲",
+                    image: "scenario/11.webp",
+                    intro: "特佩拉卡村發生了騷亂。",
+                    desc: "\n當冒險者們來到村莊時，這裡有些混亂。村長正在廣場大聲嚷嚷，聲稱村裡被「叢林魔鬼」入侵，並懸賞任何能趕走魔鬼的人。",
+                    reward: "技能成長機會/WP成長機會"
+                },
+                {
+                    type: "活動",
+                    campaignType: "短團",
+                    title: "血影幽堡",
+                    image: "scenario/05.webp",
+                    intro: "「血影夜臨，亡靈甦醒。邪祟橫行，生者迴避。」(1-2次團務)",
+                    desc: "\n遠帕伊特，納拉巴頓叢林北部的特拉科亞村，世代流傳著一個可怕的傳說：\n「每逢『血影夜』，邪靈的爪牙將自沼澤深處爬出，奪走生者的氣息。」\n\n今年的血影夜前夕，村民們夜裡不詳的夢境似乎預示著即將到來的危機。\n\n絕望的特拉科亞人只剩最後的希望——前往佩澤拉克尋求外來者的幫助。\n\n在災難降臨前，你們能否阻止這場災禍，並查明背後的真相？",
+                    reward: "技能成長機會/WP成長機會"
+                },
+                {
+                    type: "活動",
+                    campaignType: "短團",
+                    title: "懸旗節：裂羽之兆",
+                    image: "scenario/06.webp",
+                    intro: "年末象徵黑暗將被擊碎、生命再度循環的日子。(1-2次團務)",
+                    desc: "\n每年年末，各地城邦會為古老的懸旗節做準備——那是紀念世界之母的夜晚，也是象徵黑暗將被擊碎、生命再度循環的日子。\n\n傳說中，馬茲提卡曾在遠古的戰火中殞落於她的子嗣之手，卻以更深的方式留在這片土地：\n她的氣息在旗上飄揚、在河海裡回響，守護著後世的每一次重生。\n\n今年的節慶看似如常，破邪偶已塑成、彩旗已升起，然而神殿中卻出現一些難以言說的細微變化——火光忽暗、旗影紊亂、供桌下傳來不自然的震動。\n\n沒有人預料到，今年的懸旗節，將和以往不同……",
+                    reward: "使用預設角卡，無獎勵"
+                },
+                {
+                    type: "活動",
+                    campaignType: "單次",
+                    title: "鹽沼之淚",
+                    image: "scenario/07.webp",
+                    intro: "在庫塔卡邊境，生命是廉價的，但眼淚卻是奢侈的。",
+                    desc: "\n阿佐庫特拉鹽沼，相傳這裡曾是繁榮的沃土，但因凡人的傲慢，雨神 阿祖爾 降下了為期三年的鹽雨。如今，只剩腐蝕靈魂的鹹霧、被鹽鹼化的毒藤，以及半沉沒在泥沼中的階梯金字塔遺骨。\n\n當地的採鹽人部落是一群面容枯槁的艱苦人，他們在淤泥中掙扎，試圖從阿祖爾無情的領地中刮取一點點財富。\n然而，最近這片沼澤變得比以往更加兇險。\n\n村民們低聲談論著霧氣中徘徊的無面魅影，以及夜半從沼澤深處傳來的悲鳴。更糟糕的是，就在三天前，部落中最活潑的女孩 瑞娜 在採集毒藤時失蹤了。她那絕望的父母在泥地上只找到了她遺落的一隻鹿皮涼鞋。\n\n天空開始陰沉，帶著刺痛感的鹹雨開始落下。每一滴雨水都像是神靈的嘲弄，提醒著你們：在阿佐庫特拉，每一滴眼淚都有其代價。\n\n村民們相信，這一定是某種古老的詛咒再次甦醒。這對夫婦交出了僅有的可可豆與綠松石，那是他們一生的積蓄。他們不求神靈開恩，只求在這片連托納利都能被鹽漬的神罰之地裡，你們能帶回他們唯一的希望......",
+                    reward: "技能成長機會/WP成長機會"
+                }
+            ],
+            permanent: [
+                {
+                    type: "主線",
+                    campaignType: "長團",
+                    title: "黑曜黎明：奧克塔卡之誓",
+                    image: "scenario/08.webp",
+                    intro: "在軍事前哨城－奧克塔卡發生的故事。",
+                    desc: "\n庫塔卡區域東南，在群山與火石交織之地，聳立著一座名為「奧克塔卡」的軍事前哨城。這裡由庫塔卡戰酋之子領導，豹騎士守衛其岩築之牆，信仰山與石之神普魯托克，守望那通往禁忌山谷－－內克薩爾的唯一裂口。\n \n曾經，這片土地為札爾特克的血祭之境；過往，羽蛇神從天而降，為人民帶來秩序與生機。但如今，羽父已遠，石與影重新主宰夢境。天象紊亂、屍群夜行、神諭沉默——舊日的黑曜黎明似乎正再次破曉。\n \n你們是一群來自各地的勇士、追尋者與見證者。無論是為了榮耀、真理還是贖罪而來，奧克塔卡將是你們的起點，也是守望世界命運的關鍵。",
+                    reward: ""
+                },
+                {
+                    type: "主線",
+                    campaignType: "長團",
+                    title: "無光絕壁：陷落的特奧卡里",
+                    image: "scenario/09.webp",
+                    intro: "在佩澤拉克東南方－歐克斯特卡村莊發生的故事。",
+                    desc: "\n一封來自東南村莊的求援信，竟意外牽扯出隱藏在暗處的陰謀？\n\n歐克斯特卡的商人女族長給出了豐厚的報酬，希望冒險者能夠解決家族的燃眉之急。",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "未知之洞",
+                    image: "scenario/10.webp",
+                    intro: "在溫暖酒館的悠閒時光，卻被一陣哭泣聲給打破。",
+                    desc: "\n附近農場的農婦哭著奔來，似乎遇到了大麻煩急需冒險者協助。",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "末路客棧",
+                    image: "scenario/12.webp",
+                    intro: "一場關於生存、社交與抉擇的考驗。",
+                    desc: "\n你們已經在茂密的雨林中跋涉了數日，翠綠的樹冠遮蔽了天空。隨著太陽逐漸西沉，叢林深處傳來了野獸低沉的咆哮。\n\n就在黑夜即將降臨之時，一座古老而堅固的石造建築映入眼簾——「末路客棧」。這是一場關於生存、社交與抉擇的考驗，每個選擇都將決定誰能見到明天的太陽。",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "溺玉之屋",
+                    image: "scenario/13.webp",
+                    intro: "每二十年升起的神祕廢棄金字塔神廟。",
+                    desc: "\n天空中，厚重的烏雲低垂，隱約的雷光像發怒的蛇一樣在雲層間穿梭，將海面映照得慘白。\n\n坐在船頭的嚮導，那個獨眼的帕伊特老漁夫，緩緩轉過身來。他那隻被翡翠眼罩覆蓋的左眼在雷光下顯得格外詭異......\n\n你們將深入被淹沒的遺跡，尋找失落的玉石，但要小心，水底的東西也在尋找你們。",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "短團",
+                    title: "秋曜之血",
+                    image: "scenario/14.webp",
+                    intro: "富庶的小鎮－約瓦爾提克，正迎來他們豐收的季節。(2-3次團務)",
+                    desc: "\n在佩澤拉克南方，鄰近泰茲卡之家沙漠邊緣的一個富庶的小鎮－約瓦爾提克，正迎來他們豐收的季節。為了慶祝，財富無數的雷納托卡領主，向冒險者公會的冒險者們發出了極具誠意的邀請函。\n\n慶典的舉辦地，是他引以為傲的「棘星居所」。在石製建築腳下，熱鬧的露天市集早已擠滿了歡慶的平民與商人，空氣中瀰漫著烤玉米、熱可可與沙漠香料的醉人香氣。除了豐盛的佳餚與徹夜狂歡的樂舞，領主還預告了一個極具看點的驚喜。\n\n帶著你們的榮耀與好奇心，換上最體面的裝束，踏上這場充滿沙漠情調的節慶吧！在純釀的美酒、歡快的鼓聲，以及舞者的悠揚樂聲中，這注定將是一個令人永生難忘的璀璨之夜。",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "短團",
+                    title: "狂野之魘",
+                    image: "scenario/15.webp",
+                    intro: "南方的奧茲托特蘭村，最近遇上了大麻煩。(1-2次團務)",
+                    desc: "\n聽說了嗎？南方那座被陽光眷顧的奧茲托特蘭村，最近可是遇上了大麻煩。\n原本只敢在夜裡撿腐肉的叢林郊狼，最近簡直像是中了邪。牠們不光是成群結隊地襲擊村莊，還懂得有組織地破壞柵欄，趁夜把一整群火雞精準地趕進連陽光都透不進去的深邃叢林裡。\n\n當地人已經走投無路，那群郊狼狡猾得根本不像一般的野獸……聽到這裡，這筆散發著危險與黃金氣味的委託，你們有興趣嗎？",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "翠林堰流",
+                    image: "scenario/16.webp",
+                    intro: "一段在河邊小村的小故事。",
+                    desc: "\n寧靜的小河村，好客的村民與親切的村長，如此悠閒的時光，直到某個跌跌撞撞的旅商跑進長屋大聲嚷嚷後戛然而止。",
+                    reward: ""
+                },
+                {
+                    type: "支線",
+                    campaignType: "單次",
+                    title: "冥府幽光",
+                    image: "scenario/17.webp",
+                    intro: "一位矮人學者，正在徵求英勇的冒險團隊。",
+                    desc: "\n各位英勇的冒險者，請坐下聽我這老頭子嘮叨幾句。老夫大半輩子都在瓦克里的烈日與塵土中與古物打交道，為各路商隊鑑定寶物。多年前，老夫在北方的伊茲卡拉沙漠挖掘神廟時遭遇塌方，不幸失去了左臂 。這筆殘疾的帳，我遲早要跟命運討回來！\n\n最近，我從幾本殘破的古卷中，破解了一組指向瓦克里與庫塔卡交界山區的秘境座標。那裡沉睡著一座神秘遺跡，傳聞中藏有能治癒老夫斷臂的古老泉水。\n\n然而，那片邊境山區極不平靜，地形險峻，更常有劫匪與荒野猛獸出沒。老夫一介殘疾學者，無力獨自穿越山脈 。因此，我在此誠徵一隊身手不凡、生死相隨的護衛隊！報酬絕對少不了你們的黃金與奇珍異寶！如果你們渴望財富、名聲，或者單純想與我一同見證歷史，請加入我，讓我們一同揭開那沉睡已久的古老秘密！",
+                    reward: ""
+                }
+            ]
+        };
+
+        let currentCategory = 'reenactment';
+
+        // 輪轉控制函數 (修正版)
+function slideQuests(direction) {
+    const container = document.getElementById('quest-slider');
+    const card = container.querySelector('.avg-quest-card');
+    
+    if (!card) return;
+    
+    // 動態獲取單張卡片的實際寬度，並加上 gap 的 20px
+    const scrollAmount = card.offsetWidth + 20; 
+    
+    // 依據按鈕方向精準捲動一張卡片的距離
+    container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+}
+
+        // 判斷類型與團務的 CSS class
+        function getTypeClass(type) {
+            if(type === '主線') return 'type-main';
+            if(type === '支線') return 'type-side';
+            return 'type-event';
+        }
+
+        function getCampClass(camp) {
+            if(camp === '單次') return 'camp-one';
+            if(camp === '短團') return 'camp-short';
+            return 'camp-long';
+        }
+
+        function renderQuests() {
+            const container = document.getElementById('quest-slider');
+            const data = QUEST_DATABASE[currentCategory];
+            const info = CATEGORY_INFO[currentCategory];
+
+            const headerObj = document.getElementById('cat-header');
+            headerObj.style.animation = 'none';
+            headerObj.offsetHeight; 
+            headerObj.style.animation = 'slideInLeft 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)';
+            
+            document.getElementById('cat-title').innerText = info.title;
+            document.getElementById('cat-desc').innerHTML = info.desc;
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="color:#666; padding:20px;">當前分類下暫無任何任務紀事。</div>';
+            } else {
+                container.innerHTML = data.map((q, idx) => {
+                    return `
+                        <div class="avg-quest-card" onclick="openQuestDetail('${currentCategory}', ${idx})">
+                            <div class="card-bg-img" style="background-image: url('${q.image}');"></div>
+                            <div class="card-info">
+                                <div class="quest-meta">
+                                    <span class="${getTypeClass(q.type)}"><i class="fas fa-bookmark" style="margin-right:4px;"></i>${q.type}</span>
+                                    <span class="${getCampClass(q.campaignType)}"><span class="status-dot"></span>${q.campaignType}</span>
+                                </div>
+                                <h3 class="quest-title">${q.title}</h3>
+                                <div class="quest-intro">${q.intro}</div>
+                                <div class="click-prompt">▼ 點擊查閱</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            container.scrollLeft = 0; // 切換分類時回到最左側
+            setTimeout(() => { if(window.parent) window.parent.postMessage('resize-quests', '*'); }, 150);
+        }
+
+        function switchCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.avg-tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            renderQuests();
+        }
+
+        function openQuestDetail(cat, idx) {
+            const quest = QUEST_DATABASE[cat][idx];
+            if(!quest) return;
+
+            document.getElementById('dlg-img').style.backgroundImage = `url('${quest.image}')`;
+            document.getElementById('dlg-title').innerText = quest.title;
+            
+            const tagObj = document.getElementById('dlg-status');
+            tagObj.innerHTML = `<span class="${getTypeClass(quest.type)}">${quest.type}</span> | <span class="${getCampClass(quest.campaignType)}">${quest.campaignType}</span>`;
+            
+            document.getElementById('dlg-text').innerText = quest.desc;
+            document.getElementById('dlg-reward').innerText = quest.reward;
+
+            document.getElementById('avg-dialogue').classList.add('open');
+        }
+
+        function closeDialogue(e) {
+            if (e.target === e.currentTarget) {
+                document.getElementById('avg-dialogue').classList.remove('open');
+            }
+        }
+
+        window.onload = renderQuests;
+    </script>
+</body>
+</html>
