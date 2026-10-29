@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 奧茲托特蘭</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #d4af37; 
+            --bg-dark: rgba(15, 10, 5, 0.92); 
+            --text: #e5d8b8; 
+            --accent: #a84226; 
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('oztotlan.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.7) sepia(0.2) contrast(1.1); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.9)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(20, 15, 10, 0.95); border: 1px solid var(--accent); padding: 25px 30px;
+            color: var(--text); border-radius: 2px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(168, 66, 38, 0.15);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        .info-panel { width: 500px; height: 85vh; background: var(--bg-dark); border: 2px solid var(--accent); display: flex; box-shadow: -15px 0 50px rgba(0,0,0,1); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #0f0a05; display: flex; flex-direction: column; border-right: 1px solid var(--accent); }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 25px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(168, 66, 38, 0.3); 
+            opacity: 0.6; letter-spacing: 3px; font-weight: bold; transition: 0.3s;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(168, 66, 38, 0.15); }
+        .bookmark-btn.active { opacity: 1; background: rgba(168, 66, 38, 0.25); border-left: 4px solid var(--gold); color: #fff;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(168, 66, 38, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.8rem; }
+        h3 { color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px; font-size: 1.3rem; margin-top: 25px;}
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(168, 66, 38, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 2px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #ddd;}
+        .gazetteer-box strong { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { margin-bottom: 10px; font-size: 1.05rem; color: #ccc; border-left: 3px solid var(--accent); padding-left: 10px; }
+        .menu-list strong { color: var(--gold); }
+
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(168, 66, 38, 0.3); color: #ccc;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(168, 66, 38, 0.2);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(168, 66, 38, 0.15); box-shadow: 0 0 15px rgba(168, 66, 38, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        .interaction-card span { display: block; font-size: 0.95rem; color: #bbb; line-height: 1.5; margin-top: 5px; }
+        .interaction-card .highlight { color: var(--accent); font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('village')">村莊概況</div>
+            <div class="bookmark-btn" onclick="showTab('guild')">大門堡壘商會</div>
+            <div class="bookmark-btn" onclick="showTab('shrine')">羽翼神廟</div>
+            <div class="bookmark-btn" onclick="showTab('tavern')">彩羽鸚鳴酒館</div>
+        </div>
+
+        <div class="scroll-content">
+            <!-- 村莊概覽 -->
+            <div id="village" class="section active">
+                <h2>奧茲托特蘭</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>地理位置：</strong> 帕伊特境內，博馬克叢林邊緣的聚落。</p>
+                    <p><strong>權力核心：</strong> 商會會長 科茲卡特爾 與 羽父祭司 特奧西維特爾的雙頭政治。</p>
+                    <p><strong>特產資源：</strong> 可可豆、手工織物、火雞。</p>
+                    <p><strong>防禦設施：</strong> 圓木環形防禦網、南大門商會堡壘。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  從遠處眺望，奧茲托特蘭彷彿一座被茂密叢林環抱的孤島。為了抵禦荒野的威脅，村莊被一圈高聳且密集的圓木柵欄緊緊圍繞，展現出強烈的防禦需求。</p>
+                    <p>  柵欄內部，土坯與茅草搭建的平房錯落有致，環繞著一個巨大的下沉式圓形水池。這個水池不僅是村莊的命脈水源，中央更培育著幾塊精緻的水上浮田，顯示出當地農民對土地與水資源的極致利用。而在水網邊緣，則有著大片用木柵欄圍起的火雞飼養圈，是村莊重要的肉食來源。</p>
+                    <p>  村莊的心臟地帶，一座陡峭的石造階梯金字塔拔地而起，巍峨地俯瞰著整個聚落。這座羽蛇神羽翼神廟與南端那座方正且插滿旗幟的商會堡壘遙遙相對，形成了一種微妙的雙頭政治格局。</p>
+                    <p>  奧茲托特蘭依靠著穩定的農業與波奇特卡商會的物流網路繁榮發展。然而，長老會議在「履行商業合約以求長遠利益」與「遵循神明教誨優先照顧村民」的理念上時有摩擦。這座看似平靜的村莊，實則在商業擴張與傳統信仰之間保持著脆弱的平衡。</p>
+                </div>
+            </div>
+
+            <!-- 商會集市 -->
+            <div id="guild" class="section">
+                <h2>大門堡壘商會</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>核心價值：</strong> 契約即法律、長遠利益、絕對的秩序。</p>
+                    <p><strong>根據地：</strong> 村莊南端的「大門堡壘商會」，掌控著唯一的出入口與最大的糧食倉庫。</p>
+                    <p><strong>社會功能：</strong> 負責奧茲托特蘭對外的貿易聯繫，保管即將作為「貢品與出口物資」的玉米與珍貴物資，並維持村莊的軍事防線。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  位於村莊東南角的方形建築群，是村裡最堅固、最華麗的土坯建築。外牆裝飾著色彩斑斕的壁畫與豹皮，並高掛著象徵商會權威的旗幟。作為奧茲托特蘭的經濟心臟，這裡不僅是倉庫，也是商隊集結出發的起點。商會深知「違約」的代價，因此對於物資的管理極為嚴苛，有時甚至顯得冷酷無情。</p>
+                </div>
+
+                <h3>商會勢力核心 NPC</h3>
+
+                <div class="interaction-card" onclick="setNpc('科茲卡特爾', '商會長', '正值壯年、氣場極具壓迫感的男性。披著華麗的豹皮披風，脖子上掛滿綠松石與黃金項鍊。眼神永遠像在評估物品價值，語氣冰冷且不容置疑。他深愛奧茲托特蘭，但他看的是「長遠的生存」。他不介意背負冷血的罵名，只要能保住村莊的貿易信譽。', 'npc/cozcatl.webp')">
+                    <strong>科茲卡特爾</strong>
+                    <span>冷酷的精算師、忍辱負重的實權領袖。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('內扎烏科約託', '武裝隊長', '渾身是疤的肌肉壯漢，穿著精良護甲，手握黑曜石鋸刃劍。鄙視軟弱，只崇尚絕對的力量與紀律。拿錢辦事，保衛商會。負責指揮大門堡壘的防禦。他身經百戰，對會長絕對忠誠。', 'npc/nezahualcoyotl.webp')">
+                    <strong>內扎烏科約託</strong>
+                    <span>商會之刃、身經百戰的老兵。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('阿梅亞莉', '首席算計師', '年輕、眼神銳利且不苟言笑。手持摺疊繪本或結繩記事，衣著嚴謹無多餘裝飾。她只相信數字，將一切村莊事務轉化為帳本上的消耗率與利潤，是商會長最倚重的智囊。', 'npc/ameyalli.webp')">
+                    <strong>阿梅亞莉</strong>
+                    <span>冰冷的數據機器、理性的極致。</span>
+                </div>
+            </div>
+
+            <!-- 羽翼神廟 -->
+            <div id="shrine" class="section">
+                <h2>羽蛇神羽翼神廟</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>核心價值：</strong> 生命優先、敬畏神明。</p>
+                    <p><strong>根據地：</strong> 村莊北端陡峭岩丘上的「羽蛇神羽翼神廟」。</p>
+                    <p><strong>社會功能：</strong> 村民祈求風調雨順的精神寄託，主持村莊的宗教儀式，並試圖在商會的冰冷計算中保留一絲人性的溫暖。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  一座小型但莊嚴的白色石造階梯金字塔，建於村莊北側的隆起岩盤之上。頂端的神龕前日夜燃燒著神聖的柯巴脂香，散發著清新的樹酯香氣。神廟在村民心中擁有崇高的道德地位，代表著奧茲托特蘭的傳統信仰與心靈寄託。</p>
+                </div>
+
+                <h3>祭司勢力核心</h3>
+
+                <div class="interaction-card" onclick="setNpc('特奧西維特爾', '神廟祭司', '年過五旬，面容慈祥但佈滿皺紋，常顯現疲憊之態。身穿潔白祭司袍，頭戴綠松石與綠色長羽冠冕，語氣總是溫和且充滿悲憫。身為村莊的道德領袖，他常與商會長為了資源分配而爭執，堅信神明會庇佑善良之人。', 'npc/teoxihuitl.webp')">
+                    <strong>特奧西維特爾</strong>
+                    <span>仁慈的神明代言人、溫和的精神領袖。</span>        
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('米亞奧茨津', '神廟薩滿', '比祭司哥哥年輕十多歲，正值壯年。對魔法十分有天賦，喜歡研究並實踐他對魔法的想像', 'npc/miaotzin.webp')">
+                    <strong>米亞奧茨津</strong>
+                    <span>祭司之弟，才華橫溢的研究者。</span>        
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('亞洛', '忠誠侍僧', '十七歲的少年，眼神堅定甚至有些狂熱。穿著樸素的白色麻布短袍。對神廟傳統有著絕對的堅持，是祭司最忠誠的追隨者，對商會的逐利行為充滿敵意。', 'npc/yallo.webp')">
+                    <strong>亞洛</strong>
+                    <span>守護神廟尊嚴的狂熱少年。</span>
+                </div>
+            </div>
+
+            <!-- 彩羽鸚鳴 -->
+            <div id="tavern" class="section">
+                <h2>「彩羽鸚鳴」酒館</h2>
+                
+                <div class="gazetteer-box">
+                    <p><依附於村莊北端的陡峭岩丘底部，完全向山腹深處人工開鑿的巨型穴居酒館。是底層村民、農夫與外來傭兵主要的世俗社交場所。</p>
+                    <p>與外部通風天然縫隙相連，荒野風吹過會在石道間擠壓，形成宛如大型金剛鸚鵡尖銳鳴叫的奇特迴音。</p>
+                    <p>混雜著發酵龍舌蘭酒的酸甜味、烤玉米焦香，以及淡淡的便宜柯巴脂香氣。</p>
+                    
+                    <p style="margin-top: 15px; border-top: 1px dashed rgba(168, 66, 38, 0.3); padding-top: 10px;"></p>
+                    <p><strong>1F 用餐區：</strong> 包含掛滿多彩羽毛的入口防禦木門、呈同心圓梯田狀的主宴飲廳，以及深處的天然岩石吧檯。</p>
+                    <p><strong>2F 住宿區：</strong> 遠離喧囂的上層接待平台，向山腹更深處延伸出數條人工挖掘的盲端隧道，內部鋪有簡易草蓆，作為臨時客房與休憩處。</p>
+                </div>
+
+                <h3 style="color: #a84226; border-bottom: 1px dashed #a84226; padding-bottom: 5px; margin-top: 20px;">酒館核心 NPC</h3>
+
+                <div class="interaction-card" onclick="setNpc('泰拉莉雅', '酒館老闆娘', '身形富態，眼神極其精明、氣場強大。身穿鮮豔織裙，表面豪爽熱情，實際隨時在評估對方的價值。', 'npc/tlalya.webp')">
+                    <strong>泰拉莉雅</strong>
+                    <span>酒館老闆娘</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('約洛薩瓦爾', '廚師老闆', '魁梧壯碩，雙手滿是老繭。穿著沾滿炭灰的粗糙圍裙，沉默寡言但內心極度善良。他負責酒館的餐飲，對於村莊周邊的動植物與食材來源瞭若指掌。', 'npc/yolotzahuatl.webp')">
+                    <strong>約洛薩瓦爾</strong>
+                    <span>酒館廚師</span>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('泰索忒菈', '服務生女兒', '充滿青春活力，綁著兩條長辮子。在石台間穿梭端送酒水，天真善良且充滿好奇心。', 'npc/tezotzela.webp')">
+                    <strong>泰索忒菈</strong>
+                    <span>服務生女兒</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#e5d8b8;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
