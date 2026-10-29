@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 阿維茨蘭</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --bg-dark: rgba(10, 20, 15, 0.9); --text: #e0d0b0; --jade: #4caf50; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('ahuitzlan.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.7) sepia(0.2) hue-rotate(15deg); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        /* --- 左側動態展示區 --- */
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.8)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(10, 25, 15, 0.95); border: 1px solid var(--jade); padding: 25px 30px;
+            color: var(--text); border-radius: 4px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9), inset 0 0 15px rgba(76, 175, 80, 0.15);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        /* --- 右側：資訊面板 --- */
+        .info-panel { width: 500px; height: 85vh; background: var(--bg-dark); border: 2px solid var(--jade); display: flex; box-shadow: -15px 0 40px rgba(0,0,0,0.9); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #0a110d; display: flex; flex-direction: column; border-right: 1px solid var(--jade); overflow-y: auto; }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 25px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(76, 175, 80, 0.3); 
+            opacity: 0.7; letter-spacing: 3px; font-weight: bold; transition: 0.3s; flex-shrink: 0;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(76, 175, 80, 0.15); }
+        .bookmark-btn.active { opacity: 1; background: rgba(76, 175, 80, 0.25); border-left: 4px solid var(--gold); color: #fff;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(76, 175, 80, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--jade); margin: 0 0 20px 0; font-size: 1.8rem; }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 3px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #ddd;}
+        .gazetteer-box strong { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(76, 175, 80, 0.3); color: #ccc;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(76, 175, 80, 0.2);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(76, 175, 80, 0.15); box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        
+        .exit-btn {
+            position: absolute; top: 20px; right: 25px; color: var(--gold); text-decoration: none;
+            border: 1px solid var(--gold); padding: 8px 20px; font-family: 'Cinzel', serif; font-size: 1rem; letter-spacing: 2px;
+            z-index: 100; transition: 0.3s; background: rgba(0,0,0,0.6);
+        }
+        .exit-btn:hover { background: var(--jade); color: #fff; border-color: var(--jade); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('village')">村落簡介</div>
+            <div class="bookmark-btn" onclick="showTab('facilities')">設施與工坊</div>
+        </div>
+
+        <div class="scroll-content">
+            <!-- 村落概覽 -->
+            <div id="village" class="section active">
+                <h2>阿維茨蘭</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>地理位置：</strong> 帕伊特境內，依傍博馬克叢林中的溪流而建。</p>
+                    <p><strong>統治體系：</strong> 長老自治，由深受敬重的長老莫科特爾引導村民。</p>
+                    <p><strong>特產資源：</strong> 水上浮田孕育的飽滿玉米、藥草，以及精美的羽毛工藝品。</p>
+                    <p><strong>重要地標：</strong> 聖羽工坊、夸爾特祭壇、小碼頭、公用長屋。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  「阿維茨蘭」意為「水獸與繁藤之地」。不同於那些被厚重石牆包圍的城邦，這是一處充滿生機的半寫實奇幻村落。村民們利用蘆葦與淤泥編織成巨大的「水上浮田」，在河面上直接種植玉米與藥草。</p>
+                    <p>  此處的建築多由木材、稻草與彩色黏土構成，屋簷下懸掛著鳥羽編織的裝飾，空氣中總是瀰漫著濕潤泥土、成熟玉米的甜味與可可的香氣。</p>
+                </div>
+
+                <h3 style="color: #4caf50; border-bottom: 1px dashed #4caf50; padding-bottom: 5px;">當地要員與來客</h3>
+
+                <div class="interaction-card" onclick="setNpc('莫科特爾', '村落長老', '一位深受村民敬重的智者。他深諳這片水域的脾氣，總是在庫庫爾祭壇旁關注著聖河水位的變化，引導著村落度過無數個豐收與乾旱的季節。', 'npc/mokotl.webp')">
+                    <strong>長老 莫科特爾</strong>
+                    <span>時刻關注著河流命脈的睿智老者。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('帕阿特利', '貿易行商', '平時總是優雅梳理羽冠的貿易商人。他經常帶領商隊沿著帕伊特河移動，在此地建立營地，為與世無爭的阿維茨蘭帶來外界的物資與最新情報。', 'npc/pahtli.webp')">
+                    <strong>帕阿特利</strong>
+                    <span>活躍於河道貿易、消息靈通的行商。</span>
+                </div>
+            </div>
+
+            <!-- 村落設施 -->
+            <div id="facilities" class="section">
+                <h2>設施與社交</h2>
+                
+                <div class="lore-desc">
+                    <p>  阿維茨蘭沒有傳統意義上提供酒水買賣的「酒館」。村民們的生活圍繞著信仰、勞作與部落共享的公有設施展開。外來者必須學會入境隨俗，才能在這裡獲得情報與庇護。</p>
+                </div>
+
+                <h3 style="color: #4caf50; border-bottom: 1px dashed #4caf50; padding-bottom: 5px;">重要集會與工坊</h3>
+                
+                <div class="interaction-card" onclick="setNpc('雅婭烏基', '羽織工匠', '目光銳利且冷靜。她主導著工坊的運作，對於叢林的生物有著深刻的理解。她能以極高的專注力，編織出精美的羽毛護符。', 'npc/yayauki.webp')">
+                    <strong>小工坊</strong>
+                    <span>屋頂掛滿繽紛鳥羽。由羽織工匠雅婭烏基主導，將羽毛中的托納利編織進日常衣物與護符中。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('公用長屋', '部落核心', '村落中央的巨大公共建築。外地冒險者若需留宿，必須獲得長老莫科特爾的許可，並在晚餐時分享冒險見聞或展現禮儀。', 'npc/longhouse.webp')">
+                    <strong>公用長屋</strong>
+                    <span>村民討論公事與分享玉米粥的場所，也是獲取情報的核心地帶。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('行商營地', '貿易與情報', '像帕阿特利這樣的行商，通常會在村落邊緣架起亞麻布帳篷建立臨時營地。他們在此飲用稀釋的可可飲料並交換各地資訊。', 'npc/pochteca_camp.webp')">
+                    <strong>行商營地</strong>
+                    <span>流動商賈的臨時駐紮點，是打探消息的最佳去處。</span>
+                </div>
+
+                <div class="interaction-card">
+                    <strong>夸爾特祭壇</strong>
+                    <span>一座古老的小型階梯金字塔，村民每日在此供奉玉米與花朵祈求豐收。</span>
+                </div>
+                
+                <div class="interaction-card">
+                    <strong>小碼頭</strong>
+                    <span>停靠著幾艘帕伊特式長獨木舟，是農民與行商交換貨物的樞紐。</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#e0d0b0;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
