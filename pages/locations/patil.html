@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 帕蒂爾</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #d4af37; 
+            --bg-dark: rgba(20, 10, 5, 0.92); /* 帶有烘焙可可色調的深褐背景 */
+            --text: #e5d8b8; 
+            --accent: #d87040; /* 萬壽菊的橙橘色 */
+            --green: #2e8b57; /* 象徵可可葉與青苔的松石綠 */
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('patil.webp'); /* 建議替換為被可可樹林包圍、裝飾橙色花朵的村落背景 */
+            background-size: cover; background-position: center; 
+            filter: brightness(0.7) sepia(0.2) contrast(1.1); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        /* --- 左側動態展示區 --- */
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.9)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(25, 15, 10, 0.95); border: 1px solid var(--accent); padding: 25px 30px;
+            color: var(--text); border-radius: 2px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(216, 112, 64, 0.15);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        /* --- 右側：資訊面板 --- */
+        .info-panel { width: 500px; height: 85vh; background: var(--bg-dark); border: 2px solid var(--accent); display: flex; box-shadow: -15px 0 50px rgba(0,0,0,1); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #140a05; display: flex; flex-direction: column; border-right: 1px solid var(--accent); }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 25px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(216, 112, 64, 0.3); 
+            opacity: 0.6; letter-spacing: 3px; font-weight: bold; transition: 0.3s;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(216, 112, 64, 0.15); }
+        .bookmark-btn.active { opacity: 1; background: rgba(216, 112, 64, 0.25); border-left: 4px solid var(--gold); color: #fff;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(216, 112, 64, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.8rem; }
+        h3 { color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px; font-size: 1.3rem; margin-top: 25px;}
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(216, 112, 64, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 2px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #ddd;}
+        .gazetteer-box strong { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { margin-bottom: 10px; font-size: 1.05rem; color: #ccc; border-left: 3px solid var(--accent); padding-left: 10px; }
+        .menu-list strong { color: var(--gold); }
+
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(216, 112, 64, 0.3); color: #ccc;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(216, 112, 64, 0.2);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(216, 112, 64, 0.15); box-shadow: 0 0 15px rgba(216, 112, 64, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        .interaction-card span { display: block; font-size: 0.95rem; color: #bbb; line-height: 1.5; margin-top: 5px; }
+        .interaction-card .highlight { color: var(--accent); font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('village')">村莊概況</div>
+            <div class="bookmark-btn" onclick="showTab('tavern')">醇香之屋</div>
+            <div class="bookmark-btn" onclick="showTab('market')">可可交易所</div>
+            <div class="bookmark-btn" onclick="showTab('shrine')">羽父神廟</div>
+        </div>
+
+        <div class="scroll-content">
+            <!-- 帕蒂爾概覽 -->
+            <div id="village" class="section active">
+                <h2>帕蒂爾</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>地理位置：</strong> 帕伊特境內，進入烏爾托斯森林前的小丘之鎮。</p>
+                    <p><strong>統治者：</strong> 鎮長 圖派克。</p>
+                    <p><strong>特產資源：</strong> 頂級可可豆、精製巧克力、黑曜石武器。</p>
+                    <p><strong>當前狀態：</strong> 貿易繁榮的世外桃源，空氣中瀰漫著濃郁的酸甜可可香。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  帕蒂爾鎮坐落在平原與森林交界的緩坡上，四周被無邊無際的可可樹林所包圍。鎮上的建築多由厚實的黃土黏磚和巨木支柱構成，外牆刷上鮮豔的石灰赭紅與松石綠漆，在陽光下顯得充滿生機。</p>
+                    <p>  走進帕蒂爾，最先迎接旅人的是空氣中那股無時無刻不瀰漫著的發酵可可豆的酸甜，與烘焙巧克力的濃郁香氣。平原上的熱風吹過，帶來農人採摘可可時的傳統歌謠聲，街道兩旁則裝飾著盛開的橙色萬壽菊。這裡是一片與世無爭、秩序井然的世外桃源，也是馬茲提卡大陸上重要的可可交易樞紐。</p>
+                </div>
+
+                <h3 style="color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px;">城鎮要員</h3>
+
+                <div class="interaction-card" onclick="setNpc('圖派克', '鎮長', '熱情好客的管理者。身形發福、總是笑口常開的人類，穿著寬鬆華麗的白色棉袍。他將小村落打造成區域貿易中心，極度自豪。', 'npc/tupac.webp')">
+                    <strong>圖派克</strong>
+                    <span>鎮長</span>
+                </div>
+                
+                <div class="interaction-card" onclick="setNpc('薩卡', '首席交易員', '負責登記所有進出的可可豆，對貨物流動異常敏感。', 'npc/saca.webp')">
+                    <strong>薩卡</strong>
+                    <span>首席交易員</span>
+                </div>
+            </div>
+
+            <!-- 醇香之屋 -->
+            <div id="tavern" class="section">
+                <h2>醇香之屋</h2>
+                
+                <div class="gazetteer-box">
+                    <p>鎮上最大的聚會所兼酒館，冒險者長休與收集情報的絕佳場所。</p>
+                    <p>巨大的茅草屋頂下擺放著厚實的木桌椅，中央有一個巨大的黏土火塘。幾位婦女正用木質攪拌棒在陶罐裡打起泡沫濃郁的傳統熱可可。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  醇香之屋是帕蒂爾鎮的社交與八卦中心。這裡不賣烈酒，而是供應著全鎮乃至整個平原最頂級的可可飲品。無論是疲憊的行商還是遠道而來的冒險者，都會聚集在火塘邊，在濃郁的巧克力香氣中交換著各地的見聞與流言。</p>
+                </div>
+
+                <h3 style="color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px; margin-top: 20px;">酒館人物</h3>
+
+                <div class="interaction-card" onclick="setNpc('洛洛', '酒館老闆娘', '一位半身人老闆娘，對生意興隆感到滿意。', 'npc/lolo.webp')">
+                    <strong>洛洛</strong>
+                    <span>酒館老闆娘</span>
+                </div>
+            </div>
+
+            <!-- 可可交易所 -->
+            <div id="market" class="section">
+                <h2>中央可可交易所</h2>
+                
+                <div class="gazetteer-box">
+                    <p>物資補給與高階裝備購置，帕蒂爾鎮的經濟命脈。</p>
+                    <p>一座由灰色巨石砌成的方形露天廣場。無數的旅商在此卸下貨物，農人們則將一袋袋烘乾的貴重可可豆進行秤重與交易。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  中央可可交易所展現了帕蒂爾強大的商業活力。這裡的交易不僅限於可可，來自各地的物資也在此匯聚。除了充足的糧食補給，冒險者甚至能在這裡的工坊找到品質優良的防身武器。</p>
+                </div>
+            </div>
+
+            <!-- 神龕 -->
+            <div id="shrine" class="section">
+                <h2>夸爾特神廟</h2>
+                
+                <div class="gazetteer-box">
+                    <p>位於村落最高處的一座小型階梯金字塔，供奉著羽父夸爾特。金字塔表面覆蓋著青苔，祭壇上堆滿了新鮮的可可果與鮮花。這裡安靜、神聖，能俯瞰整個平原。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  遠離了交易所的喧囂，夸爾特神廟是一處靜謐的聖地。空氣中混合著新鮮花朵與古老石塊的氣息。此處的祭司不僅主持儀式，也精通草藥學，為需要幫助的村民或旅人提供治療。</p>
+                </div>
+
+                <h3 style="color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px;">神廟祭司</h3>
+
+                <div class="interaction-card" onclick="setNpc('庫埃茨帕菈', '神廟祭司', '一位年輕女性人類，雙眼蒙著繡有太陽圖騰的絲帶，臉上塗抹黃色戰妝。憂鬱、空靈的大自然聆聽者。', 'npc/cuetzpala.webp')">
+                    <strong>齊拉莉</strong>
+                    <span>神廟祭司</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#e5d8b8;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
