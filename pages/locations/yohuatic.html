@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 約瓦爾提克</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #d4af37; 
+            --bg-dark: rgba(18, 12, 10, 0.93); /* 沙漠夜影與黑曜石深褐質感 */
+            --text: #e6d8c0; /* 砂岩與羊皮紙暖色文字 */
+            --accent: #c84b31; /* 象徵火神泰茲卡與沙漠赤陶的熾熱紅 */
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('yohuatic.webp'); /* 建議替換為沙漠邊境石牆城鎮與外圍水道浮田背景 */
+            background-size: cover; background-position: center; 
+            filter: brightness(0.68) sepia(0.25) contrast(1.12); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        /* --- 左側動態展示區 --- */
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.9)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(22, 14, 10, 0.96); border: 1px solid var(--accent); padding: 25px 30px;
+            color: var(--text); border-radius: 2px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(200, 75, 49, 0.15);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        /* --- 右側：資訊面板 --- */
+        .info-panel { width: 500px; height: 85vh; background: var(--bg-dark); border: 2px solid var(--accent); display: flex; box-shadow: -15px 0 50px rgba(0,0,0,1); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #120b08; display: flex; flex-direction: column; border-right: 1px solid var(--accent); overflow-y: auto; }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 22px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(200, 75, 49, 0.3); 
+            opacity: 0.6; letter-spacing: 3px; font-weight: bold; transition: 0.3s; flex-shrink: 0;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(200, 75, 49, 0.15); }
+        .bookmark-btn.active { opacity: 1; background: rgba(200, 75, 49, 0.25); border-left: 4px solid var(--gold); color: #fff;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(200, 75, 49, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.8rem; }
+        h3 { color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px; font-size: 1.3rem; margin-top: 25px;}
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(200, 75, 49, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 2px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #ddd;}
+        .gazetteer-box strong { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { margin-bottom: 10px; font-size: 1.05rem; color: #ccc; border-left: 3px solid var(--accent); padding-left: 10px; }
+        .menu-list strong { color: var(--gold); }
+
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(200, 75, 49, 0.3); color: #ccc;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(200, 75, 49, 0.2);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(200, 75, 49, 0.15); box-shadow: 0 0 15px rgba(200, 75, 49, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        .interaction-card span { display: block; font-size: 0.95rem; color: #bbb; line-height: 1.5; margin-top: 5px; }
+        .interaction-card .highlight { color: var(--accent); font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('overview')">城鎮概覽</div>
+            <div class="bookmark-btn" onclick="showTab('central')">棘星宅邸</div>
+            <div class="bookmark-btn" onclick="showTab('temple')">泰茲卡神廟</div>
+            <div class="bookmark-btn" onclick="showTab('tavern')">烈陽金樽</div>
+            <div class="bookmark-btn" onclick="showTab('commons')">水道平民區</div>
+        </div>
+
+        <div class="scroll-content">
+            <!-- 1. 城鎮概覽 -->
+            <div id="overview" class="section active">
+                <h2>約瓦爾提克</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>官方名字：</strong> 約瓦爾提克鎮</p>
+                    <p><strong>所屬區域：</strong> 佩澤拉克南境，鄰近泰茲卡之家沙漠</p>
+                    <p><strong>統治者：</strong>雷納托卡</p>
+                    <p><strong>政府：</strong> 世襲領主集權制，由親信貴族家族、大商人與泰茲卡神廟共同鞏固統治。</p>
+                    <p><strong>特產資源：</strong> 地下水灌溉農產、浮田玉米、沙漠邊境貿易貨物、精緻石材。</p>
+                    <p><strong>法律：</strong>嚴苛的稅賦與階級法規，極力保障權貴與領主利益。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  約瓦爾提克坐落於佩澤拉克南境、緊鄰「泰茲卡之家」酷熱沙漠邊緣的乾燥地帶。仰賴著豐沛的地下水源，這座被高聳石牆嚴密包圍的綠洲小鎮顯得格外富庶。石牆外圍開闢了縱橫交錯的人工水道，無數綠意盎然的水上浮田皆仰賴這些地下水脈的滋養。</p>
+                    <p>  然而，在繁榮富足的表象下，鎮內卻有著極度鮮明的階級壁壘。全鎮由內而外被劃分為三大區域：以三層石造領主府「棘星宅邸」為核心的中央地帶、供奉太陽與火之神泰茲卡且富商雲集的權貴區，以及位於外緣水道旁、長年遭受重稅與勞役壓榨的底層農民平民區。</p>
+                </div>
+            </div>
+
+            <!-- 2. 中央地帶：棘星宅邸 -->
+            <div id="central" class="section">
+                <h2>中央地帶：棘星宅邸</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>核心建築：</strong> 棘星宅邸—— 宏偉的三層石製領主宅邸。</p>
+                    <p><strong>中央廣場：</strong> 位於領主府正前方。平時是領主召集鎮民宣達政令與演講的威權廣場；每逢年度「豐收祭」，此處則會轉變為熱鬧非凡的大型慶典市集。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  中央地帶是約瓦爾提克的權力心臟。「棘星宅邸」以厚重的灰白巨石砌成，高達三層的建築結構在低矮的邊境城鎮中宛如一座不可撼動的山峰。宅邸外牆雕刻著象徵領主威嚴的尖刺星辰圖騰，衛兵日夜駐守，俯瞰著前方的中央廣場。</p>
+                </div>
+
+                <h3>宅邸核心人物</h3>
+
+                <div class="interaction-card" onclick="setNpc('雷納托卡', '領主', '約瓦爾提克的現任統治者，坐鎮於中央地帶的棘星宅邸。他掌控著鎮上命脈的地下水源與浮田農業，並透過嚴苛的法律、高昂的稅賦與勞役制度，極力鞏固自身與權貴家族的利益。', 'npc/renatoca.webp')">
+                    <strong>雷納托卡</strong>
+                    <span>約瓦爾提克的現任統治者，坐鎮於中央地帶的棘星宅邸。</span>
+
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('亞蕾琪', '領主的小女兒', '年僅八歲的純真少女，帶著受寵千金的嬌憨與任性，但內心保有未被權力腐化的純真。身為年幼的領主之女，她沒有任何實質的政治或行政職責。面對父親時，她敢於表現出無禮與嬌縱；但當遇到陌生的外來者時，卻會怯生生地展現出極佳的禮貌與教養。', 'npc/arequi.webp')">
+                    <strong>亞蕾琪</strong>
+                    <span>領主的小女兒</span>
+                </div>
+            </div>
+
+            <!-- 3. 權貴區：泰茲卡神廟 -->
+            <div id="temple" class="section">
+                <h2>泰茲卡神廟</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>信仰核心：</strong> 火神 泰茲卡</p>
+                    <p><strong>區域特色：</strong> 環繞神廟而建的富人區，居住著大商人與領主交好的貴族家族。街道整潔寬敞，與平民區的泥濘截然不同。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  由於鄰近「泰茲卡之家」沙漠，約瓦爾提克的權貴階層對主宰烈陽與火焰的泰茲卡極為敬畏。這座以紅砂岩與黑曜石裝飾的階梯神廟終年燃燒著不滅的聖火，空氣中飄散著濃烈的硫磺與高級薰香。神廟不僅是宗教中心，更是貴族家族彰顯財富與鞏固政治盟約的場所。</p>
+                </div>
+
+                <h3>神廟核心 NPC</h3>
+
+                <div class="interaction-card" onclick="setNpc('托科維特', '烈陽祭司', '權貴階層的精神支柱、精於政治的冷酷神官。身穿鑲有赤紅火蜥蜴鱗片與金線的華貴祭袍，神情威嚴冷酷，長期以神權為雷納托卡領主的鐵腕統治背書。', 'npc/tocohuitl.webp')">
+                    <strong>托科維特</strong>
+                    <span>烈陽祭司</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('索奇米娜', '神廟侍女', '負責看守神廟聖火盆的年輕女祭司。穿著沾有煙灰的素白棉袍，眼神清澈卻帶著一絲憂鬱，熟稔各種治療中暑與灼傷的草藥知識。不同於高層祭司的傲慢，她性格溫婉內斂，時常在神廟後門偷偷分發乾淨的飲水與燙傷藥膏給修築水道的苦力。', 'npc/xochimina.webp')">
+                    <strong>索奇米娜</strong>
+                    <span>神廟侍女</span>
+                </div>
+            </div>
+
+            <!-- 4. 權貴區：烈陽金樽酒館 -->
+            <div id="tavern" class="section">
+                <h2>烈陽金樽</h2>
+                
+                <div class="gazetteer-box">
+                    <p>雙層石造華麗旅宿，中庭設有引自地下泉水的清涼噴泉與遮陽彩布，完美隔絕了沙漠邊境的燥熱。跨區貿易的旅商、外地貴客、富裕冒險者與當地貴族是這裡的常客。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  位於權貴區大道上的「烈陽金樽」，是外來旅人與其他城鎮貴客下榻的首選之地。館內鋪設著涼爽的拋光石板，侍者穿梭於華麗的羽毛屏風之間，端上一盤盤由平民區農夫辛勤種植、卻只有貴族吃得起的珍饈美饌。</p>
+                </div>
+
+                <h3>酒館核心</h3>
+
+                <div class="interaction-card" onclick="setNpc('伊茲科瓦特', '酒館老闆', '八面玲瓏的社交名流。他總是穿著一塵不染的絲質棉袍，臉上掛著無可挑剔的職業微笑，舉止優雅世故，能從旅人的靴子塵土判斷出對方的身價與來歷。', 'npc/itzcoatl.webp')">
+                    <strong>伊茲科瓦特</strong>
+                    <span><span class="highlight">酒館老闆</span></span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('奎茨帕林', '駐唱樂師', '在中庭噴泉旁吹奏骨笛與拍擊皮鼓的年輕樂師。披著色彩鮮豔的羽毛短披肩，笑容爽朗迷人，只要打賞幾枚可可豆或請他喝上一杯，便能聽見不少權貴家族的私下八卦。', 'npc/cuetzpalin.webp')">
+                    <strong>奎茨帕林</strong>
+                    <span>駐唱樂師</span>
+                </div>
+            </div>
+
+            <!-- 5. 平民區：水道農民生活圈 -->
+            <div id="commons" class="section">
+                <h2>水道農民生活圈</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>區域現況：</strong> 位於城牆內外邊緣的低窪地帶。儘管約瓦爾提克極為富庶，但底層農民長年承受領主與貴族的沉重賦稅與勞役壓榨，生活十分困頓。</p>
+                    <p><strong>核心地標：</strong> 地下引水渠與外圍浮田、苦根草棚集會所、老水閘修繕坊。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  與權貴區的金碧輝煌形成刺眼對比，平民區是由擁擠破舊的泥磚矮房與蘆葦棚屋組成的迷宮。這裡的居民日出而作，手持木製掘土棒在石牆外的水道與浮田間揮汗如雨，將收成最好的作物送進棘星宅邸與權貴區，自己卻只能依賴微薄的配給度日。在長年的壓迫下，農民們形成了極具凝聚力的互助生活圈。</p>
+                </div>
+
+                <h3>重要地點與成員</h3>
+
+                <div class="interaction-card" onclick="setNpc('瓦卡爾', '浮田農夫長者', '六十多歲的老農，雙手佈滿厚繭，性格堅毅隱忍。皮膚黝黑乾癟，脊背因長年彎腰耕作而微駝，是外圍浮田農民最信賴的發言人。', 'npc/huacal.webp')">
+                    <strong>外圍浮田與水道</strong>
+                    <span><span class="highlight">此地是城鎮糧食生產命脈，仰賴人工開闢的地下水渠灌溉。</span></span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('蒂庫瓦', '水閘工匠', '身材結實、作風俐落的中年女性。脾氣有些暴躁直率，渾身沾滿濕泥，腰間掛著石錘與麻繩，負責維護連接地下水源與外部水道的古老石造水閘。', 'npc/ticua.webp')">
+                    <strong>水閘修繕坊</strong>
+                    <span>控制地下水脈流向與維修農具的簡陋工坊。</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('梅茲特莉', '苦根草棚主事', '眼神慈祥卻透著滄桑的老婦人，擅長用沙漠邊境的苦根草與仙人掌治療農夫的勞損與熱病，在泥磚巷弄深處搭建的簡陋蘆葦棚屋裡，熬煮著廉價的玉米糊與草藥茶。這裡是農民收工後唯一能喘口氣、交換生活物資與低聲抱怨時局的避風港。', 'npc/meztli.webp')">
+                    <strong>草棚集會所</strong>
+                    <span>平民區的地下社交中心、廉價食堂與草藥醫站。</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#e6d8c0;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
