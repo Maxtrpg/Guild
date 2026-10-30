@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 雙鷹驛 (Twin-Eagle Post)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #d4af37; 
+            --bg-dark: rgba(14, 15, 20, 0.93); /* 大漠暮色與玄武岩暗影 */
+            --text: #e6d8c0; /* 黃土泥磚與羊皮紙暖色文字 */
+            --accent: #d97724; /* 象徵守衛塔火把與熔爐的荒漠暖橘 */
+            --oasis: #3b9c9c; /* 象徵綠洲泉水與帕伊特彩羽的松石綠 */
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('twin_eagle.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.72) sepia(0.15) contrast(1.08); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        /* --- 左側動態展示區 --- */
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.9)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(18, 16, 14, 0.96); border: 1px solid var(--accent); padding: 25px 30px;
+            color: var(--text); border-radius: 2px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(217, 119, 36, 0.15);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        /* --- 右側：資訊面板 --- */
+        .info-panel { width: 500px; height: 85vh; background: var(--bg-dark); border: 2px solid var(--accent); display: flex; box-shadow: -15px 0 50px rgba(0,0,0,1); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #0d0c0a; display: flex; flex-direction: column; border-right: 1px solid var(--accent); overflow-y: auto; }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 22px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(217, 119, 36, 0.3); 
+            opacity: 0.6; letter-spacing: 3px; font-weight: bold; transition: 0.3s; flex-shrink: 0;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(217, 119, 36, 0.15); }
+        .bookmark-btn.active { opacity: 1; background: rgba(217, 119, 36, 0.25); border-left: 4px solid var(--gold); color: #fff;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(217, 119, 36, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.8rem; }
+        h3 { color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px; font-size: 1.3rem; margin-top: 25px;}
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(217, 119, 36, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 2px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #ddd;}
+        .gazetteer-box strong { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { margin-bottom: 10px; font-size: 1.05rem; color: #ccc; border-left: 3px solid var(--oasis); padding-left: 10px; }
+        .menu-list strong { color: var(--gold); }
+
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(217, 119, 36, 0.3); color: #ccc;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(217, 119, 36, 0.25);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(217, 119, 36, 0.15); box-shadow: 0 0 15px rgba(217, 119, 36, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        .interaction-card span { display: block; font-size: 0.95rem; color: #bbb; line-height: 1.5; margin-top: 5px; }
+        .interaction-card .highlight { color: #e89548; font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('overview')">雙鷹驛</div>
+            <div class="bookmark-btn" onclick="showTab('gate')">南門與古柱</div>
+            <div class="bookmark-btn" onclick="showTab('inn')">乾涸龍舌蘭</div>
+            <div class="bookmark-btn" onclick="showTab('workshops')">工坊與鍛鋪</div>
+            <div class="bookmark-btn" onclick="showTab('shrine')">古祭壇草庵</div>
+        </div>
+
+        <div class="scroll-content">
+            <!-- 1. 雙鷹驛概覽 -->
+            <div id="overview" class="section active">
+                <h2>雙鷹驛</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>地理位置：</strong> 佩澤拉克南境邊陲，荒漠與灌木叢交界的綠洲。</p>
+                    <p><strong>戰略地位：</strong> 進入「泰茲卡之家」沙漠前的最後補給站，亦是穿越沙漠後的第一個休憩點。</p>
+                    <p><strong>治安防務：</strong> 無大城邦正規軍常駐，僅由守衛隊長特帕爾率領當地民兵把守。</p>
+                    <p><strong>特產與貿易：</strong> 旅商轉運樞紐、黑曜石器打製、帕伊特羽飾加工、龍舌蘭酒。</p>
+                    <p><strong>城鎮風氣：</strong> 對外來者極度包容，三教九流匯聚的邊境自由之地。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  雙鷹驛座落於佩澤拉克南境蒼涼的仙人掌荒漠中，是一座圍繞著天然湧泉建立的環形防禦驛站。整座小鎮被一圈高聳尖銳的原木寨牆緊緊環抱，唯有南側設有兩座厚實的方型黃土守衛塔鎮守大門。寨牆之內，平頂的黃土泥磚屋沿著環形沙道錯落分佈，夜幕降臨時，牆頭與巷弄間的火把便會將整座綠洲映照得格外溫暖。</p>
+                    <p>  小鎮的正中央是一汪清澈見底的碧藍綠洲水池，高大的棕櫚樹在池畔搖曳，水池南側則開闢了數塊整齊的灌溉菜畦，孕育著耐旱的玉米、豆類與龍舌蘭。作為旅商穿梭於佩澤拉克、遠帕伊特與沙漠大城圖坎之間的必經咽喉，這裡終日駝鈴不絕；但也因缺乏強權統治且對外客來者不拒，使這座綠洲同時成為冒險者、淘金客與法外之徒混跡的邊境溫床。</p>
+                </div>
+            </div>
+
+            <!-- 2. 羽蛇南門與雙鷹中庭廣場 -->
+            <div id="gate" class="section">
+                <h2>羽蛇南門與雙鷹廣場</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>羽蛇南門與守衛塔：</strong> 位於驛站最南端的唯一出入口。兩座雙層高的厚重土石方塔夾道而立，塔頂雉堞燃燒著警戒火盆，中間以堅固的雙開木柵門相連，內部設有民兵值勤室與精良武器架。</p>
+                    <p><strong>雙鷹中庭廣場：</strong> 進入南門後的開闊沙地廣場。正中央矗立著一根飽經風霜的巨型深灰玄武岩石柱，柱面浮雕刻有展翅的雙頭雄鷹圖騰。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  南門是雙鷹驛面對泰茲卡沙漠風沙與荒野掠食者的第一道防線，門樓上的民兵日夜緊握武器巡視南方荒原。穿過大門步入中庭廣場，首先映入眼簾的便是那座古老的「雙頭鷹玄武岩石柱」。據考據，這根石柱底部銘刻著庇護古咒，是一座鎮守綠洲地脈的遠古「鎮魂碑」，散發著令怪物不敢輕易靠近的結界。</p>
+                </div>
+
+                <h3>南門防務要員</h3>
+
+                <div class="interaction-card" onclick="setNpc('特帕爾', '守衛隊長', '鐵血務實的民兵隊長。面色陰沉、眼神如沙漠禿鷲般銳利的中年戰士，因早年與荒漠盜匪交手而留下一道貫穿下顎的傷疤，平時習慣嚼著龍舌蘭葉提神。沒有正規軍支援的邊陲綠洲，他深知民兵人手有限，因此對待外來傭兵與實力強悍的冒險者相當務實，常在守衛塔內室私下委託能人異士協助維持驛站治安。', 'npc/tepal.webp')">
+                    <strong>特帕爾</strong>
+                    <span>守衛隊長</span>
+                </div>
+            </div>
+
+            <!-- 3. 「乾涸龍舌蘭」客棧與酒肆 -->
+            <div id="inn" class="section">
+                <h2>「乾涸龍舌蘭」客棧</h2>
+                
+                <div class="gazetteer-box">
+                    <p>位於驛站西側最氣派的雙層L型黃土大宅。一樓為寬敞喧鬧的拱門酒肆大廳，二樓則設有半露天的拱廊露台，露台中央燃燒著溫暖的營火，擺有長桌供住客乘涼小酌。雙鷹驛規模最大的餐飲旅宿、商隊歇腳處與邊境情報集散地。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  無論是剛結束大漠苦旅的行商，還是準備南下探險的傭兵，踏入雙鷹驛後的第一件事便是直奔「乾涸龍舌蘭」。客棧內終日人聲鼎沸，空氣中瀰漫著濃烈的發酵龍舌蘭酒微酸酒香與炭火烤肉的油脂香氣。站在二樓的火盆露台上，旅人能一邊啜飲冰涼的泉水與烈酒，一邊俯瞰中央綠洲的波光與廣場上的熙攘人潮。</p>
+                </div>
+
+                <h3>客棧常見人物</h3>
+
+                <div class="interaction-card" onclick="setNpc('奧蒂卡', '客棧主廚兼掌櫃', '廚藝精湛的豪爽大娘、客棧的靈魂人物。她揮舞著大木杓在灶台間穿梭，爽朗的大笑聲幾乎能蓋過整間酒肆的喧囂。體態豐腴、手臂粗壯有力，總是繫著一條沾滿香料與肉汁的亞麻圍裙。性格熱情潑辣，最看不得旅人餓肚子，對往來商隊的小道消息也極為靈通。', 'npc/ohtica.webp')">
+                    <strong>奧蒂卡</strong>
+                    <span>客棧主廚</span>
+                </div>
+            </div>
+
+            <!-- 4. 奇馬爾羽飾工坊與黑曜石打製鋪 -->
+            <div id="workshops" class="section">
+                <h2>工坊</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>羽飾工坊：</strong> 位於雙鷹石柱左後方的泥磚工坊。屋頂晾曬著處理完畢的羽毛與木料，門前搭設著醒目的紅、黃、綠、藍四色條紋遮陽彩篷，攤位上陳列著各式繽紛的帕伊特羽飾與工藝品。</p>
+                    <p><strong>黑曜石打製鋪：</strong> 位於雙鷹石柱右後方的半露天石牆鍛造場。場內設有一座紅光熊熊的磚造熔爐、兩座打鐵砧台與武器木架，地面四周堆滿了烏黑發亮的黑曜石原礦與打製留下的玻璃質礦渣。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  在雙鷹中庭廣場與中央綠洲之間，坐落著支撐驛站貿易的兩大工藝重鎮。西側的彩篷下飄揚著來自遠帕伊特叢林的斑斕鳥羽，為行商提供精緻的羽毛護符與編織品；東側的鍛鋪則日夜迴盪著沉重的鐵錘敲擊聲與四濺火星，來自沙漠的矮人匠師在此將粗糙的火山黑曜石打製成鋒利無匹的鋸刃劍與長矛。</p>
+                </div>
+
+                <h3>駐鎮匠師</h3>
+
+                <div class="interaction-card" onclick="setNpc('約利亞馬尼科欽', '雕刻師', '頭髮花白、步履蹣跚的帕伊特長者。年輕時曾走遍馬茲提卡各大商道，年老後定居於雙鷹驛開設工坊，性情溫厚慈祥，將畢生手藝傾囊傳授給年輕學徒。', 'npc/yoliyamanicotzin.webp')">
+                    <strong>約利亞馬尼科欽</strong>
+                    <span>雕刻師</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('「灰手」卡庫', '矮人工匠', '來自泰茲卡之家沙漠的矮人，皮膚呈日曬的古銅紅，雙手因長年接觸黑曜石礦渣與生石灰而染上灰白色。雖然說話粗魯直率，但做生意童叟無欺，極度鄙視偷工減料。', 'npc/cacu.webp')">
+                    <strong>「灰手」卡庫</strong>
+                    <span>矮人工匠</span>
+                </div>
+            </div>
+
+            <!-- 5. 古祭壇廢墟與盲神官草庵 -->
+            <div id="shrine" class="section">
+                <h2>古祭壇與草庵</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>地理位置：</strong> 位於驛站東北角（右上方）的隆起岩丘上，木寨牆在此處順應地勢向外繞行。</p>
+                    <p><strong>環境外觀：</strong> 岩丘頂端坐落著一座傾頹風化的古代三層階梯金字塔廢墟，斷裂的石柱間長滿耐旱灌木；緊鄰岩丘西側的綠洲樹蔭下，則有一間簡樸的乾草頂黃土泥屋（盲神官草庵），門前燃著溫暖的小火堆。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  遠離了南門的喧囂與西側酒肆的吵雜，雙鷹驛的東北角保留著一份跨越千年的孤寂與神秘。那座連名字都已消逝在歷史風沙中的古祭壇廢墟，靜靜俯瞰著下方的綠洲池水。而在岩丘腳下的草庵內，終日飄散著苦澀卻令人心神安寧的白鼠尾草薰香，為迷茫的旅人指引靈魂的方向。</p>
+                </div>
+
+                <h3>草庵修行者</h3>
+
+                <div class="interaction-card" onclick="setNpc('德拉納斯', '祭司', '洞察靈魂與星象的先知、綠洲的精神守望者。常年在草庵內透過黑曜石水盆進行冥想，或敲擊石缽吟誦古老的安魂祝禱。雖然不問世俗政事，但對恭敬求教的旅人總是知無不言，是雙鷹驛中最受敬畏的智者。', 'npc/dranath.webp')">
+                    <strong>德拉納斯</strong>
+                    <span>神廟祭司。</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#e6d8c0;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
