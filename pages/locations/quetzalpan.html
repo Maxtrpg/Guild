@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬茲提卡地理誌 - 綠羽村</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --gold: #d4af37; 
+            --bg-dark: rgba(12, 18, 14, 0.93); /* 翡翠林丘的深邃叢林暗影 */
+            --text: #e5d8b8; /* 白灰泥磚與羊皮紙暖色文字 */
+            --accent: #3a8c5c; /* 象徵綠羽與熱帶林蔭的翡翠綠 */
+            --sun: #d97724; /* 象徵晨曦曜玉與太陽壁畫的暖金橘 */
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Noto Serif TC', serif; background-color: #000; }
+
+        /* --- 背景場景 --- */
+        .scene-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('quetzalpan.webp'); 
+            background-size: cover; background-position: center; 
+            filter: brightness(0.68) sepia(0.15) contrast(1.08); 
+            transition: transform 1s ease-out; transform: scale(1.05);
+        }
+
+        /* --- 主容器 --- */
+        .game-ui { 
+            position: relative; z-index: 10; width: 100%; height: 100%; 
+            display: flex; justify-content: flex-end; align-items: center; 
+            padding-right: 3%; box-sizing: border-box; gap: 25px; 
+        }
+
+        /* --- 左側動態展示區 --- */
+        .character-display-zone { position: relative; flex: 1; height: 100%; pointer-events: none; }
+        
+        .character-sprite { 
+            position: absolute; right: 450px; bottom: -5vh; height: 105vh; max-width: 60vw; 
+            object-fit: contain; object-position: bottom right; 
+            opacity: 0; transform: translateX(-20px); transition: 0.5s ease; 
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.9)); 
+            z-index: 1;
+        }
+        .character-sprite.active { opacity: 1; transform: translateX(0); }
+        
+        .npc-story-overlay {
+            position: absolute; right: 0; bottom: 12vh; width: 380px; 
+            background: rgba(14, 22, 17, 0.96); border: 1px solid var(--accent); padding: 25px 30px;
+            color: var(--text); border-radius: 2px; 
+            box-shadow: 0 0 40px rgba(0,0,0,0.9), inset 0 0 20px rgba(58, 140, 92, 0.15);
+            opacity: 0; transform: translateX(20px); transition: all 0.4s ease;
+            text-align: justify; line-height: 1.7; pointer-events: auto; z-index: 2; 
+        }
+        .npc-story-overlay.active { opacity: 1; transform: translateX(0); }
+        .npc-story-overlay strong { 
+            color: var(--gold); font-size: 1.3rem; font-family: 'Cinzel', 'Noto Serif TC', serif; 
+            display: block; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+            padding-bottom: 10px; margin-bottom: 15px; letter-spacing: 1px;
+        }
+
+        /* --- 右側：資訊面板 --- */
+        .info-panel { width: 500px; height: 85vh; background: var(--bg-dark); border: 2px solid var(--accent); display: flex; box-shadow: -15px 0 50px rgba(0,0,0,1); flex-shrink: 0; z-index: 3;}
+        
+        .bookmarks { width: 65px; height: 100%; background: #0a110d; display: flex; flex-direction: column; border-right: 1px solid var(--accent); overflow-y: auto; }
+        .bookmarks::-webkit-scrollbar { display: none; }
+        .bookmark-btn { 
+            writing-mode: vertical-lr; padding: 25px 15px; color: var(--gold); 
+            cursor: pointer; border-bottom: 1px solid rgba(58, 140, 92, 0.3); 
+            opacity: 0.6; letter-spacing: 3px; font-weight: bold; transition: 0.3s; flex-shrink: 0;
+        }
+        .bookmark-btn:hover { opacity: 1; background: rgba(58, 140, 92, 0.15); }
+        .bookmark-btn.active { opacity: 1; background: rgba(58, 140, 92, 0.25); border-left: 4px solid var(--gold); color: #fff;} 
+
+        .scroll-content { flex: 1; padding: 35px; overflow-y: auto; color: var(--text); line-height: 1.8; }
+        .scroll-content::-webkit-scrollbar { width: 6px; }
+        .scroll-content::-webkit-scrollbar-thumb { background: rgba(58, 140, 92, 0.5); border-radius: 3px; }
+
+        h2 { font-family: 'Cinzel', serif; color: var(--gold); border-bottom: 1px solid var(--gold); margin: 0 0 20px 0; font-size: 1.8rem; }
+        h3 { color: var(--accent); border-bottom: 1px dashed var(--accent); padding-bottom: 5px; font-size: 1.3rem; margin-top: 25px;}
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+
+        .gazetteer-box {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(58, 140, 92, 0.3);
+            padding: 15px 20px; margin-bottom: 20px; border-radius: 2px;
+        }
+        .gazetteer-box p { margin: 5px 0; font-size: 1.05rem; line-height: 1.5; color: #ddd;}
+        .gazetteer-box strong { color: var(--gold); font-family: 'Cinzel', 'Noto Serif TC', serif; }
+        
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { margin-bottom: 10px; font-size: 1.05rem; color: #ccc; border-left: 3px solid var(--sun); padding-left: 10px; }
+        .menu-list strong { color: var(--gold); }
+
+        .lore-desc { font-size: 1.1rem; text-align: justify; margin-bottom: 25px; padding-top: 15px; border-top: 1px dashed rgba(58, 140, 92, 0.3); color: #ccc;}
+
+        .interaction-card {
+            background: rgba(255,255,255,0.03); padding: 15px; border: 1px solid rgba(58, 140, 92, 0.25);
+            margin-bottom: 15px; cursor: pointer; transition: 0.3s;
+        }
+        .interaction-card:hover { border-color: var(--gold); background: rgba(58, 140, 92, 0.15); box-shadow: 0 0 15px rgba(58, 140, 92, 0.2);}
+        .interaction-card strong { color: var(--gold); display: block; margin-bottom: 5px; font-size: 1.1rem;}
+        .interaction-card span { display: block; font-size: 0.95rem; color: #bbb; line-height: 1.5; margin-top: 5px; }
+        .interaction-card .highlight { color: #5bc287; font-weight: bold; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="scene-background"></div>
+
+<div class="game-ui">
+    <div class="character-display-zone">
+        <img id="npc-sprite" class="character-sprite" src="" alt="">
+        <div id="story-box" class="npc-story-overlay"></div>
+    </div>
+
+    <div class="info-panel">
+        <div class="bookmarks">
+            <div class="bookmark-btn active" onclick="showTab('overview')">村莊概況</div>
+            <div class="bookmark-btn" onclick="showTab('council')">長屋與神龕</div>
+            <div class="bookmark-btn" onclick="showTab('posada')">翠羽涼蔭</div>
+            <div class="bookmark-btn" onclick="showTab('martial')">遊樂場與小市集</div>
+        </div>
+
+        <div class="scroll-content">
+            <!-- 1. 綠羽村概覽 -->
+            <div id="overview" class="section active">
+                <h2>綠羽村</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>地理位置：</strong> 帕伊特境內靠庫塔卡邊陲，翡翠林丘山腳下。</p>
+                    <p><strong>人口規模：</strong> 約 50 人的小型邊陲聚落。</p>
+                    <p><strong>行政統治：</strong> 村長 瑪蒂辛 與 宗族長老議會。</p>
+                    <p><strong>特產資源：</strong> 玉米、辣椒、羽毛飾品。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  綠羽村是一座依偎在翡翠林丘山腳下的寧靜聚落，四周被茂密的熱帶叢林與棕櫚樹環抱。一條清澈的山澗溪流自西北方林間蜿蜒流下，斜向貫穿整個村落中心，兩座原木小橋橫跨溪上，將西側的生活區與東側的信仰廣場自然相連。村內錯落著圓形與方形的民居，皆由塗抹白灰的火山石基座與泥磚砌成，屋頂則鋪著厚實的棕櫚茅草。</p>
+                    <p>  村落東側是一座鋪設平整青石板的階梯小廣場，地面與四周繪有色彩斑斕、卻因熱帶雨水沖刷而略顯斑駁的羽蛇與太陽圖騰壁畫。自神龕東北側延伸出的蜿蜒山徑，則是通往山上古代太陽神廟群的外圍步道起點。</p>
+                </div>
+
+                <h3>祖輩的鐵律：秋分護石祭</h3>
+                <div class="gazetteer-box">
+                    <p>  在綠羽村的傳統中，平時鮮少有人靠近山頂那座古老的遺蹟。唯獨每年秋分之夜，全村會點起火把，將供奉在村內神龕中散發柔和金光的聖石「晨曦曜玉」恭敬地護送上山，安放於深處的基座上一夜。儘管已無人知曉儀式最初的起源，但村民們都謹記著祖輩提起此事時的敬畏神情——在叢林邊陲，恪守古老傳統永遠是安居樂業的第一準則。</p>
+                </div>
+            </div>
+
+            <!-- 2. 長屋與神龕 -->
+            <div id="council" class="section">
+                <h2>宗族長屋與晨曦神龕</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>宗族議事長屋：</strong> 位於青石廣場北側過橋處，是村內最寬敞的石木建築。屋頂上方裝飾著巨大的五彩羽冠圖騰，門廊懸掛著乾燥玉米串與彩羽編織簾，為村長與長老議會處理政務的核心場所。</p>
+                    <p><strong>夸爾特祭壇：</strong> 坐落於廣場東側的多層石造高台。下層青石板繪有鮮豔的羽蛇與烈陽壁畫。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  越過溪流上的木橋，便進入了綠羽村的行政與精神中樞。議事長屋見證了無數次宗族會議與農作分配，而東側高台上的晨曦神龕則在林間陽光映照下顯得莊嚴肅穆，守護著村落世代相傳的寧靜。</p>
+                </div>
+
+                <h3>行政要員</h3>
+
+                <div class="interaction-card" onclick="setNpc('瑪蒂辛', '綠羽村村長', '務實精明的行政首領、愛操心的大家長。對村裡的年輕晚輩疼愛有加，待客大方熱情，行事果斷且極為看重村落的傳統與秩序。', 'npc/madisyn.webp')">
+                    <strong>瑪蒂辛</strong>
+                    <span>綠羽村村長</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('索奇', '議會長老兼大灶屋總管', '精打細算的議會發言人、嘴硬心軟的糧倉總管。眼神銳利，腰間總是掛著一串用來記帳的打結彩繩與算盤豆。極度節儉，負責看管全村的公款與糧食儲備，常在議事長屋裡反對村長過度慷慨的招待，但內心深處其實非常關心村人與旅者的溫飽。', 'npc/xochitl.webp')">
+                    <strong>索奇</strong>
+                    <span>議會長老兼大灶屋總管</span>
+                </div>
+            </div>
+
+            <!-- 3. 翠羽涼蔭 -->
+            <div id="posada" class="section">
+                <h2>「翠羽涼蔭」吊床客棧</h2>
+                
+                <div class="gazetteer-box">
+                    <p>位於村落西北側溪畔。主體為一座高挑的半露天石柱長廊，石柱間掛滿透氣舒適的龍舌蘭纖維吊床；長廊南側緊鄰著戶外大灶屋，三座高聳的泥灶終日冒著裊裊柴煙。綠羽村唯一接待外客的旅宿與公共炊事中心。</p>
+                </div>
+
+                <div class="lore-desc">
+                    <p>  在濕熱的叢林邊陲，沒有什麼比躺在「翠羽涼蔭」的半露天石柱長廊下更令人放鬆了。山風穿過棕櫚屋簷，伴隨著溪水潺潺聲，吹散旅途的疲憊。長廊旁的大灶屋裡擺滿了木桶與陶甕，由長老索奇統合管理，一籠接一籠地蒸著全村引以為傲的招牌鄉土料理。</p>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('米亞瓦', '廚師', '翠羽涼蔭的廚娘。神態熱情、嗓門洪亮，臉上帶著市井大嬸特有的親切與忙碌。', 'npc/miyawa.webp')">
+                    <strong>米亞瓦</strong>
+                    <span>廚師</span>
+                </div>
+            </div>
+
+            <!-- 4. 學堂與市集 -->
+            <div id="martial" class="section">
+                <h2>遊樂場與小市集</h2>
+                
+                <div class="gazetteer-box">
+                    <p><strong>遊樂場：</strong> 位於村莊西南側的泥地小院。木柵欄內立著三個塞滿乾草與藤蔓的練劍木樁，一旁的木架與草牆上陳列著練習用的木劍與數面繪有鮮豔紋樣的羽飾圓盾。</p>
+                    <p><strong>小市集：</strong> 位於村落南側道路旁的數座茅草棚攤位，陳列著陶罐、竹簍與山林物產，提供過往行商與旅人基礎的物資補給。</p>
+                </div>
+
+                <h3>核心人物</h3>
+
+                <div class="interaction-card" onclick="setNpc('圖帕克', '退休戰士', '年輕時對抗叢林巨獸導致左腿留下舊傷，走路一瘸一拐，平時總是拄著一根鑲有黑曜石片的厚重木杖。', 'npc/tupac2.webp')">
+                    <strong>圖帕克</strong>
+                    <span>退休戰士</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('夏迪', '見習戰士', '勇氣過剩的見習戰士、十七八歲的年輕少女。正義感十足且極度渴望證明自己的實力，雖然缺乏真正的實戰經驗、偶爾還有些笨拙冒失，但保護村莊的熱忱比誰都強烈。', 'npc/shandy.webp')">
+                    <strong>夏迪</strong>
+                    <span>見習戰士</span>
+                </div>
+
+                <div class="interaction-card" onclick="setNpc('韋馬克', '皮毛商', '身材精悍、皮膚黑黝的獵人與皮毛商。十分熱情，健談。', 'npc/wemark.webp')">
+                    <strong>韋馬克</strong>
+                    <span>皮毛商</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.bookmark-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        document.getElementById('npc-sprite').classList.remove('active');
+        document.getElementById('story-box').classList.remove('active');
+    }
+
+    function setNpc(name, title, story, img) {
+        const sprite = document.getElementById('npc-sprite');
+        const storyBox = document.getElementById('story-box');
+        
+        sprite.classList.remove('active');
+        storyBox.classList.remove('active');
+        
+        setTimeout(() => {
+            sprite.src = img; 
+            storyBox.innerHTML = `<strong>${name} <span style="font-size:0.9rem; color:#888;">| ${title}</span></strong><span style="color:#e5d8b8;">${story}</span>`;
+            sprite.classList.add('active');
+            storyBox.classList.add('active');
+        }, 300);
+    }
+</script>
+</body>
+</html>
